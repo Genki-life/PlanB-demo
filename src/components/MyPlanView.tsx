@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -7,7 +7,6 @@ import {
   Sparkles,
   Compass,
   Heart,
-  Activity,
   Moon,
   Flame,
   Footprints,
@@ -34,13 +33,14 @@ import {
 const NOVA_LISTENING_URL = '/kila-listening.png';
 
 // ============================================================================
-// 1. DATA MODELS & SAMPLE DATASETS
+// 1. DATA MODELS & UNIFIED ACTIVITY DATASET
 // ============================================================================
 
 type RhythmTimeframe = '7d' | 'month';
 type SecondaryModuleType = 'activity' | 'rhythm' | 'direction' | 'memory' | 'health' | null;
 
-// --- A. Activity Record Model (Supports Active, Mindful Rest, or No Record) ---
+// --- A. Unified Activity Record Model ---
+// Supports Active (with distinct sessionsCount & durationMinutes), Mindful Rest, or No Record
 type DayRecordType = 'active' | 'rest' | 'none';
 
 interface DayActivityRecord {
@@ -48,6 +48,7 @@ interface DayActivityRecord {
   type: DayRecordType;
   title?: string;
   durationMinutes?: number;
+  sessionsCount?: number; // Number of completed activities/sessions on this active day (>= 1)
   note?: string;
   isSample?: boolean;
 }
@@ -57,108 +58,182 @@ const MONTH_NAMES = [
   'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
-// Build initial realistic multi-month sample dataset centered around real device date
+const SHORT_MONTH_NAMES = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+];
+
+const SHORT_WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+function formatDateKey(y: number, m: number, d: number): string {
+  return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+}
+
+function getDeviceTodayState() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = now.getMonth();
+  const d = now.getDate();
+  return {
+    year: y,
+    month: m,
+    day: d,
+    dateStr: formatDateKey(y, m, d)
+  };
+}
+
+// Build unified 6-month sample dataset centered around real device date
+// Used by BOTH Activity Monthly Grid AND Your Rhythm (6-month trend curve + 7d/Month stats)
 function createInitialActivityLogs(baseYear: number, baseMonth: number, baseDay: number): Record<string, DayActivityRecord> {
   const logs: Record<string, DayActivityRecord> = {};
 
-  const formatD = (y: number, m: number, d: number) =>
-    `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  // Historical 5 months prior to current month (offsets -5 to -1)
+  const historicalMonthPatterns: {
+    offset: number;
+    activeDays: number[];
+    doubleSessionDays: number[];
+    restDays: number[];
+  }[] = [
+    {
+      offset: -8,
+      activeDays: [3, 8, 13, 18, 23, 27],
+      doubleSessionDays: [13],
+      restDays: [10, 21]
+    },
+    {
+      offset: -7,
+      activeDays: [2, 6, 11, 15, 19, 24, 28],
+      doubleSessionDays: [15],
+      restDays: [8, 22]
+    },
+    {
+      offset: -6,
+      activeDays: [1, 5, 9, 12, 16, 20, 24, 27, 30],
+      doubleSessionDays: [12, 24],
+      restDays: [7, 18, 26]
+    },
+    {
+      offset: -5,
+      activeDays: [2, 5, 9, 13, 17, 21, 25, 28],
+      doubleSessionDays: [13, 25],
+      restDays: [7, 19]
+    },
+    {
+      offset: -4,
+      activeDays: [1, 4, 7, 10, 12, 15, 18, 21, 24, 27, 30],
+      doubleSessionDays: [7, 21],
+      restDays: [6, 16, 25]
+    },
+    {
+      offset: -3,
+      activeDays: [2, 5, 8, 11, 14, 17, 20, 23, 26, 29],
+      doubleSessionDays: [11, 23],
+      restDays: [4, 15, 24]
+    },
+    {
+      offset: -2,
+      activeDays: [1, 3, 5, 7, 10, 12, 14, 16, 19, 21, 23, 25, 28, 30],
+      doubleSessionDays: [5, 16, 25],
+      restDays: [6, 13, 20, 27]
+    },
+    {
+      offset: -1,
+      activeDays: [2, 3, 5, 7, 9, 12, 14, 15, 18, 20, 21, 24, 26, 28, 30],
+      doubleSessionDays: [7, 15, 26],
+      restDays: [6, 13, 19, 27, 31]
+    }
+  ];
+
+  for (const pattern of historicalMonthPatterns) {
+    const mDate = new Date(baseYear, baseMonth + pattern.offset, 1);
+    const y = mDate.getFullYear();
+    const m = mDate.getMonth();
+    const maxDays = new Date(y, m + 1, 0).getDate();
+
+    for (const d of pattern.activeDays) {
+      if (d <= maxDays) {
+        const isDouble = pattern.doubleSessionDays.includes(d);
+        const isStretch = d % 3 === 0;
+        logs[formatDateKey(y, m, d)] = {
+          date: formatDateKey(y, m, d),
+          type: 'active',
+          title: isDouble
+            ? '15-min walk + 5-min evening stretch'
+            : isStretch
+            ? '5-min living room stretch'
+            : '15-min mindful walk',
+          durationMinutes: isDouble ? 20 : isStretch ? 5 : 15,
+          sessionsCount: isDouble ? 2 : 1,
+          note: 'Sample historical activity',
+          isSample: true
+        };
+      }
+    }
+
+    for (const d of pattern.restDays) {
+      if (d <= maxDays) {
+        logs[formatDateKey(y, m, d)] = {
+          date: formatDateKey(y, m, d),
+          type: 'rest',
+          title: 'Mindful rest day',
+          durationMinutes: 0,
+          sessionsCount: 0,
+          note: 'Sample restorative day',
+          isSample: true
+        };
+      }
+    }
+  }
 
   // Populate current month up to baseDay
-  const activeSampleDays = [1, 2, 4, 6, 8, 9, 11, 13, 15, 16, 18, 20, 22, 24, 26, 28];
-  const restSampleDays = [3, 10, 17, 23];
+  const currentActiveDays = [1, 2, 4, 6, 8, 9, 11, 13, 15, 16, 18, 20, 22, 24, 26, 28];
+  const currentDoubleDays = [2, 11, 20];
+  const currentRestDays = [3, 10, 17, 23];
 
-  for (const d of activeSampleDays) {
+  for (const d of currentActiveDays) {
     if (d <= baseDay) {
-      logs[formatD(baseYear, baseMonth, d)] = {
-        date: formatD(baseYear, baseMonth, d),
+      const isDouble = currentDoubleDays.includes(d);
+      const isWalk = d % 2 === 0 || d === 1;
+      logs[formatDateKey(baseYear, baseMonth, d)] = {
+        date: formatDateKey(baseYear, baseMonth, d),
         type: 'active',
-        title: d % 2 === 0 ? '15-min mindful walk' : '5-min living room stretch',
-        durationMinutes: d % 2 === 0 ? 15 : 5,
+        title: isDouble
+          ? '15-min walk + 5-min desk stretch'
+          : isWalk
+          ? '15-min mindful walk'
+          : '5-min living room stretch',
+        durationMinutes: isDouble ? 20 : isWalk ? 15 : 5,
+        sessionsCount: isDouble ? 2 : 1,
         note: d === baseDay ? 'Completed after lunch' : 'Light gentle pacing',
         isSample: true
       };
     }
   }
 
-  for (const d of restSampleDays) {
+  for (const d of currentRestDays) {
     if (d <= baseDay) {
-      logs[formatD(baseYear, baseMonth, d)] = {
-        date: formatD(baseYear, baseMonth, d),
+      logs[formatDateKey(baseYear, baseMonth, d)] = {
+        date: formatDateKey(baseYear, baseMonth, d),
         type: 'rest',
         title: 'Mindful rest day',
         durationMinutes: 0,
+        sessionsCount: 0,
         note: 'Intentional recovery pause — no guilt',
         isSample: true
       };
     }
   }
 
-  // Always ensure Today has an active sample record if not already set
-  const todayKey = formatD(baseYear, baseMonth, baseDay);
+  // Ensure Today has an active sample record by default
+  const todayKey = formatDateKey(baseYear, baseMonth, baseDay);
   if (!logs[todayKey]) {
     logs[todayKey] = {
       date: todayKey,
       type: 'active',
       title: '15-min mindful walk',
       durationMinutes: 15,
+      sessionsCount: 1,
       note: 'Post-lunch outdoor walk',
-      isSample: true
-    };
-  }
-
-  // Populate Previous Month
-  const prevDate = new Date(baseYear, baseMonth - 1, 1);
-  const prevYear = prevDate.getFullYear();
-  const prevMonth = prevDate.getMonth();
-  const prevActiveDays = [2, 3, 5, 7, 9, 12, 14, 15, 18, 20, 21, 24, 26, 28, 30];
-  const prevRestDays = [6, 13, 19, 27];
-
-  for (const d of prevActiveDays) {
-    logs[formatD(prevYear, prevMonth, d)] = {
-      date: formatD(prevYear, prevMonth, d),
-      type: 'active',
-      title: d % 3 === 0 ? '5-min desk shoulder reset' : '15-min mindful walk',
-      durationMinutes: d % 3 === 0 ? 5 : 15,
-      note: 'Sample historical activity',
-      isSample: true
-    };
-  }
-
-  for (const d of prevRestDays) {
-    logs[formatD(prevYear, prevMonth, d)] = {
-      date: formatD(prevYear, prevMonth, d),
-      type: 'rest',
-      title: 'Rest & recharge window',
-      durationMinutes: 0,
-      note: 'Sample restorative day',
-      isSample: true
-    };
-  }
-
-  // Populate 2 Months Ago
-  const twoAgoDate = new Date(baseYear, baseMonth - 2, 1);
-  const twoAgoYear = twoAgoDate.getFullYear();
-  const twoAgoMonth = twoAgoDate.getMonth();
-  const twoAgoActive = [1, 4, 6, 8, 11, 14, 17, 19, 22, 25, 27];
-  const twoAgoRest = [5, 12, 20, 26];
-
-  for (const d of twoAgoActive) {
-    logs[formatD(twoAgoYear, twoAgoMonth, d)] = {
-      date: formatD(twoAgoYear, twoAgoMonth, d),
-      type: 'active',
-      title: '15-min outdoor walk',
-      durationMinutes: 15,
-      isSample: true
-    };
-  }
-
-  for (const d of twoAgoRest) {
-    logs[formatD(twoAgoYear, twoAgoMonth, d)] = {
-      date: formatD(twoAgoYear, twoAgoMonth, d),
-      type: 'rest',
-      title: 'Mindful rest day',
-      durationMinutes: 0,
       isSample: true
     };
   }
@@ -166,67 +241,31 @@ function createInitialActivityLogs(baseYear: number, baseMonth: number, baseDay:
   return logs;
 }
 
-// --- B. Your Rhythm Dataset ---
+// --- B. Dynamic Rhythm Computation Types ---
 interface MonthlyTrendPoint {
+  key: string;
   month: string;
   activeDays: number;
+  completedSessions: number;
   totalMinutes: number;
 }
 
-const MONTHLY_TREND_SERIES: MonthlyTrendPoint[] = [
-  { month: 'Jun', activeDays: 8, totalMinutes: 95 },
-  { month: 'Jul', activeDays: 11, totalMinutes: 135 },
-  { month: 'Aug', activeDays: 10, totalMinutes: 120 },
-  { month: 'Sep', activeDays: 14, totalMinutes: 175 },
-  { month: 'Oct', activeDays: 16, totalMinutes: 210 },
-  { month: 'Nov', activeDays: 18, totalMinutes: 235 },
-];
+interface DailyBarItem {
+  label: string;
+  minutes: number;
+  sessions: number;
+  status: 'done' | 'rest' | 'light' | 'none';
+}
 
 interface RecentSummaryData {
   rangeLabel: string;
-  completedCount: number;
+  activeDaysCount: number;
+  completedCount: number; // Total completed sessions/activities
   activeMinutes: number;
   restDaysCount: number;
-  rescheduledCount: number;
   novaObservation: string;
-  dailyBreakdown: { label: string; minutes: number; status: 'done' | 'rest' | 'light' }[];
+  dailyBreakdown: DailyBarItem[];
 }
-
-const RHYTHM_RECENT_SUMMARY: Record<RhythmTimeframe, RecentSummaryData> = {
-  '7d': {
-    rangeLabel: 'Past 7 days',
-    completedCount: 5,
-    activeMinutes: 65,
-    restDaysCount: 1,
-    rescheduledCount: 1,
-    novaObservation:
-      'Your post-lunch walks (1:15 PM – 1:40 PM) had the highest completion rate this week. On Tuesday, switching to a 5-minute living room stretch kept your rhythm steady without pressure.',
-    dailyBreakdown: [
-      { label: 'Mon', minutes: 15, status: 'done' },
-      { label: 'Tue', minutes: 5, status: 'light' },
-      { label: 'Wed', minutes: 15, status: 'done' },
-      { label: 'Thu', minutes: 0, status: 'rest' },
-      { label: 'Fri', minutes: 15, status: 'done' },
-      { label: 'Sat', minutes: 15, status: 'done' },
-      { label: 'Sun', minutes: 0, status: 'rest' },
-    ],
-  },
-  month: {
-    rangeLabel: 'Past 30 days',
-    completedCount: 18,
-    activeMinutes: 235,
-    restDaysCount: 6,
-    rescheduledCount: 4,
-    novaObservation:
-      'Over the past month, your active days rose from 14 to 18. Allowing 6 intentional rest days prevented mid-week fatigue and helped you sustain a gentle routine.',
-    dailyBreakdown: [
-      { label: 'Wk 1', minutes: 50, status: 'done' },
-      { label: 'Wk 2', minutes: 60, status: 'done' },
-      { label: 'Wk 3', minutes: 55, status: 'light' },
-      { label: 'Wk 4', minutes: 70, status: 'done' },
-    ],
-  },
-};
 
 // --- C. Your Direction Dataset ---
 interface DirectionPresetGoal {
@@ -292,7 +331,7 @@ const INITIAL_MEMORIES: MemoryItem[] = [
     category: 'feels_right',
     title: 'Preferred midday walking window is 1:15 PM – 1:45 PM',
     summary: 'Short 15-minute outdoor walks right after lunch feel easiest to start and help clear afternoon screen fatigue.',
-    learnedFrom: 'Observed from 5 completed post-lunch walks over the past two weeks.',
+    learnedFrom: 'Observed from completed post-lunch walks over the past two weeks.',
     howItHelps: 'Nova schedules outdoor walk suggestions after 1:00 PM instead of early mornings.',
     updatedAt: 'Updated 2 days ago',
     isConfirmed: true
@@ -302,7 +341,7 @@ const INITIAL_MEMORIES: MemoryItem[] = [
     category: 'feels_right',
     title: 'Prefers low-friction living room stretches over gym routines',
     summary: 'No-mat, no-workout-clothes 5-minute stretches in the living room work best when workdays run late.',
-    learnedFrom: 'You chose “5-minute stretch at home” as your Plan B three times on busy Tuesdays and Thursdays.',
+    learnedFrom: 'You chose “5-minute stretch at home” as your Plan B on busy workdays.',
     howItHelps: 'When energy or time is low, Nova defaults to standing or seated home stretches with zero setup.',
     updatedAt: 'Updated 5 days ago',
     isConfirmed: true
@@ -342,7 +381,7 @@ const INITIAL_MEMORIES: MemoryItem[] = [
     category: 'check',
     title: 'Keep Sundays as a protected, notification-free rest day?',
     summary: 'You usually take Sundays off from structured plans to recharge quietly at home.',
-    learnedFrom: 'Observed from your past 3 Sundays marked as Mindful Rest.',
+    learnedFrom: 'Observed from your past Sundays marked as Mindful Rest.',
     howItHelps: 'If confirmed, Nova will default Sundays to a quiet rest state without prompting for workouts.',
     updatedAt: 'New observation',
     isConfirmed: false
@@ -426,20 +465,29 @@ const HEALTH_METRICS_DEFINITIONS: HealthMetricDefinition[] = [
 ];
 
 // ============================================================================
-// 2. VISUAL CHART SUB-COMPONENTS
+// 2. VISUAL CHART SUB-COMPONENTS (DRIVEN BY UNIFIED ACTIVITY LOGS)
 // ============================================================================
 
-function MonthlyTrendCurve({ compact = false }: { compact?: boolean }) {
-  const maxVal = 22;
-  const minVal = 4;
+function MonthlyTrendCurve({
+  series,
+  compact = false
+}: {
+  series: MonthlyTrendPoint[];
+  compact?: boolean;
+}) {
+  const maxVal = Math.max(18, ...series.map((s) => s.activeDays), 1) + 2;
+  const minVal = 0;
   const width = 280;
   const height = compact ? 68 : 96;
   const padX = 18;
   const padY = compact ? 14 : 18;
 
-  const points = MONTHLY_TREND_SERIES.map((item, idx) => {
-    const x = padX + (idx / (MONTHLY_TREND_SERIES.length - 1)) * (width - padX * 2);
-    const y = height - padY - ((item.activeDays - minVal) / (maxVal - minVal)) * (height - padY * 2);
+  const points = series.map((item, idx) => {
+    const x = padX + (idx / Math.max(1, series.length - 1)) * (width - padX * 2);
+    const y =
+      height -
+      padY -
+      ((item.activeDays - minVal) / Math.max(1, maxVal - minVal)) * (height - padY * 2);
     return { x, y, ...item };
   });
 
@@ -454,7 +502,7 @@ function MonthlyTrendCurve({ compact = false }: { compact?: boolean }) {
       <svg
         viewBox={`0 0 ${width} ${height}`}
         className="w-full overflow-visible select-none"
-        aria-label="Monthly active days trend curve from June to November"
+        aria-label="Monthly active days trend curve"
       >
         <defs>
           <linearGradient id="rhythmTrendFill" x1="0" y1="0" x2="0" y2="1">
@@ -487,19 +535,25 @@ function MonthlyTrendCurve({ compact = false }: { compact?: boolean }) {
         {points.map((pt, idx) => {
           const isLatest = idx === points.length - 1;
           return (
-            <g key={pt.month}>
+            <g key={pt.key}>
               <circle
                 cx={pt.x}
                 cy={pt.y}
                 r={isLatest ? 4.5 : 3}
-                className={isLatest ? 'fill-[#FF7A32] stroke-white stroke-2' : 'fill-[#5E5BAE] stroke-white stroke-[1.5]'}
+                className={
+                  isLatest
+                    ? 'fill-[#FF7A32] stroke-white stroke-2'
+                    : 'fill-[#5E5BAE] stroke-white stroke-[1.5]'
+                }
               />
-              {(!compact || isLatest || idx === 0 || idx === 2) && (
+              {(!compact || isLatest || idx === 0 || idx === 2 || idx === 4) && (
                 <text
                   x={pt.x}
                   y={pt.y - 7}
                   textAnchor="middle"
-                  className={`text-[9px] font-bold ${isLatest ? 'fill-[#5E5BAE]' : 'fill-[#7A7895]'}`}
+                  className={`text-[9px] font-bold ${
+                    isLatest ? 'fill-[#5E5BAE]' : 'fill-[#7A7895]'
+                  }`}
                 >
                   {pt.activeDays}d
                 </text>
@@ -510,10 +564,10 @@ function MonthlyTrendCurve({ compact = false }: { compact?: boolean }) {
       </svg>
 
       <div className="flex items-center justify-between px-1.5 mt-1 text-[10px] font-medium text-[#7A7895]">
-        {MONTHLY_TREND_SERIES.map((item, idx) => (
+        {series.map((item, idx) => (
           <span
-            key={item.month}
-            className={idx === MONTHLY_TREND_SERIES.length - 1 ? 'text-[#5E5BAE] font-bold' : ''}
+            key={item.key}
+            className={idx === series.length - 1 ? 'text-[#5E5BAE] font-bold' : ''}
           >
             {item.month}
           </span>
@@ -523,19 +577,29 @@ function MonthlyTrendCurve({ compact = false }: { compact?: boolean }) {
   );
 }
 
-function ActiveMinutesBarChart({ timeframe }: { timeframe: RhythmTimeframe }) {
-  const items = RHYTHM_RECENT_SUMMARY[timeframe].dailyBreakdown;
-  const maxVal = timeframe === '7d' ? 20 : 80;
+function ActiveMinutesBarChart({
+  items,
+  timeframe
+}: {
+  items: DailyBarItem[];
+  timeframe: RhythmTimeframe;
+}) {
+  const maxVal = Math.max(timeframe === '7d' ? 20 : 60, ...items.map((i) => i.minutes), 1);
 
   return (
     <div className="pt-2">
       <div className="flex items-end justify-between gap-2 h-24 px-2 pt-4 border-b border-[#26263F]/[0.06]">
         {items.map((bar, idx) => {
-          const heightPct = bar.minutes === 0 ? 12 : Math.max(22, Math.round((bar.minutes / maxVal) * 100));
+          const heightPct =
+            bar.minutes === 0
+              ? bar.status === 'rest'
+                ? 14
+                : 6
+              : Math.max(22, Math.round((bar.minutes / maxVal) * 100));
           return (
             <div key={idx} className="flex-1 flex flex-col items-center gap-1 h-full justify-end">
               <span className="text-[9.5px] font-semibold text-[#7A7895]">
-                {bar.minutes > 0 ? `${bar.minutes}m` : 'Rest'}
+                {bar.minutes > 0 ? `${bar.minutes}m` : bar.status === 'rest' ? 'Rest' : '–'}
               </span>
               <div
                 style={{ height: `${heightPct}%` }}
@@ -544,7 +608,9 @@ function ActiveMinutesBarChart({ timeframe }: { timeframe: RhythmTimeframe }) {
                     ? 'bg-[#5E5BAE]'
                     : bar.status === 'light'
                     ? 'bg-[#8E8CD6]'
-                    : 'bg-[#E59980]/60'
+                    : bar.status === 'rest'
+                    ? 'bg-[#E59980]/70'
+                    : 'bg-[#26263F]/10'
                 }`}
               />
             </div>
@@ -571,21 +637,69 @@ interface MyPlanViewProps {
 }
 
 export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
-  // Real device date anchor
-  const [deviceToday] = useState(() => {
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = now.getMonth();
-    const d = now.getDate();
-    const dateStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-    return { year: y, month: m, day: d, dateStr };
-  });
+  // Real device date state with automatic local midnight & background-resume sync
+  const [deviceToday, setDeviceToday] = useState(getDeviceTodayState);
 
-  // 1. Activity Monthly State & Logs
+  // 1. Activity Monthly State & Unified Activity Logs
   const [viewYear, setViewYear] = useState<number>(deviceToday.year);
   const [viewMonth, setViewMonth] = useState<number>(deviceToday.month);
   const [pickerYear, setPickerYear] = useState<number>(deviceToday.year);
   const [slideDirection, setSlideDirection] = useState<number>(0);
+
+  // Track whether user is currently viewing the live current month so cross-month rollovers auto-advance
+  const isViewingCurrentMonthRef = useRef<boolean>(true);
+  useEffect(() => {
+    isViewingCurrentMonthRef.current =
+      viewYear === deviceToday.year && viewMonth === deviceToday.month;
+  }, [viewYear, viewMonth, deviceToday.year, deviceToday.month]);
+
+  // Sync deviceToday at local midnight and when returning from background (visibilitychange / focus)
+  useEffect(() => {
+    const syncDateWithSystem = () => {
+      const next = getDeviceTodayState();
+      setDeviceToday((prev) => {
+        if (prev.dateStr === next.dateStr) return prev;
+        // If user was viewing the previous current month and month rolled over, auto-switch to new current month
+        if (
+          isViewingCurrentMonthRef.current &&
+          (prev.year !== next.year || prev.month !== next.month)
+        ) {
+          setViewYear(next.year);
+          setViewMonth(next.month);
+          setPickerYear(next.year);
+        }
+        return next;
+      });
+    };
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        syncDateWithSystem();
+      }
+    };
+
+    window.addEventListener('focus', syncDateWithSystem);
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    // Schedule timer for next local midnight
+    const now = new Date();
+    const nextMidnight = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() + 1,
+      0,
+      0,
+      1
+    );
+    const msUntilMidnight = Math.max(1000, nextMidnight.getTime() - now.getTime());
+    const midnightTimer = window.setTimeout(syncDateWithSystem, msUntilMidnight);
+
+    return () => {
+      window.removeEventListener('focus', syncDateWithSystem);
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.clearTimeout(midnightTimer);
+    };
+  }, [deviceToday.dateStr]);
 
   const [activityLogs, setActivityLogs] = useState<Record<string, DayActivityRecord>>(() =>
     createInitialActivityLogs(deviceToday.year, deviceToday.month, deviceToday.day)
@@ -597,6 +711,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
   const [dayDraftType, setDayDraftType] = useState<DayRecordType>('active');
   const [dayDraftTitle, setDayDraftTitle] = useState<string>('');
   const [dayDraftDuration, setDayDraftDuration] = useState<number>(15);
+  const [dayDraftSessions, setDayDraftSessions] = useState<number>(1);
   const [dayDraftNote, setDayDraftNote] = useState<string>('');
   const [dayUpdateToast, setDayUpdateToast] = useState<string | null>(null);
 
@@ -633,7 +748,12 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
       id: string;
       sender: 'ai' | 'user';
       text: string;
-      proposedDirection?: { goalTitle: string; description: string; executionApproach: string; tailoredReason: string };
+      proposedDirection?: {
+        goalTitle: string;
+        description: string;
+        executionApproach: string;
+        tailoredReason: string;
+      };
       accepted?: boolean;
     }[]
   >([]);
@@ -655,8 +775,6 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
   // 7. Apple Health Connection Toggle (Frontend Demo Simulation)
   const [isAppleHealthConnected, setIsAppleHealthConnected] = useState<boolean>(true);
 
-  const currentRecentData = RHYTHM_RECENT_SUMMARY[rhythmFilter];
-
   // Scroll chat containers to bottom
   useEffect(() => {
     if (isMemoryChatOpen) {
@@ -670,29 +788,302 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
     }
   }, [directionChatMessages, isDirectionChatOpen]);
 
-  // --- Computed Activity Month Grid Values ---
+  // ============================================================================
+  // 4. UNIFIED DATA DERIVATIONS (ACTIVITY + YOUR RHYTHM + NOVA OBSERVATION)
+  // ============================================================================
+
   const daysInCurrentMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
   const firstDayOfWeek = new Date(viewYear, viewMonth, 1).getDay();
   const isCurrentMonth = viewYear === deviceToday.year && viewMonth === deviceToday.month;
 
   const monthPrefix = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}`;
-  const currentMonthRecords = Object.values(activityLogs).filter((r) => r.date.startsWith(monthPrefix));
-  const activeDaysCount = currentMonthRecords.filter((r) => r.type === 'active').length;
-  const restDaysCount = currentMonthRecords.filter((r) => r.type === 'rest').length;
-  const totalMinutes = currentMonthRecords.reduce((acc, cur) => acc + (cur.durationMinutes || 0), 0);
+  const currentMonthRecords = useMemo(
+    () => Object.values(activityLogs).filter((r) => r.date.startsWith(monthPrefix)),
+    [activityLogs, monthPrefix]
+  );
 
-  // --- Computed Nova 1-Sentence Top Observation ---
-  const confirmedMemories = memories.filter((m) => m.isConfirmed);
-  const hasSufficientData = Object.keys(activityLogs).length >= 3 || confirmedMemories.length > 0;
-  const novaTopObservation = hasSufficientData
-    ? 'Short walks have been fitting into your afternoons lately.'
-    : 'I’m getting to know your rhythm.';
+  // Distinguish Active Days (活动天数) vs Completed Activities / Sessions (活动次数)
+  const activeDaysCount = useMemo(
+    () => currentMonthRecords.filter((r) => r.type === 'active').length,
+    [currentMonthRecords]
+  );
+  const completedSessionsInMonth = useMemo(
+    () =>
+      currentMonthRecords
+        .filter((r) => r.type === 'active')
+        .reduce((sum, r) => sum + (r.sessionsCount ?? 1), 0),
+    [currentMonthRecords]
+  );
+  const restDaysCount = useMemo(
+    () => currentMonthRecords.filter((r) => r.type === 'rest').length,
+    [currentMonthRecords]
+  );
+  const totalMinutes = useMemo(
+    () =>
+      currentMonthRecords
+        .filter((r) => r.type === 'active')
+        .reduce((acc, cur) => acc + (cur.durationMinutes || 0), 0),
+    [currentMonthRecords]
+  );
 
-  // Representative 3 memories for Level-1 "What Nova knows"
-  const representativeMemories = memories.slice(0, 3);
-  const mattersMemories = memories.filter((m) => m.category === 'matters' && m.isConfirmed);
-  const feelsRightMemories = memories.filter((m) => m.category === 'feels_right' && m.isConfirmed);
-  const checkMemories = memories.filter((m) => !m.isConfirmed);
+  // 6-Month Trend Series derived directly from activityLogs ending at viewed month (or deviceToday month)
+  const monthlyTrendSeries: MonthlyTrendPoint[] = useMemo(() => {
+    const series: MonthlyTrendPoint[] = [];
+    for (let offset = -5; offset <= 0; offset++) {
+      const mDate = new Date(viewYear, viewMonth + offset, 1);
+      const y = mDate.getFullYear();
+      const m = mDate.getMonth();
+      const prefix = `${y}-${String(m + 1).padStart(2, '0')}`;
+      const records = Object.values(activityLogs).filter((r) => r.date.startsWith(prefix));
+      const activeRecs = records.filter((r) => r.type === 'active');
+
+      series.push({
+        key: prefix,
+        month: SHORT_MONTH_NAMES[m],
+        activeDays: activeRecs.length,
+        completedSessions: activeRecs.reduce((s, r) => s + (r.sessionsCount ?? 1), 0),
+        totalMinutes: activeRecs.reduce((s, r) => s + (r.durationMinutes || 0), 0)
+      });
+    }
+    return series;
+  }, [activityLogs, viewYear, viewMonth]);
+
+  // Dynamic 7-Day and Month Rhythm Summaries derived from the exact same activityLogs
+  const rhythmSummaries: Record<RhythmTimeframe, RecentSummaryData> = useMemo(() => {
+    // Determine anchor end date for 7d window:
+    // If viewing current month, use max(deviceToday.dateStr, latest logged date in current month)
+    // so logging on any day in the month or past 7 days reflects immediately.
+    let anchorDateObj = new Date(deviceToday.year, deviceToday.month, deviceToday.day);
+    if (!isCurrentMonth) {
+      const lastDay = new Date(viewYear, viewMonth + 1, 0).getDate();
+      anchorDateObj = new Date(viewYear, viewMonth, lastDay);
+    } else if (currentMonthRecords.length > 0) {
+      const maxLoggedDateStr = [...currentMonthRecords]
+        .map((r) => r.date)
+        .sort()
+        .pop();
+      if (maxLoggedDateStr && maxLoggedDateStr > deviceToday.dateStr) {
+        const [ly, lm, ld] = maxLoggedDateStr.split('-').map(Number);
+        anchorDateObj = new Date(ly, lm - 1, ld);
+      }
+    }
+
+    // 1. Compute 7-Day Window
+    let sevenDayActiveDays = 0;
+    let sevenDaySessions = 0;
+    let sevenDayMinutes = 0;
+    let sevenDayRestDays = 0;
+    const sevenDayBars: DailyBarItem[] = [];
+
+    for (let i = 6; i >= 0; i--) {
+      const dObj = new Date(
+        anchorDateObj.getFullYear(),
+        anchorDateObj.getMonth(),
+        anchorDateObj.getDate() - i
+      );
+      const dKey = formatDateKey(dObj.getFullYear(), dObj.getMonth(), dObj.getDate());
+      const rec = activityLogs[dKey];
+      const dayLabel = SHORT_WEEKDAYS[dObj.getDay()];
+
+      if (rec?.type === 'active') {
+        const mins = rec.durationMinutes ?? 15;
+        const sess = rec.sessionsCount ?? 1;
+        sevenDayActiveDays += 1;
+        sevenDaySessions += sess;
+        sevenDayMinutes += mins;
+        sevenDayBars.push({
+          label: dayLabel,
+          minutes: mins,
+          sessions: sess,
+          status: mins <= 5 ? 'light' : 'done'
+        });
+      } else if (rec?.type === 'rest') {
+        sevenDayRestDays += 1;
+        sevenDayBars.push({
+          label: dayLabel,
+          minutes: 0,
+          sessions: 0,
+          status: 'rest'
+        });
+      } else {
+        sevenDayBars.push({
+          label: dayLabel,
+          minutes: 0,
+          sessions: 0,
+          status: 'none'
+        });
+      }
+    }
+
+    const sevenDayObservation =
+      sevenDayActiveDays === 0 && sevenDayRestDays === 0
+        ? 'No activities logged in this 7-day window yet. Tap any date on the Activity calendar to log a walk, stretch, or rest day.'
+        : `In this 7-day window, you logged ${sevenDayActiveDays} active ${
+            sevenDayActiveDays === 1 ? 'day' : 'days'
+          } (${sevenDaySessions} ${
+            sevenDaySessions === 1 ? 'activity' : 'activities'
+          }, ${sevenDayMinutes} min) and ${sevenDayRestDays} mindful rest ${
+            sevenDayRestDays === 1 ? 'day' : 'days'
+          }.`;
+
+    // 2. Compute Month Window (Viewed Month: viewYear - viewMonth)
+    const weekBuckets: DailyBarItem[] = [
+      { label: 'Wk 1', minutes: 0, sessions: 0, status: 'none' },
+      { label: 'Wk 2', minutes: 0, sessions: 0, status: 'none' },
+      { label: 'Wk 3', minutes: 0, sessions: 0, status: 'none' },
+      { label: 'Wk 4', minutes: 0, sessions: 0, status: 'none' }
+    ];
+    const weekHasRest = [false, false, false, false];
+
+    for (const rec of currentMonthRecords) {
+      const dayNum = Number(rec.date.split('-')[2] || 1);
+      const bucketIdx = Math.min(3, Math.floor((dayNum - 1) / 7));
+      if (rec.type === 'active') {
+        weekBuckets[bucketIdx].minutes += rec.durationMinutes ?? 15;
+        weekBuckets[bucketIdx].sessions += rec.sessionsCount ?? 1;
+      } else if (rec.type === 'rest') {
+        weekHasRest[bucketIdx] = true;
+      }
+    }
+
+    for (let b = 0; b < 4; b++) {
+      if (weekBuckets[b].minutes > 0) {
+        weekBuckets[b].status = weekBuckets[b].minutes <= 15 ? 'light' : 'done';
+      } else if (weekHasRest[b]) {
+        weekBuckets[b].status = 'rest';
+      }
+    }
+
+    const monthObservation =
+      activeDaysCount === 0 && restDaysCount === 0
+        ? `No records logged in ${MONTH_NAMES[viewMonth]} ${viewYear} yet.`
+        : `In ${MONTH_NAMES[viewMonth]}, you’ve recorded ${activeDaysCount} active ${
+            activeDaysCount === 1 ? 'day' : 'days'
+          } across ${completedSessionsInMonth} completed ${
+            completedSessionsInMonth === 1 ? 'activity' : 'activities'
+          } (${totalMinutes} min total) and ${restDaysCount} mindful rest ${
+            restDaysCount === 1 ? 'day' : 'days'
+          }.`;
+
+    return {
+      '7d': {
+        rangeLabel: isCurrentMonth ? 'Past 7 days' : `${ SHORT_MONTH_NAMES[viewMonth] } (last 7d)`,
+        activeDaysCount: sevenDayActiveDays,
+        completedCount: sevenDaySessions,
+        activeMinutes: sevenDayMinutes,
+        restDaysCount: sevenDayRestDays,
+        novaObservation: sevenDayObservation,
+        dailyBreakdown: sevenDayBars
+      },
+      month: {
+        rangeLabel: `${MONTH_NAMES[viewMonth]} ${viewYear}`,
+        activeDaysCount,
+        completedCount: completedSessionsInMonth,
+        activeMinutes: totalMinutes,
+        restDaysCount,
+        novaObservation: monthObservation,
+        dailyBreakdown: weekBuckets
+      }
+    };
+  }, [
+    activityLogs,
+    currentMonthRecords,
+    deviceToday,
+    isCurrentMonth,
+    viewYear,
+    viewMonth,
+    activeDaysCount,
+    completedSessionsInMonth,
+    totalMinutes,
+    restDaysCount
+  ]);
+
+  const currentRecentData = rhythmSummaries[rhythmFilter];
+
+  // --- Computed Memories (Confirmed vs Pending Check) ---
+  const confirmedMemories = useMemo(
+    () => memories.filter((m) => m.isConfirmed),
+    [memories]
+  );
+  const checkMemories = useMemo(
+    () => memories.filter((m) => !m.isConfirmed),
+    [memories]
+  );
+  const mattersMemories = useMemo(
+    () => memories.filter((m) => m.category === 'matters' && m.isConfirmed),
+    [memories]
+  );
+  const feelsRightMemories = useMemo(
+    () => memories.filter((m) => m.category === 'feels_right' && m.isConfirmed),
+    [memories]
+  );
+
+  // Level-1 "What Nova knows" strictly shows ONLY confirmed memories (up to 3)
+  const representativeConfirmedMemories = useMemo(
+    () => confirmedMemories.slice(0, 3),
+    [confirmedMemories]
+  );
+
+  // --- Computed Top Nova Observation (Strictly Data-Driven + Sample Indicator) ---
+  // Look at records in the viewed month + recent 7-day window
+  const { novaTopObservation, isNovaObservationSample } = useMemo(() => {
+    const sevenDaySummary = rhythmSummaries['7d'];
+    const totalRecentRecordedDays =
+      currentMonthRecords.length > 0
+        ? currentMonthRecords.length
+        : sevenDaySummary.activeDaysCount + sevenDaySummary.restDaysCount;
+
+    // Insufficient data fallback
+    if (totalRecentRecordedDays < 3) {
+      return {
+        novaTopObservation: 'I’m getting to know your rhythm.',
+        isNovaObservationSample: false
+      };
+    }
+
+    const recordsToAnalyze =
+      currentMonthRecords.length >= 3
+        ? currentMonthRecords
+        : Object.values(activityLogs).slice(-7);
+
+    const activeRecs = recordsToAnalyze.filter((r) => r.type === 'active');
+    const restRecs = recordsToAnalyze.filter((r) => r.type === 'rest');
+    const totalSessions = activeRecs.reduce((s, r) => s + (r.sessionsCount ?? 1), 0);
+    const totalMins = activeRecs.reduce((s, r) => s + (r.durationMinutes || 0), 0);
+    const walkCount = activeRecs.filter((r) =>
+      (r.title || '').toLowerCase().includes('walk')
+    ).length;
+    const stretchCount = activeRecs.filter((r) =>
+      (r.title || '').toLowerCase().includes('stretch')
+    ).length;
+
+    const hasSampleRecords = recordsToAnalyze.some((r) => r.isSample);
+
+    let text = '';
+    if (activeRecs.length > 0 && walkCount >= stretchCount && restRecs.length > 0) {
+      text = `You’ve logged ${activeRecs.length} active days (${totalSessions} activities) and ${
+        restRecs.length
+      } rest ${restRecs.length === 1 ? 'day' : 'days'} in ${
+        SHORT_MONTH_NAMES[viewMonth]
+      } — short walks are fitting smoothly into your rhythm.`;
+    } else if (activeRecs.length > 0 && stretchCount > walkCount) {
+      text = `Brief stretches have anchored ${activeRecs.length} active days (${totalSessions} activities, ${totalMins} min) in ${SHORT_MONTH_NAMES[viewMonth]}.`;
+    } else if (activeRecs.length > 0) {
+      text = `You’ve logged ${activeRecs.length} active days (${totalSessions} activities, ${totalMins} min) in ${SHORT_MONTH_NAMES[viewMonth]} at a steady, low-pressure pace.`;
+    } else {
+      text = `You’ve logged ${restRecs.length} mindful rest days in ${SHORT_MONTH_NAMES[viewMonth]}, giving yourself space to recharge.`;
+    }
+
+    return {
+      novaTopObservation: text,
+      isNovaObservationSample: hasSampleRecords
+    };
+  }, [currentMonthRecords, rhythmSummaries, activityLogs, viewMonth]);
+
+  const hasSampleInCurrentMonth = useMemo(
+    () => currentMonthRecords.some((r) => r.isSample),
+    [currentMonthRecords]
+  );
 
   // --- Handlers for Month Switching ---
   const handlePrevMonth = () => {
@@ -725,11 +1116,13 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
   };
 
   const handleJumpToThisMonth = () => {
+    const latestToday = getDeviceTodayState();
+    setDeviceToday(latestToday);
     const currentTotal = viewYear * 12 + viewMonth;
-    const todayTotal = deviceToday.year * 12 + deviceToday.month;
+    const todayTotal = latestToday.year * 12 + latestToday.month;
     setSlideDirection(todayTotal >= currentTotal ? 1 : -1);
-    setViewYear(deviceToday.year);
-    setViewMonth(deviceToday.month);
+    setViewYear(latestToday.year);
+    setViewMonth(latestToday.month);
   };
 
   // --- Handlers for Day Detail & Record Correction ---
@@ -738,13 +1131,17 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
     setActiveDayModalDate(dateStr);
     if (existing) {
       setDayDraftType(existing.type);
-      setDayDraftTitle(existing.title || (existing.type === 'rest' ? 'Mindful rest day' : '15-min mindful walk'));
+      setDayDraftTitle(
+        existing.title || (existing.type === 'rest' ? 'Mindful rest day' : '15-min mindful walk')
+      );
       setDayDraftDuration(existing.durationMinutes ?? (existing.type === 'active' ? 15 : 0));
+      setDayDraftSessions(existing.sessionsCount ?? (existing.type === 'active' ? 1 : 0));
       setDayDraftNote(existing.note || '');
     } else {
       setDayDraftType('active');
-      setDayDraftTitle('');
+      setDayDraftTitle('15-min mindful walk');
       setDayDraftDuration(15);
+      setDayDraftSessions(1);
       setDayDraftNote('');
     }
   };
@@ -763,14 +1160,22 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
           type: dayDraftType,
           title: dayDraftType === 'rest' ? 'Mindful rest day' : dayDraftTitle.trim(),
           durationMinutes: dayDraftType === 'rest' ? 0 : dayDraftDuration,
-          note: dayDraftNote.trim() || (dayDraftType === 'rest' ? 'Restorative recovery day' : 'Logged manually'),
+          sessionsCount: dayDraftType === 'rest' ? 0 : dayDraftSessions,
+          note:
+            dayDraftNote.trim() ||
+            (dayDraftType === 'rest' ? 'Restorative recovery day' : 'Logged manually'),
           isSample: false
         };
       }
       return next;
     });
 
-    const label = dayDraftType === 'none' ? 'Record cleared' : dayDraftType === 'rest' ? 'Rest day saved' : 'Activity saved';
+    const label =
+      dayDraftType === 'none'
+        ? 'Record cleared — rhythm updated'
+        : dayDraftType === 'rest'
+        ? 'Rest day saved — rhythm updated'
+        : 'Activity saved — rhythm updated';
     setDayUpdateToast(label);
     setTimeout(() => setDayUpdateToast(null), 2600);
     setActiveDayModalDate(null);
@@ -803,9 +1208,9 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
     setTimeout(() => setDirectionToast(false), 2800);
   };
 
-  // Conversational Direction Adjustment with Nova (References memory without modifying memories)
   const handleOpenDirectionChat = () => {
-    const referencedMem = confirmedMemories[0]?.title || 'your preference for midday walks and low-friction stretches';
+    const referencedMem =
+      confirmedMemories[0]?.title || 'your preference for midday walks and low-friction stretches';
     setDirectionChatInput('');
     setDirectionChatMessages([
       {
@@ -835,26 +1240,46 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
       tailoredReason: 'Updated in conversation with Nova, referencing your known rhythm preferences.'
     };
 
-    if (lower.includes('sleep') || lower.includes('evening') || lower.includes('night') || lower.includes('unwind')) {
+    if (
+      lower.includes('sleep') ||
+      lower.includes('evening') ||
+      lower.includes('night') ||
+      lower.includes('unwind')
+    ) {
       proposed = {
         goalTitle: 'Unwind for deeper evening rest',
-        description: 'Release physical shoulder and neck tension before bedtime for smoother sleep onset.',
+        description:
+          'Release physical shoulder and neck tension before bedtime for smoother sleep onset.',
         executionApproach: '5–10 min evening floor stretches + 15 min screen-free wind-down audio',
-        tailoredReason: 'Aligned with your known preference for low-friction home stretches and calm recovery.'
+        tailoredReason:
+          'Aligned with your known preference for low-friction home stretches and calm recovery.'
       };
-    } else if (lower.includes('stiff') || lower.includes('neck') || lower.includes('shoulder') || lower.includes('desk')) {
+    } else if (
+      lower.includes('stiff') ||
+      lower.includes('neck') ||
+      lower.includes('shoulder') ||
+      lower.includes('desk')
+    ) {
       proposed = {
         goalTitle: 'Ease desk stiffness & posture fatigue',
         description: 'Counteract long sitting blocks with brief micro-mobility breaks.',
         executionApproach: '5 min neck & shoulder mobility flow twice a week + gentle midday walks',
-        tailoredReason: 'References your afternoon shoulder stiffness memory while keeping sessions short.'
+        tailoredReason:
+          'References your afternoon shoulder stiffness memory while keeping sessions short.'
       };
-    } else if (lower.includes('3') || lower.includes('lighter') || lower.includes('gentle') || lower.includes('slow')) {
+    } else if (
+      lower.includes('3') ||
+      lower.includes('lighter') ||
+      lower.includes('gentle') ||
+      lower.includes('slow')
+    ) {
       proposed = {
         goalTitle: direction.goalTitle,
         description: direction.description,
-        executionApproach: '3 light 10-min afternoon walks per week + guilt-free rest days whenever work runs late',
-        tailoredReason: 'Softened weekly frequency to match your no-pressure, nervous-system-first approach.'
+        executionApproach:
+          '3 light 10-min afternoon walks per week + guilt-free rest days whenever work runs late',
+        tailoredReason:
+          'Softened weekly frequency to match your no-pressure, nervous-system-first approach.'
       };
     }
 
@@ -874,7 +1299,8 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
     const targetMsg = directionChatMessages.find((m) => m.id === msgId);
     if (!targetMsg || !targetMsg.proposedDirection) return;
 
-    const { goalTitle, description, executionApproach, tailoredReason } = targetMsg.proposedDirection;
+    const { goalTitle, description, executionApproach, tailoredReason } =
+      targetMsg.proposedDirection;
     const nextDir: DirectionState = {
       ...direction,
       goalTitle,
@@ -916,7 +1342,9 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
     );
     if (selectedMemory?.id === id) {
       setSelectedMemory((prev) =>
-        prev ? { ...prev, category: 'feels_right', isConfirmed: true, updatedAt: 'Confirmed just now' } : null
+        prev
+          ? { ...prev, category: 'feels_right', isConfirmed: true, updatedAt: 'Confirmed just now' }
+          : null
       );
     }
     showMemoryFeedback('Memory confirmed and saved');
@@ -946,7 +1374,6 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
     showMemoryFeedback('Removed from What Nova knows');
   };
 
-  // Open Talk to Nova for either modifying a specific memory OR supplementing/adding/correcting from the section entry
   const handleStartTalkToNovaMemory = (item?: MemoryItem | null, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     setSelectedMemory(null);
@@ -973,11 +1400,19 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
     setIsMemoryChatOpen(true);
   };
 
-  const buildMemoryProposal = (userText: string, currentItem: MemoryItem | null): MemoryChatProposal => {
+  const buildMemoryProposal = (
+    userText: string,
+    currentItem: MemoryItem | null
+  ): MemoryChatProposal => {
     const lower = userText.toLowerCase();
 
     if (currentItem) {
-      if (lower.includes('evening') || lower.includes('night') || lower.includes('after dinner') || lower.includes('7 pm')) {
+      if (
+        lower.includes('evening') ||
+        lower.includes('night') ||
+        lower.includes('after dinner') ||
+        lower.includes('7 pm')
+      ) {
         return {
           mode: 'update',
           targetMemoryId: currentItem.id,
@@ -995,12 +1430,18 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
           newCategory: currentItem.category === 'check' ? 'feels_right' : currentItem.category
         };
       }
-      if (lower.includes('10 min') || lower.includes('shorter') || lower.includes('5 min') || lower.includes('brief')) {
+      if (
+        lower.includes('10 min') ||
+        lower.includes('shorter') ||
+        lower.includes('5 min') ||
+        lower.includes('brief')
+      ) {
         return {
           mode: 'update',
           targetMemoryId: currentItem.id,
           newTitle: 'Keep sessions brief (5–10 minutes) on normal workdays',
-          newSummary: 'Shorter 5-to-10 minute micro-sessions feel much more approachable than 15-minute blocks.',
+          newSummary:
+            'Shorter 5-to-10 minute micro-sessions feel much more approachable than 15-minute blocks.',
           newCategory: currentItem.category === 'check' ? 'feels_right' : currentItem.category
         };
       }
@@ -1013,16 +1454,21 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
       };
     }
 
-    // Adding / supplementing a new memory or correcting existing preferences
     if (lower.includes('morning') || lower.includes('before work')) {
       return {
         mode: 'add',
         newTitle: 'Enjoys quiet 10-minute morning walks before work starts',
-        newSummary: 'Gentle morning fresh air before opening laptops helps set a steady tone for the day.',
+        newSummary:
+          'Gentle morning fresh air before opening laptops helps set a steady tone for the day.',
         newCategory: 'feels_right'
       };
     }
-    if (lower.includes('knee') || lower.includes('back') || lower.includes('joint') || lower.includes('low-impact')) {
+    if (
+      lower.includes('knee') ||
+      lower.includes('back') ||
+      lower.includes('joint') ||
+      lower.includes('low-impact')
+    ) {
       return {
         mode: 'add',
         newTitle: 'Keep movements gentle and low-impact for joint comfort',
@@ -1124,7 +1570,6 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
 
   return (
     <div className="flex-1 overflow-y-auto px-6 pt-1 pb-6 flex flex-col gap-3.5 z-10 scrollbar-none select-none">
-      
       {/* Toast Notifications */}
       <AnimatePresence>
         {directionToast && (
@@ -1155,20 +1600,20 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
               <Check className="w-4 h-4 stroke-[2.5]" />
               <span>{dayUpdateToast}</span>
             </div>
-            <span className="text-[11px] text-white/80">Saved</span>
+            <span className="text-[11px] text-white/80">Updated</span>
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* ============================================================ */}
-      {/* 1. Nova's One-Sentence Observation (Top of Plan Level-1)     */}
+      {/* 1. Nova's One-Sentence Observation (Data-Driven + Sample Tag) */}
       {/* ============================================================ */}
       <section
         id="plan-nova-observation"
         aria-label="Nova's observation"
-        className="bg-white/75 backdrop-blur-md rounded-[22px] px-4 py-3 border border-white/85 shadow-[0_4px_18px_rgba(90,80,140,0.04)] flex items-center gap-3"
+        className="bg-white/75 backdrop-blur-md rounded-[22px] px-4 py-3 border border-white/85 shadow-[0_4px_18px_rgba(90,80,140,0.04)] flex items-start gap-3"
       >
-        <div className="w-9 h-9 rounded-full bg-gradient-to-b from-[#E5DDFB] to-[#F3EEFE] border border-white shadow-2xs overflow-hidden shrink-0 flex items-center justify-center">
+        <div className="w-9 h-9 rounded-full bg-gradient-to-b from-[#E5DDFB] to-[#F3EEFE] border border-white shadow-2xs overflow-hidden shrink-0 flex items-center justify-center mt-0.5">
           <img
             src={NOVA_LISTENING_URL}
             alt="Nova"
@@ -1176,47 +1621,71 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
             className="w-full h-full object-cover scale-125 translate-y-0.5"
           />
         </div>
-        <p className="text-[13.5px] font-medium text-[#26263F] leading-snug flex-1">
-          “{novaTopObservation}”
-        </p>
+        <div className="flex-1 min-w-0">
+          <p className="text-[13px] font-medium text-[#26263F] leading-snug">
+            “{novaTopObservation}”
+          </p>
+          {isNovaObservationSample && (
+            <span className="inline-block mt-1 text-[10px] font-medium text-[#8C8AA3] bg-[#26263F]/[0.04] px-2 py-0.5 rounded-full">
+              Based on sample data
+            </span>
+          )}
+        </div>
       </section>
 
       {/* ============================================================ */}
-      {/* 2. Module: Activity (Compact Illuminated Monthly Grid)       */}
+      {/* 2. Module: Activity (Compact Grid + History Entry + This month) */}
       {/* ============================================================ */}
       <section
         id="plan-module-activity"
         className="bg-white/70 backdrop-blur-md rounded-[24px] p-4.5 border border-white/80 shadow-[0_4px_20px_rgba(90,80,140,0.04)] flex flex-col gap-2.5 relative"
         aria-label="Activity Monthly Records"
       >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-[16px] font-bold text-[#26263F] tracking-tight">Activity</span>
+        <div className="flex items-center justify-between gap-1.5">
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className="text-[16px] font-bold text-[#26263F] tracking-tight shrink-0">Activity</span>
             <button
               type="button"
               onClick={() => {
                 setPickerYear(viewYear);
                 setIsMonthPickerOpen(true);
               }}
-              className="flex items-center gap-1 text-[12px] font-semibold text-[#26263F] bg-[#26263F]/[0.05] hover:bg-[#26263F]/[0.09] active:scale-95 px-2.5 py-1 rounded-full transition-all cursor-pointer"
+              className="flex items-center gap-1 text-[11.5px] font-semibold text-[#26263F] bg-[#26263F]/[0.05] hover:bg-[#26263F]/[0.09] active:scale-95 px-2 py-1 rounded-full transition-all cursor-pointer whitespace-nowrap shrink-0"
               aria-label="Select month"
             >
-              <span>{MONTH_NAMES[viewMonth]} {viewYear}</span>
-              <ChevronDown className="w-3.5 h-3.5 text-[#5E5BAE] opacity-75" />
+              <span>
+                {isCurrentMonth ? MONTH_NAMES[viewMonth] : SHORT_MONTH_NAMES[viewMonth]} {viewYear}
+              </span>
+              <ChevronDown className="w-3 h-3 text-[#5E5BAE] opacity-75 shrink-0" />
             </button>
           </div>
 
-          {!isCurrentMonth && (
+          <div className="flex items-center gap-1 shrink-0">
+            {!isCurrentMonth && (
+              <button
+                type="button"
+                id="activity-this-month-btn"
+                onClick={handleJumpToThisMonth}
+                className="flex items-center gap-1 text-[10.5px] font-semibold text-[#5E5BAE] bg-[#5E5BAE]/10 hover:bg-[#5E5BAE]/18 active:scale-95 px-2 py-1 rounded-full transition-all cursor-pointer whitespace-nowrap shrink-0"
+                aria-label="Return to this month"
+              >
+                <RotateCcw className="w-2.5 h-2.5 stroke-[2.2]" />
+                <span>This month</span>
+              </button>
+            )}
+
+            {/* Lightweight Activity History Entry */}
             <button
               type="button"
-              onClick={handleJumpToThisMonth}
-              className="flex items-center gap-1 text-[11px] font-semibold text-[#5E5BAE] bg-[#5E5BAE]/10 hover:bg-[#5E5BAE]/18 active:scale-95 px-2.5 py-1 rounded-full transition-all cursor-pointer"
-              aria-label="Return to this month"
+              id="activity-history-entry-btn"
+              onClick={() => setSelectedModule('activity')}
+              className="flex items-center gap-0.5 text-[11px] font-semibold text-[#5E5BAE] hover:text-[#46437B] bg-white/60 hover:bg-white/90 border border-white/80 px-2 py-1 rounded-full transition-all cursor-pointer active:scale-95 whitespace-nowrap shrink-0"
+              aria-label="Open Activity History"
             >
-              <RotateCcw className="w-3 h-3 stroke-[2.2]" />
-              <span>This month</span>
+              <span>History</span>
+              <ChevronRight className="w-3 h-3 stroke-[2.2]" />
             </button>
-          )}
+          </div>
         </div>
 
         {/* Weekday indicators */}
@@ -1249,13 +1718,18 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
             ))}
 
             {Array.from({ length: daysInCurrentMonth }, (_, i) => i + 1).map((dayNum) => {
-              const dStr = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
+              const dStr = formatDateKey(viewYear, viewMonth, dayNum);
               const record = activityLogs[dStr];
-              const isToday = viewYear === deviceToday.year && viewMonth === deviceToday.month && dayNum === deviceToday.day;
+              const isToday =
+                viewYear === deviceToday.year &&
+                viewMonth === deviceToday.month &&
+                dayNum === deviceToday.day;
               const isFuture =
                 viewYear > deviceToday.year ||
                 (viewYear === deviceToday.year && viewMonth > deviceToday.month) ||
-                (viewYear === deviceToday.year && viewMonth === deviceToday.month && dayNum > deviceToday.day);
+                (viewYear === deviceToday.year &&
+                  viewMonth === deviceToday.month &&
+                  dayNum > deviceToday.day);
 
               return (
                 <button
@@ -1284,7 +1758,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
           </motion.div>
         </div>
 
-        {/* Status Legend & Sample Data Label (No extra stats numbers) */}
+        {/* Status Legend & Sample Data Label */}
         <div className="pt-2 border-t border-[#26263F]/[0.06] flex items-center justify-between text-[11px] text-[#7A7895]">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5">
@@ -1300,14 +1774,16 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
               <span>No record</span>
             </div>
           </div>
-          <span className="text-[10px] font-medium text-[#8C8AA3] bg-[#26263F]/[0.04] px-2 py-0.5 rounded-full">
-            Sample data
-          </span>
+          {hasSampleInCurrentMonth && (
+            <span className="text-[10px] font-medium text-[#8C8AA3] bg-[#26263F]/[0.04] px-2 py-0.5 rounded-full">
+              Sample data
+            </span>
+          )}
         </div>
       </section>
 
       {/* ============================================================ */}
-      {/* 3. Module: Your rhythm (6-month curve + 2 metrics, NO Nova noticed duplication) */}
+      {/* 3. Module: Your rhythm (Synced with Activity Logs; distinguishes Active days vs Activities) */}
       {/* ============================================================ */}
       <section
         id="plan-module-rhythm"
@@ -1322,7 +1798,6 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
           <span className="text-[16px] font-bold text-[#26263F] tracking-tight">Your rhythm</span>
 
           <div className="flex items-center gap-2">
-            {/* 7 days / Month toggle (Stop propagation so toggling doesn't open sheet) */}
             <div
               onClick={(e) => e.stopPropagation()}
               className="bg-[#26263F]/[0.06] p-0.5 rounded-full inline-flex"
@@ -1355,30 +1830,40 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
           </div>
         </div>
 
-        {/* 6-Month Trend Curve */}
+        {/* 6-Month Trend Curve (Active days per month) */}
         <div className="bg-white/55 px-3.5 py-2.5 rounded-[18px] border border-white/75">
-          <MonthlyTrendCurve compact={true} />
+          <MonthlyTrendCurve series={monthlyTrendSeries} compact={true} />
         </div>
 
-        {/* Small amount of recent data: 2 compact metrics */}
-        <div className="grid grid-cols-2 gap-2.5">
-          <div className="bg-white/60 px-3.5 py-2.5 rounded-[16px] border border-white/75 flex items-baseline justify-between">
-            <span className="text-[11px] font-medium text-[#7A7895]">Completed</span>
-            <div className="flex items-baseline gap-1">
-              <span className="text-[17px] font-bold text-[#26263F] leading-none">
-                {currentRecentData.completedCount}
+        {/* Recent Stats: Explicitly distinguishes Active days (活动天数) vs Activities (活动次数) + Duration */}
+        <div className="grid grid-cols-3 gap-2">
+          <div className="bg-white/60 px-2.5 py-2 rounded-[15px] border border-white/75 flex flex-col justify-between">
+            <span className="text-[10.5px] font-medium text-[#7A7895]">Active days</span>
+            <div className="flex items-baseline gap-1 mt-1">
+              <span className="text-[16px] font-bold text-[#26263F] leading-none">
+                {currentRecentData.activeDaysCount}
               </span>
-              <span className="text-[10.5px] text-[#7A7895]">sessions</span>
+              <span className="text-[10px] text-[#7A7895]">days</span>
             </div>
           </div>
 
-          <div className="bg-white/60 px-3.5 py-2.5 rounded-[16px] border border-white/75 flex items-baseline justify-between">
-            <span className="text-[11px] font-medium text-[#7A7895]">Duration</span>
-            <div className="flex items-baseline gap-1">
-              <span className="text-[17px] font-bold text-[#26263F] leading-none">
+          <div className="bg-white/60 px-2.5 py-2 rounded-[15px] border border-white/75 flex flex-col justify-between">
+            <span className="text-[10.5px] font-medium text-[#7A7895]">Activities</span>
+            <div className="flex items-baseline gap-1 mt-1">
+              <span className="text-[16px] font-bold text-[#26263F] leading-none">
+                {currentRecentData.completedCount}
+              </span>
+              <span className="text-[10px] text-[#7A7895]">done</span>
+            </div>
+          </div>
+
+          <div className="bg-white/60 px-2.5 py-2 rounded-[15px] border border-white/75 flex flex-col justify-between">
+            <span className="text-[10.5px] font-medium text-[#7A7895]">Duration</span>
+            <div className="flex items-baseline gap-1 mt-1">
+              <span className="text-[16px] font-bold text-[#26263F] leading-none">
                 {currentRecentData.activeMinutes}
               </span>
-              <span className="text-[10.5px] text-[#7A7895]">min</span>
+              <span className="text-[10px] text-[#7A7895]">min</span>
             </div>
           </div>
         </div>
@@ -1428,45 +1913,37 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
       </section>
 
       {/* ============================================================ */}
-      {/* 5. Module: What Nova knows (2–3 representative items + Talk to Nova) */}
+      {/* 5. Module: What Nova knows (Confirmed Memories ONLY + Separate Pending Prompt) */}
       {/* ============================================================ */}
       <section
         id="plan-module-memory"
         aria-label="What Nova knows"
         className="bg-white/70 backdrop-blur-md rounded-[24px] p-4.5 border border-white/80 shadow-[0_4px_20px_rgba(90,80,140,0.04)] flex flex-col gap-2.5 relative"
       >
-        {/* Header: Clickable to open full Memory list sheet */}
         <button
           type="button"
           onClick={() => setSelectedModule('memory')}
           className="w-full flex items-center justify-between text-left group cursor-pointer"
           aria-label="View all memories in What Nova knows"
         >
-          <div className="flex items-center gap-2">
-            <span className="text-[16px] font-bold text-[#26263F] tracking-tight">What Nova knows</span>
-            {checkMemories.length > 0 && (
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#5E5BAE]/10 text-[#5E5BAE]">
-                {checkMemories.length} to check
-              </span>
-            )}
-          </div>
+          <span className="text-[16px] font-bold text-[#26263F] tracking-tight">What Nova knows</span>
           <div className="flex items-center gap-1 text-[11.5px] font-semibold text-[#5E5BAE]">
-            <span>All ({memories.length})</span>
+            <span>All ({confirmedMemories.length})</span>
             <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform stroke-[2.2]" />
           </div>
         </button>
 
-        {/* 2–3 Representative Preferences or Life States */}
-        {representativeMemories.length === 0 ? (
+        {/* Confirmed Memories List (Strictly isConfirmed === true, 2–3 representative items) */}
+        {representativeConfirmedMemories.length === 0 ? (
           <div
             onClick={() => setSelectedModule('memory')}
             className="bg-white/55 rounded-[16px] p-3.5 border border-white/75 text-[12.5px] text-[#7A7895] cursor-pointer"
           >
-            No preferences saved yet. Talk to Nova to share what works for you.
+            No confirmed preferences saved yet. Talk to Nova to share what works for you.
           </div>
         ) : (
           <div className="flex flex-col gap-1.5">
-            {representativeMemories.map((item) => (
+            {representativeConfirmedMemories.map((item) => (
               <button
                 key={item.id}
                 type="button"
@@ -1483,6 +1960,23 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
               </button>
             ))}
           </div>
+        )}
+
+        {/* Separate Prompt for Pending / Unconfirmed Items */}
+        {checkMemories.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setSelectedModule('memory')}
+            className="w-full px-3.5 py-2 rounded-[14px] bg-[#FAF8FD] hover:bg-white border border-[#5E5BAE]/20 flex items-center justify-between text-left transition-all cursor-pointer group"
+          >
+            <div className="flex items-center gap-1.5 min-w-0">
+              <Sparkles className="w-3.5 h-3.5 text-[#6865B8] shrink-0 stroke-[2.2]" />
+              <span className="text-[12px] font-semibold text-[#5E5BAE] truncate">
+                Can I check something? ({checkMemories.length} pending)
+              </span>
+            </div>
+            <ChevronRight className="w-3.5 h-3.5 text-[#5E5BAE] group-hover:translate-x-0.5 transition-transform shrink-0 stroke-[2.2]" />
+          </button>
         )}
 
         {/* Conversational Entry: Modify, Supplement, or Correct via Nova */}
@@ -1573,7 +2067,6 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
           <AnimatePresence>
             {selectedModule && (
               <div className="absolute inset-0 z-50 flex flex-col justify-end pointer-events-auto overflow-hidden">
-                {/* Dimmed backdrop */}
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -1586,7 +2079,6 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                   className="absolute inset-0 bg-black/25 backdrop-blur-xs"
                 />
 
-                {/* Slide-up Sheet */}
                 <motion.div
                   initial={{ y: '100%' }}
                   animate={{ y: 0 }}
@@ -1646,7 +2138,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                     <div className="flex flex-col gap-4 text-xs text-[#5D5B78]">
                       <div className="flex items-center justify-between bg-white/75 p-1 rounded-full border border-white/90 shadow-2xs">
                         <span className="text-xs font-semibold text-[#26263F] pl-3">
-                          Time range
+                          Time range ({currentRecentData.rangeLabel})
                         </span>
                         <div className="flex items-center gap-1">
                           <button
@@ -1684,34 +2176,45 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                         </p>
                       </div>
 
-                      <div className="grid grid-cols-3 gap-2">
-                        <div className="bg-white/75 p-3 rounded-[18px] border border-white/85 flex flex-col justify-between">
-                          <span className="text-[10.5px] font-medium text-[#7A7895]">Completed</span>
+                      {/* 4 Distinct Metrics: Active Days vs Activities vs Active Time vs Rest Days */}
+                      <div className="grid grid-cols-4 gap-2">
+                        <div className="bg-white/75 p-2.5 rounded-[16px] border border-white/85 flex flex-col justify-between">
+                          <span className="text-[10px] font-medium text-[#7A7895]">Active days</span>
                           <div className="mt-1">
-                            <span className="text-[18px] font-bold text-[#26263F] leading-none">
+                            <span className="text-[17px] font-bold text-[#26263F] leading-none">
+                              {currentRecentData.activeDaysCount}
+                            </span>
+                            <span className="text-[9.5px] text-[#7A7895] block mt-0.5">days</span>
+                          </div>
+                        </div>
+
+                        <div className="bg-white/75 p-2.5 rounded-[16px] border border-white/85 flex flex-col justify-between">
+                          <span className="text-[10px] font-medium text-[#7A7895]">Activities</span>
+                          <div className="mt-1">
+                            <span className="text-[17px] font-bold text-[#5E5BAE] leading-none">
                               {currentRecentData.completedCount}
                             </span>
-                            <span className="text-[10px] text-[#7A7895] block mt-0.5">sessions</span>
+                            <span className="text-[9.5px] text-[#7A7895] block mt-0.5">sessions</span>
                           </div>
                         </div>
 
-                        <div className="bg-white/75 p-3 rounded-[18px] border border-white/85 flex flex-col justify-between">
-                          <span className="text-[10.5px] font-medium text-[#7A7895]">Active time</span>
+                        <div className="bg-white/75 p-2.5 rounded-[16px] border border-white/85 flex flex-col justify-between">
+                          <span className="text-[10px] font-medium text-[#7A7895]">Duration</span>
                           <div className="mt-1">
-                            <span className="text-[18px] font-bold text-[#26263F] leading-none">
+                            <span className="text-[17px] font-bold text-[#26263F] leading-none">
                               {currentRecentData.activeMinutes}
                             </span>
-                            <span className="text-[10px] text-[#7A7895] block mt-0.5">minutes</span>
+                            <span className="text-[9.5px] text-[#7A7895] block mt-0.5">minutes</span>
                           </div>
                         </div>
 
-                        <div className="bg-white/75 p-3 rounded-[18px] border border-white/85 flex flex-col justify-between">
-                          <span className="text-[10.5px] font-medium text-[#7A7895]">Rest days</span>
+                        <div className="bg-white/75 p-2.5 rounded-[16px] border border-white/85 flex flex-col justify-between">
+                          <span className="text-[10px] font-medium text-[#7A7895]">Rest days</span>
                           <div className="mt-1">
-                            <span className="text-[18px] font-bold text-[#E59980] leading-none">
+                            <span className="text-[17px] font-bold text-[#E59980] leading-none">
                               {currentRecentData.restDaysCount}
                             </span>
-                            <span className="text-[10px] text-[#7A7895] block mt-0.5">rest days</span>
+                            <span className="text-[9.5px] text-[#7A7895] block mt-0.5">rests</span>
                           </div>
                         </div>
                       </div>
@@ -1729,10 +2232,13 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                           </span>
                         </div>
 
-                        <ActiveMinutesBarChart timeframe={rhythmFilter} />
+                        <ActiveMinutesBarChart
+                          items={currentRecentData.dailyBreakdown}
+                          timeframe={rhythmFilter}
+                        />
 
                         <div className="pt-2 border-t border-black/[0.04] flex items-center justify-between text-[10.5px] text-[#7A7895]">
-                          <span>Purple bars: Guided resets</span>
+                          <span>Purple bars: Active sessions</span>
                           <span className="text-[#E59980]">Peach bars: Rest days</span>
                         </div>
                       </div>
@@ -1742,51 +2248,15 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                           <div className="flex items-center gap-1.5">
                             <TrendingUp className="w-3.5 h-3.5 text-[#5E5BAE]" />
                             <span className="font-bold text-[#26263F] text-[12.5px]">
-                              Monthly active days (Long-term trend)
+                              Monthly active days (6-month trend)
                             </span>
                           </div>
                           <span className="text-[11px] text-[#7A7895]">
-                            Jun – Nov 2026
+                            {monthlyTrendSeries[0]?.month} – {monthlyTrendSeries[monthlyTrendSeries.length - 1]?.month} {viewYear}
                           </span>
                         </div>
 
-                        <MonthlyTrendCurve compact={false} />
-
-                        <p className="text-[11px] text-[#7A7895] pt-1 leading-relaxed">
-                          Reflects days with recorded activity. Stable consistency without burnout.
-                        </p>
-                      </div>
-
-                      <div className="bg-white/75 p-4 rounded-[22px] border border-white/85 flex flex-col gap-2.5">
-                        <span className="font-bold text-[#26263F] text-[12.5px]">
-                          Action breakdown ({currentRecentData.rangeLabel})
-                        </span>
-
-                        <div className="grid grid-cols-3 gap-2 pt-1 text-center">
-                          <div className="bg-white/70 p-2.5 rounded-[16px] border border-white/80">
-                            <div className="w-2 h-2 rounded-full bg-[#5E5BAE] mx-auto mb-1" />
-                            <div className="text-[16px] font-bold text-[#26263F]">
-                              {currentRecentData.completedCount}
-                            </div>
-                            <span className="text-[10px] text-[#7A7895]">Completed</span>
-                          </div>
-
-                          <div className="bg-white/70 p-2.5 rounded-[16px] border border-white/80">
-                            <div className="w-2 h-2 rounded-full bg-[#8E8CD6] mx-auto mb-1" />
-                            <div className="text-[16px] font-bold text-[#26263F]">
-                              {currentRecentData.rescheduledCount}
-                            </div>
-                            <span className="text-[10px] text-[#7A7895]">Rescheduled</span>
-                          </div>
-
-                          <div className="bg-white/70 p-2.5 rounded-[16px] border border-white/80">
-                            <div className="w-2 h-2 rounded-full bg-[#E59980] mx-auto mb-1" />
-                            <div className="text-[16px] font-bold text-[#26263F]">
-                              {currentRecentData.restDaysCount}
-                            </div>
-                            <span className="text-[10px] text-[#7A7895]">Rest days</span>
-                          </div>
-                        </div>
+                        <MonthlyTrendCurve series={monthlyTrendSeries} compact={false} />
                       </div>
 
                       <button
@@ -1802,14 +2272,11 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
 
                   {/* ======================================================= */}
                   {/* SECONDARY PAGE 2: YOUR DIRECTION                        */}
-                  {/* - References memory without duplicating/modifying it    */}
-                  {/* - Retains both Nova conversation & manual adjustment    */}
                   {/* ======================================================= */}
                   {selectedModule === 'direction' && (
                     <div className="flex flex-col gap-4 text-xs text-[#5D5B78]">
                       {!isEditingDirection && (
                         <>
-                          {/* Plan Status Header Pill */}
                           <div className="flex items-center justify-between p-3.5 rounded-[20px] bg-white/75 border border-white/85">
                             <div>
                               <span className="text-[10.5px] uppercase font-bold text-[#7A7895] tracking-wider block">
@@ -1850,7 +2317,6 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                             </button>
                           </div>
 
-                          {/* 1. Goal Card */}
                           <div className="p-4 rounded-[22px] bg-white/75 border border-white/85 flex flex-col gap-2">
                             <div className="flex items-center gap-1.5 text-xs font-bold text-[#5E5BAE]">
                               <Compass className="w-3.5 h-3.5 stroke-[2.2]" />
@@ -1864,7 +2330,6 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                             </p>
                           </div>
 
-                          {/* 2. Current Approach */}
                           <div className="p-4 rounded-[22px] bg-white/75 border border-white/85 flex flex-col gap-2">
                             <div className="flex items-center gap-1.5 text-xs font-bold text-[#5E5BAE]">
                               <Clock className="w-3.5 h-3.5 stroke-[2.2]" />
@@ -1875,7 +2340,6 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                             </p>
                           </div>
 
-                          {/* 3. Tailored Pacing (References memory without modifying it) */}
                           <div className="p-4 rounded-[22px] bg-white/75 border border-white/85 flex flex-col gap-2">
                             <div className="flex items-center gap-1.5 text-xs font-bold text-[#5E5BAE]">
                               <Sparkles className="w-3.5 h-3.5 text-[#6865B8]" />
@@ -1886,7 +2350,6 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                             </p>
                           </div>
 
-                          {/* Review Schedule Footer */}
                           <div className="p-3.5 rounded-[18px] bg-white/55 border border-white/75 flex items-center justify-between text-xs text-[#7A7895]">
                             <div className="flex items-center gap-1.5">
                               <CalendarIcon className="w-3.5 h-3.5 stroke-[2]" />
@@ -1897,7 +2360,6 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                             <span>{direction.reviewDaysLeft} days remaining</span>
                           </div>
 
-                          {/* Action Buttons: Talk to Nova OR Adjust Manually */}
                           <div className="flex flex-col gap-2">
                             <button
                               type="button"
@@ -2041,12 +2503,9 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
 
                   {/* ======================================================= */}
                   {/* SECONDARY PAGE 3: WHAT NOVA KNOWS (All Memories Sheet)  */}
-                  {/* - Full grouped list from MemoryView                     */}
-                  {/* - Supports pending confirmations, detail view, & chat   */}
                   {/* ======================================================= */}
                   {selectedModule === 'memory' && (
                     <div className="flex flex-col gap-4 text-xs text-[#5D5B78]">
-                      {/* Conversational Supplement/Update Bar */}
                       <button
                         type="button"
                         onClick={() => handleStartTalkToNovaMemory(null)}
@@ -2064,7 +2523,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                         </div>
                         {mattersMemories.length === 0 ? (
                           <div className="bg-white/60 rounded-[18px] p-3.5 border border-white/80 text-xs text-[#7A7895]">
-                            No long-term focus items savedright now.
+                            No long-term focus items saved right now.
                           </div>
                         ) : (
                           mattersMemories.map((item) => (
@@ -2212,7 +2671,6 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                   {/* ======================================================= */}
                   {selectedModule === 'health' && (
                     <div className="flex flex-col gap-4 text-xs text-[#5D5B78]">
-                      {/* 1. Connection Status Card & Demo Switcher */}
                       <div className="p-4 rounded-[22px] bg-white/75 border border-white/85 flex flex-col gap-3">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
@@ -2257,7 +2715,6 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                         </div>
                       </div>
 
-                      {/* 2. Full 4 Metrics List with Source & Last Updated */}
                       <div className="flex flex-col gap-2.5">
                         <span className="font-bold text-[#26263F] text-xs">
                           Biometric Baseline Indicators
@@ -2319,7 +2776,6 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                         </div>
                       </div>
 
-                      {/* 3. Explanation: How Plan B Uses Health Data */}
                       <div className="p-4 rounded-[22px] bg-white/75 border border-white/85 flex flex-col gap-2">
                         <div className="flex items-center gap-1.5 text-xs font-bold text-[#5E5BAE]">
                           <ShieldCheck className="w-4 h-4 stroke-[2.2]" />
@@ -2330,7 +2786,6 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                         </p>
                       </div>
 
-                      {/* 4. Reassuring Notice: Plan Works Fully Without Apple Health */}
                       <div className="p-4 rounded-[22px] bg-[#5E5BAE]/[0.08] border border-[#5E5BAE]/20 flex flex-col gap-1.5">
                         <div className="flex items-center gap-1.5 text-xs font-bold text-[#5E5BAE]">
                           <Sparkles className="w-3.5 h-3.5 text-[#6865B8]" />
@@ -2366,27 +2821,132 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
 
                           <button
                             type="button"
-                            onClick={() => setIsMonthPickerOpen(true)}
+                            onClick={() => {
+                              setPickerYear(viewYear);
+                              setIsMonthPickerOpen(true);
+                            }}
                             className="px-3 py-1.5 rounded-full text-xs font-semibold bg-[#5E5BAE]/10 hover:bg-[#5E5BAE]/20 text-[#5E5BAE] transition-all cursor-pointer"
                           >
                             Switch month
                           </button>
                         </div>
 
-                        <div className="grid grid-cols-3 gap-2 pt-1 border-t border-black/[0.04] text-center">
-                          <div className="bg-[#FAF8FD] p-2.5 rounded-[14px]">
-                            <span className="text-[16px] font-bold text-[#5E5BAE] block leading-none">{activeDaysCount}</span>
-                            <span className="text-[10px] text-[#7A7895] mt-0.5 block">active days</span>
+                        {/* Explicitly distinguishes Active days vs Activities vs Rests vs Duration */}
+                        <div className="grid grid-cols-4 gap-2 pt-1 border-t border-black/[0.04] text-center">
+                          <div className="bg-[#FAF8FD] p-2 rounded-[14px]">
+                            <span className="text-[15px] font-bold text-[#5E5BAE] block leading-none">
+                              {activeDaysCount}
+                            </span>
+                            <span className="text-[9.5px] text-[#7A7895] mt-0.5 block">active days</span>
                           </div>
-                          <div className="bg-[#FAF8FD] p-2.5 rounded-[14px]">
-                            <span className="text-[16px] font-bold text-[#E59980] block leading-none">{restDaysCount}</span>
-                            <span className="text-[10px] text-[#7A7895] mt-0.5 block">mindful rests</span>
+                          <div className="bg-[#FAF8FD] p-2 rounded-[14px]">
+                            <span className="text-[15px] font-bold text-[#26263F] block leading-none">
+                              {completedSessionsInMonth}
+                            </span>
+                            <span className="text-[9.5px] text-[#7A7895] mt-0.5 block">activities</span>
                           </div>
-                          <div className="bg-[#FAF8FD] p-2.5 rounded-[14px]">
-                            <span className="text-[16px] font-bold text-[#26263F] block leading-none">{totalMinutes}m</span>
-                            <span className="text-[10px] text-[#7A7895] mt-0.5 block">logged</span>
+                          <div className="bg-[#FAF8FD] p-2 rounded-[14px]">
+                            <span className="text-[15px] font-bold text-[#E59980] block leading-none">
+                              {restDaysCount}
+                            </span>
+                            <span className="text-[9.5px] text-[#7A7895] mt-0.5 block">rest days</span>
+                          </div>
+                          <div className="bg-[#FAF8FD] p-2 rounded-[14px]">
+                            <span className="text-[15px] font-bold text-[#26263F] block leading-none">
+                              {totalMinutes}m
+                            </span>
+                            <span className="text-[9.5px] text-[#7A7895] mt-0.5 block">duration</span>
                           </div>
                         </div>
+                      </div>
+
+                      {/* Logged Records List */}
+                      <div className="flex flex-col gap-2.5">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-[#26263F] text-xs">
+                            Recorded Days ({currentMonthRecords.length})
+                          </span>
+                          <span className="text-[10.5px] text-[#7A7895]">
+                            Tap edit to modify or clear
+                          </span>
+                        </div>
+
+                        {currentMonthRecords.length === 0 ? (
+                          <div className="p-6 text-center rounded-[20px] bg-white/60 border border-black/[0.04] text-[#7A7895]">
+                            No activity or rest recorded yet for this month. Tap any day on the calendar grid to log an action.
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            {[...currentMonthRecords]
+                              .sort((a, b) => b.date.localeCompare(a.date))
+                              .map((rec) => {
+                                const dObj = new Date(rec.date + 'T00:00:00');
+                                const isToday = rec.date === deviceToday.dateStr;
+                                const dateLabel = dObj.toLocaleDateString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  weekday: 'short'
+                                });
+                                const sessCount = rec.sessionsCount ?? 1;
+
+                                return (
+                                  <div
+                                    key={rec.date}
+                                    className="p-3.5 rounded-[18px] bg-white/80 border border-white/90 flex items-center justify-between shadow-2xs gap-3"
+                                  >
+                                    <div className="flex items-start gap-2.5 min-w-0">
+                                      <div
+                                        className={`w-3 h-3 rounded-[4px] mt-1 shrink-0 ${
+                                          rec.type === 'active' ? 'bg-[#5E5BAE]' : 'bg-[#E59980]'
+                                        }`}
+                                      />
+                                      <div className="min-w-0">
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                          <span className="font-bold text-[#26263F] text-[13px]">
+                                            {dateLabel}
+                                          </span>
+                                          {isToday && (
+                                            <span className="bg-[#5E5BAE] text-white text-[9.5px] px-1.5 py-0.2 rounded-full font-bold">
+                                              Today
+                                            </span>
+                                          )}
+                                          {rec.isSample && (
+                                            <span className="text-[9.5px] text-[#7A7895] bg-black/[0.04] px-1.5 py-0.2 rounded-full">
+                                              Sample
+                                            </span>
+                                          )}
+                                        </div>
+                                        <div className="text-[12px] text-[#5D5B78] mt-0.5 truncate">
+                                          {rec.type === 'active' ? (
+                                            <span>
+                                              {rec.title} • {sessCount}{' '}
+                                              {sessCount === 1 ? 'activity' : 'activities'} •{' '}
+                                              {rec.durationMinutes}m
+                                            </span>
+                                          ) : (
+                                            <span>{rec.title || 'Mindful rest day'}</span>
+                                          )}
+                                        </div>
+                                        {rec.note && (
+                                          <div className="text-[11px] text-[#8E8EA8] mt-0.5 italic truncate">
+                                            “{rec.note}”
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenDayDetail(rec.date)}
+                                      className="px-2.5 py-1 rounded-[10px] bg-black/[0.04] hover:bg-black/[0.08] text-[11px] font-semibold text-[#5E5BAE] shrink-0 transition-colors cursor-pointer"
+                                    >
+                                      Edit
+                                    </button>
+                                  </div>
+                                );
+                              })}
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -2448,7 +3008,6 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                     </button>
                   </div>
 
-                  {/* Summary */}
                   <div className="p-4 rounded-[20px] bg-white/80 border border-white/90 flex flex-col gap-1.5">
                     <span className="text-[11px] font-bold text-[#7A7895] uppercase tracking-wider">
                       Memory Summary
@@ -2458,7 +3017,6 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                     </p>
                   </div>
 
-                  {/* Where Nova learned this */}
                   <div className="p-4 rounded-[20px] bg-white/80 border border-white/90 flex flex-col gap-1.5">
                     <div className="flex items-center gap-1.5 text-xs font-bold text-[#5E5BAE]">
                       <Clock className="w-3.5 h-3.5 stroke-[2.2]" />
@@ -2472,7 +3030,6 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                     </span>
                   </div>
 
-                  {/* How this shapes your suggestions */}
                   <div className="p-4 rounded-[20px] bg-[#5E5BAE]/[0.07] border border-[#5E5BAE]/20 flex flex-col gap-1.5">
                     <div className="flex items-center gap-1.5 text-xs font-bold text-[#5E5BAE]">
                       <Sparkles className="w-3.5 h-3.5 text-[#6865B8]" />
@@ -2483,7 +3040,6 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                     </p>
                   </div>
 
-                  {/* Pending Confirmation Banner if unconfirmed */}
                   {!selectedMemory.isConfirmed && (
                     <div className="p-3.5 rounded-[18px] bg-white border border-[#5E5BAE]/30 flex items-center justify-between gap-2">
                       <span className="text-xs font-semibold text-[#26263F]">
@@ -2508,7 +3064,6 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                     </div>
                   )}
 
-                  {/* Primary & Secondary Actions */}
                   <div className="flex flex-col gap-2 pt-1">
                     <button
                       type="button"
@@ -2579,7 +3134,6 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                   className="relative w-full h-[82%] bg-[#FAF7F2] rounded-t-[32px] shadow-2xl border-t border-white/95 z-10 flex flex-col overflow-hidden text-[#26263F]"
                   id="memory-talk-sheet"
                 >
-                  {/* Header */}
                   <div className="px-6 pt-5 pb-3 border-b border-[#26263F]/[0.06] flex items-center justify-between shrink-0">
                     <div className="flex items-center gap-2.5">
                       <div className="w-9 h-9 rounded-full bg-gradient-to-b from-[#E5DDFB] to-[#F3EEFE] border border-white shadow-xs overflow-hidden shrink-0">
@@ -2595,7 +3149,9 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                           Talk to Nova
                         </h4>
                         <span className="text-[11px] text-[#7A7895] block">
-                          {editingMemory ? 'Refine memory • Confirms before saving' : 'Add or update what Nova knows'}
+                          {editingMemory
+                            ? 'Refine memory • Confirms before saving'
+                            : 'Add or update what Nova knows'}
                         </span>
                       </div>
                     </div>
@@ -2613,7 +3169,6 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                     </button>
                   </div>
 
-                  {/* Referenced Memory Pill (if editing a specific item) */}
                   {editingMemory && (
                     <div className="mx-6 mt-3 px-3.5 py-2 rounded-[14px] bg-white/75 border border-white/90 flex items-center gap-2 text-[11.5px] text-[#5D5B78] shrink-0">
                       <CornerDownRight className="w-3.5 h-3.5 text-[#5E5BAE] shrink-0" />
@@ -2621,12 +3176,13 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                     </div>
                   )}
 
-                  {/* Messages Area */}
                   <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3.5 scrollbar-none">
                     {memoryChatMessages.map((msg) => (
                       <div
                         key={msg.id}
-                        className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}
+                        className={`flex flex-col ${
+                          msg.sender === 'user' ? 'items-end' : 'items-start'
+                        }`}
                       >
                         <div
                           className={`max-w-[88%] rounded-[20px] px-4 py-3 text-[13px] leading-relaxed ${
@@ -2638,12 +3194,13 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                           {msg.text}
                         </div>
 
-                        {/* Staged Memory Update/Add Confirmation Card */}
                         {msg.proposal && (
                           <div className="mt-2.5 w-full max-w-[92%] bg-white rounded-[20px] p-4 border border-[#5E5BAE]/30 shadow-sm flex flex-col gap-2.5">
                             <div className="flex items-center justify-between">
                               <span className="text-[10.5px] font-bold uppercase tracking-wider text-[#5E5BAE]">
-                                {msg.proposal.mode === 'update' ? 'Proposed Memory Update' : 'Proposed New Memory'}
+                                {msg.proposal.mode === 'update'
+                                  ? 'Proposed Memory Update'
+                                  : 'Proposed New Memory'}
                               </span>
                               <span className="text-[10px] text-[#7A7895] bg-[#FAF8FD] px-2 py-0.5 rounded-full border border-black/5">
                                 Needs confirmation
@@ -2709,7 +3266,6 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                     <div ref={memoryChatEndRef} />
                   </div>
 
-                  {/* Input Bar */}
                   <div className="p-4 bg-white/80 backdrop-blur-md border-t border-[#26263F]/[0.06] flex items-center gap-2 shrink-0">
                     <input
                       type="text"
@@ -2747,7 +3303,6 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
 
       {/* ============================================================ */}
       {/* TALK TO NOVA DIRECTION ADJUSTMENT SHEET                      */}
-      {/* (Adjusts Direction only — never duplicates or modifies memory) */}
       {/* ============================================================ */}
       {(() => {
         const directionChips = [
@@ -2810,7 +3365,9 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                     {directionChatMessages.map((msg) => (
                       <div
                         key={msg.id}
-                        className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}
+                        className={`flex flex-col ${
+                          msg.sender === 'user' ? 'items-end' : 'items-start'
+                        }`}
                       >
                         <div
                           className={`max-w-[88%] rounded-[20px] px-4 py-3 text-[13px] leading-relaxed ${
@@ -3089,23 +3646,23 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                   <div className="space-y-2.5 text-xs text-[#5D5B78] leading-relaxed">
                     <div>
                       <strong className="text-[#26263F] font-semibold block mb-0.5">
-                        • Monthly active days (days/month)
+                        • Active days (days)
                       </strong>
-                      Count of unique calendar days where at least 1 Plan B activity or gentle stretch was marked completed.
+                      Count of unique calendar days with at least 1 logged activity.
                     </div>
 
                     <div>
                       <strong className="text-[#26263F] font-semibold block mb-0.5">
-                        • Active minutes (minutes)
+                        • Activities (sessions)
                       </strong>
-                      Cumulative duration of completed audio sessions and timer resets.
+                      Total number of completed activity sessions across those active days.
                     </div>
 
                     <div>
                       <strong className="text-[#26263F] font-semibold block mb-0.5">
-                        • Rest days
+                        • Duration (minutes) & Rest days
                       </strong>
-                      Logged rest periods are recognized as intentional health recovery, never marked as missed quotas.
+                      Cumulative minutes of completed sessions, plus logged restorative rest days.
                     </div>
                   </div>
 
@@ -3191,9 +3748,12 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                   <div className="flex flex-col gap-1.5 max-h-[280px] overflow-y-auto pr-0.5">
                     {MONTH_NAMES.map((monthName, idx) => {
                       const isSelected = pickerYear === viewYear && idx === viewMonth;
-                      const isCurrent = pickerYear === deviceToday.year && idx === deviceToday.month;
+                      const isCurrent =
+                        pickerYear === deviceToday.year && idx === deviceToday.month;
                       const mPrefix = `${pickerYear}-${String(idx + 1).padStart(2, '0')}`;
-                      const mRecords = Object.values(activityLogs).filter((r) => r.date.startsWith(mPrefix));
+                      const mRecords = Object.values(activityLogs).filter((r) =>
+                        r.date.startsWith(mPrefix)
+                      );
                       const mActive = mRecords.filter((r) => r.type === 'active').length;
                       const mRest = mRecords.filter((r) => r.type === 'rest').length;
 
@@ -3213,14 +3773,20 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                             {isCurrent && (
                               <span
                                 className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
-                                  isSelected ? 'bg-white/20 text-white' : 'bg-[#5E5BAE]/10 text-[#5E5BAE]'
+                                  isSelected
+                                    ? 'bg-white/20 text-white'
+                                    : 'bg-[#5E5BAE]/10 text-[#5E5BAE]'
                                 }`}
                               >
                                 Current
                               </span>
                             )}
                           </div>
-                          <span className={`text-[11px] ${isSelected ? 'text-white/80' : 'text-[#7A7895]'}`}>
+                          <span
+                            className={`text-[11px] ${
+                              isSelected ? 'text-white/80' : 'text-[#7A7895]'
+                            }`}
+                          >
                             {mActive} active • {mRest} rest
                           </span>
                         </button>
@@ -3325,7 +3891,9 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                       </span>
                       {currentRecord?.type === 'active' && (
                         <span className="text-[11px] font-bold text-[#5E5BAE]">
-                          {currentRecord.durationMinutes} min active
+                          {currentRecord.sessionsCount ?? 1}{' '}
+                          {(currentRecord.sessionsCount ?? 1) === 1 ? 'activity' : 'activities'} •{' '}
+                          {currentRecord.durationMinutes} min
                         </span>
                       )}
                       {currentRecord?.type === 'rest' && (
@@ -3335,9 +3903,12 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                       )}
                     </div>
                     <div className="text-[13px] font-semibold text-[#26263F] mt-0.5">
-                      {currentRecord?.type === 'active' && (currentRecord.title || 'Active session')}
-                      {currentRecord?.type === 'rest' && (currentRecord.title || 'Mindful rest day')}
-                      {(!currentRecord || currentRecord.type === 'none') && 'No activity or rest recorded for this day'}
+                      {currentRecord?.type === 'active' &&
+                        (currentRecord.title || 'Active session')}
+                      {currentRecord?.type === 'rest' &&
+                        (currentRecord.title || 'Mindful rest day')}
+                      {(!currentRecord || currentRecord.type === 'none') &&
+                        'No activity or rest recorded for this day'}
                     </div>
                     {currentRecord?.note && (
                       <p className="text-[11.5px] text-[#5D5B78] italic mt-0.5">
@@ -3356,9 +3927,10 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                         type="button"
                         onClick={() => {
                           setDayDraftType('active');
-                          if (dayDraftType === 'rest') {
-                            setDayDraftTitle('');
+                          if (dayDraftType === 'rest' || !dayDraftTitle.trim()) {
+                            setDayDraftTitle('15-min mindful walk');
                             setDayDraftDuration(15);
+                            setDayDraftSessions(1);
                           }
                         }}
                         className={`py-1.5 rounded-[12px] text-xs font-semibold transition-all cursor-pointer ${
@@ -3376,6 +3948,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                           setDayDraftType('rest');
                           setDayDraftTitle('Mindful rest day');
                           setDayDraftDuration(0);
+                          setDayDraftSessions(0);
                         }}
                         className={`py-1.5 rounded-[12px] text-xs font-semibold transition-all cursor-pointer ${
                           dayDraftType === 'rest'
@@ -3401,13 +3974,15 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
 
                     {dayDraftType === 'active' && (
                       <div className="flex flex-col gap-2 pt-1">
-                        <span className="text-[11px] font-medium text-[#7A7895]">Quick Presets</span>
+                        <span className="text-[11px] font-medium text-[#7A7895]">
+                          Quick Presets
+                        </span>
                         <div className="grid grid-cols-2 gap-1.5">
                           {[
-                            { title: '15-min mindful walk', dur: 15 },
-                            { title: '5-min desk stretch', dur: 5 },
-                            { title: '20-min nature stride', dur: 20 },
-                            { title: '10-min breath reset', dur: 10 },
+                            { title: '15-min mindful walk', dur: 15, sess: 1 },
+                            { title: '5-min desk stretch', dur: 5, sess: 1 },
+                            { title: 'Walk + evening stretch', dur: 20, sess: 2 },
+                            { title: '10-min breath reset', dur: 10, sess: 1 }
                           ].map((preset) => (
                             <button
                               key={preset.title}
@@ -3415,6 +3990,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                               onClick={() => {
                                 setDayDraftTitle(preset.title);
                                 setDayDraftDuration(preset.dur);
+                                setDayDraftSessions(preset.sess);
                               }}
                               className={`p-2 rounded-[12px] text-left text-[11px] font-semibold border transition-all cursor-pointer ${
                                 dayDraftTitle === preset.title
@@ -3423,33 +3999,63 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                               }`}
                             >
                               <div className="truncate">{preset.title}</div>
-                              <span className="text-[10px] text-[#7A7895] block mt-0.5">{preset.dur} min</span>
+                              <span className="text-[10px] text-[#7A7895] block mt-0.5">
+                                {preset.sess} {preset.sess === 1 ? 'activity' : 'activities'} • {preset.dur} min
+                              </span>
                             </button>
                           ))}
                         </div>
 
-                        <div className="flex flex-col gap-1 mt-1">
-                          <label className="text-[11px] font-medium text-[#7A7895]">Duration</label>
-                          <div className="flex items-center gap-1.5">
-                            {[5, 10, 15, 20, 30].map((dur) => (
-                              <button
-                                key={dur}
-                                type="button"
-                                onClick={() => setDayDraftDuration(dur)}
-                                className={`flex-1 py-1 rounded-[10px] text-xs font-semibold border transition-all cursor-pointer ${
-                                  dayDraftDuration === dur
-                                    ? 'bg-[#5E5BAE] text-white border-[#5E5BAE]'
-                                    : 'bg-white/70 text-[#26263F] border-black/[0.05] hover:bg-white'
-                                }`}
-                              >
-                                {dur}m
-                              </button>
-                            ))}
+                        <div className="grid grid-cols-2 gap-2 mt-1">
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[11px] font-medium text-[#7A7895]">
+                              Activities (Sessions)
+                            </label>
+                            <div className="flex items-center gap-1">
+                              {[1, 2, 3].map((sess) => (
+                                <button
+                                  key={sess}
+                                  type="button"
+                                  onClick={() => setDayDraftSessions(sess)}
+                                  className={`flex-1 py-1 rounded-[10px] text-xs font-semibold border transition-all cursor-pointer ${
+                                    dayDraftSessions === sess
+                                      ? 'bg-[#5E5BAE] text-white border-[#5E5BAE]'
+                                      : 'bg-white/70 text-[#26263F] border-black/[0.05] hover:bg-white'
+                                  }`}
+                                >
+                                  {sess}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[11px] font-medium text-[#7A7895]">
+                              Duration
+                            </label>
+                            <div className="flex items-center gap-1">
+                              {[5, 15, 20, 30].map((dur) => (
+                                <button
+                                  key={dur}
+                                  type="button"
+                                  onClick={() => setDayDraftDuration(dur)}
+                                  className={`flex-1 py-1 rounded-[10px] text-xs font-semibold border transition-all cursor-pointer ${
+                                    dayDraftDuration === dur
+                                      ? 'bg-[#5E5BAE] text-white border-[#5E5BAE]'
+                                      : 'bg-white/70 text-[#26263F] border-black/[0.05] hover:bg-white'
+                                  }`}
+                                >
+                                  {dur}m
+                                </button>
+                              ))}
+                            </div>
                           </div>
                         </div>
 
                         <div className="flex flex-col gap-1 mt-1">
-                          <label className="text-[11px] font-medium text-[#7A7895]">Activity Title</label>
+                          <label className="text-[11px] font-medium text-[#7A7895]">
+                            Activity Title
+                          </label>
                           <input
                             type="text"
                             value={dayDraftTitle}
@@ -3471,7 +4077,9 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
 
                     {dayDraftType !== 'none' && (
                       <div className="flex flex-col gap-1 mt-1">
-                        <label className="text-[11px] font-medium text-[#7A7895]">Note (Optional)</label>
+                        <label className="text-[11px] font-medium text-[#7A7895]">
+                          Note (Optional)
+                        </label>
                         <input
                           type="text"
                           value={dayDraftNote}
