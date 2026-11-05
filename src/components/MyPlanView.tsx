@@ -855,8 +855,17 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
     // so logging on any day in the month or past 7 days reflects immediately.
     let anchorDateObj = new Date(deviceToday.year, deviceToday.month, deviceToday.day);
     if (!isCurrentMonth) {
-      const lastDay = new Date(viewYear, viewMonth + 1, 0).getDate();
-      anchorDateObj = new Date(viewYear, viewMonth, lastDay);
+      if (currentMonthRecords.length > 0) {
+        const maxLoggedInViewedMonth = [...currentMonthRecords]
+          .map((r) => r.date)
+          .sort()
+          .pop()!;
+        const [ly, lm, ld] = maxLoggedInViewedMonth.split('-').map(Number);
+        anchorDateObj = new Date(ly, lm - 1, ld);
+      } else {
+        const lastDay = new Date(viewYear, viewMonth + 1, 0).getDate();
+        anchorDateObj = new Date(viewYear, viewMonth, lastDay);
+      }
     } else if (currentMonthRecords.length > 0) {
       const maxLoggedDateStr = [...currentMonthRecords]
         .map((r) => r.date)
@@ -917,7 +926,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
 
     const sevenDayObservation =
       sevenDayActiveDays === 0 && sevenDayRestDays === 0
-        ? 'No activities logged in this 7-day window yet. Tap any date on the Activity calendar to log a walk, stretch, or rest day.'
+        ? 'No activities logged in this 7-day window yet. Tap any date on the Activity calendar to log an activity or rest day.'
         : `In this 7-day window, you logged ${sevenDayActiveDays} active ${
             sevenDayActiveDays === 1 ? 'day' : 'days'
           } (${sevenDaySessions} ${
@@ -1051,27 +1060,67 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
     const totalSessions = activeRecs.reduce((s, r) => s + (r.sessionsCount ?? 1), 0);
     const totalMins = activeRecs.reduce((s, r) => s + (r.durationMinutes || 0), 0);
     const walkCount = activeRecs.filter((r) =>
-      (r.title || '').toLowerCase().includes('walk')
+      /\bwalk(s|ing)?\b/i.test(r.title || '')
     ).length;
     const stretchCount = activeRecs.filter((r) =>
-      (r.title || '').toLowerCase().includes('stretch')
+      /\bstretch(es|ing)?\b/i.test(r.title || '')
+    ).length;
+    const otherActiveCount = activeRecs.filter(
+      (r) =>
+        !/\bwalk(s|ing)?\b/i.test(r.title || '') &&
+        !/\bstretch(es|ing)?\b/i.test(r.title || '')
     ).length;
 
     const hasSampleRecords = recordsToAnalyze.some((r) => r.isSample);
 
     let text = '';
-    if (activeRecs.length > 0 && walkCount >= stretchCount && restRecs.length > 0) {
-      text = `You’ve logged ${activeRecs.length} active days (${totalSessions} activities) and ${
-        restRecs.length
-      } rest ${restRecs.length === 1 ? 'day' : 'days'} in ${
-        SHORT_MONTH_NAMES[viewMonth]
-      } — short walks are fitting smoothly into your rhythm.`;
-    } else if (activeRecs.length > 0 && stretchCount > walkCount) {
-      text = `Brief stretches have anchored ${activeRecs.length} active days (${totalSessions} activities, ${totalMins} min) in ${SHORT_MONTH_NAMES[viewMonth]}.`;
+    if (activeRecs.length > 0 && walkCount > 0 && walkCount >= stretchCount && walkCount >= otherActiveCount) {
+      if (restRecs.length > 0) {
+        text = `You’ve logged ${activeRecs.length} active ${
+          activeRecs.length === 1 ? 'day' : 'days'
+        } (${totalSessions} ${totalSessions === 1 ? 'activity' : 'activities'}) and ${
+          restRecs.length
+        } rest ${restRecs.length === 1 ? 'day' : 'days'} in ${
+          SHORT_MONTH_NAMES[viewMonth]
+        } — short walks are fitting smoothly into your rhythm.`;
+      } else {
+        text = `Short walks have anchored ${activeRecs.length} active ${
+          activeRecs.length === 1 ? 'day' : 'days'
+        } (${totalSessions} ${
+          totalSessions === 1 ? 'activity' : 'activities'
+        }, ${totalMins} min) in ${SHORT_MONTH_NAMES[viewMonth]}.`;
+      }
+    } else if (
+      activeRecs.length > 0 &&
+      stretchCount > 0 &&
+      stretchCount > walkCount &&
+      stretchCount >= otherActiveCount
+    ) {
+      text = `Brief stretches have anchored ${activeRecs.length} active ${
+        activeRecs.length === 1 ? 'day' : 'days'
+      } (${totalSessions} ${
+        totalSessions === 1 ? 'activity' : 'activities'
+      }, ${totalMins} min) in ${SHORT_MONTH_NAMES[viewMonth]}.`;
     } else if (activeRecs.length > 0) {
-      text = `You’ve logged ${activeRecs.length} active days (${totalSessions} activities, ${totalMins} min) in ${SHORT_MONTH_NAMES[viewMonth]} at a steady, low-pressure pace.`;
+      if (restRecs.length > 0) {
+        text = `You’ve logged ${activeRecs.length} active ${
+          activeRecs.length === 1 ? 'day' : 'days'
+        } (${totalSessions} ${
+          totalSessions === 1 ? 'activity' : 'activities'
+        }, ${totalMins} min) and ${restRecs.length} rest ${
+          restRecs.length === 1 ? 'day' : 'days'
+        } in ${SHORT_MONTH_NAMES[viewMonth]} at a steady, low-pressure pace.`;
+      } else {
+        text = `You’ve logged ${activeRecs.length} active ${
+          activeRecs.length === 1 ? 'day' : 'days'
+        } (${totalSessions} ${
+          totalSessions === 1 ? 'activity' : 'activities'
+        }, ${totalMins} min) in ${SHORT_MONTH_NAMES[viewMonth]} at a steady, low-pressure pace.`;
+      }
     } else {
-      text = `You’ve logged ${restRecs.length} mindful rest days in ${SHORT_MONTH_NAMES[viewMonth]}, giving yourself space to recharge.`;
+      text = `You’ve logged ${restRecs.length} mindful rest ${
+        restRecs.length === 1 ? 'day' : 'days'
+      } in ${SHORT_MONTH_NAMES[viewMonth]}, giving yourself space to recharge.`;
     }
 
     return {
@@ -1796,11 +1845,28 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
       >
         <div className="flex items-center justify-between">
           <span className="text-[16px] font-bold text-[#26263F] tracking-tight">Your rhythm</span>
+          <ChevronRight className="w-4 h-4 text-[#5E5BAE] group-hover:translate-x-0.5 transition-transform stroke-[2.2]" />
+        </div>
 
-          <div className="flex items-center gap-2">
+        {/* 6-Month Trend Curve (Active days per month) with explicit "6-month trend" tag */}
+        <div className="bg-white/55 px-3.5 py-2.5 rounded-[18px] border border-white/75 flex flex-col gap-1">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-semibold text-[#5D5B78]">6-month trend</span>
+            <span className="text-[10px] font-medium text-[#8C8AA3]">Active days</span>
+          </div>
+          <MonthlyTrendCurve series={monthlyTrendSeries} compact={true} />
+        </div>
+
+        {/* Recent Stats Header + 7 days / Month Toggle (Explicitly scopes toggle to recent stats below) */}
+        <div className="flex flex-col gap-2 pt-0.5 border-t border-[#26263F]/[0.05]">
+          <div className="flex items-center justify-between gap-2 pt-1">
+            <span className="text-[11.5px] font-semibold text-[#5D5B78] truncate">
+              {currentRecentData.rangeLabel}
+            </span>
+
             <div
               onClick={(e) => e.stopPropagation()}
-              className="bg-[#26263F]/[0.06] p-0.5 rounded-full inline-flex"
+              className="bg-[#26263F]/[0.06] p-0.5 rounded-full inline-flex shrink-0"
             >
               <button
                 type="button"
@@ -1825,45 +1891,38 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                 Month
               </button>
             </div>
-
-            <ChevronRight className="w-4 h-4 text-[#5E5BAE] group-hover:translate-x-0.5 transition-transform stroke-[2.2]" />
           </div>
-        </div>
 
-        {/* 6-Month Trend Curve (Active days per month) */}
-        <div className="bg-white/55 px-3.5 py-2.5 rounded-[18px] border border-white/75">
-          <MonthlyTrendCurve series={monthlyTrendSeries} compact={true} />
-        </div>
-
-        {/* Recent Stats: Explicitly distinguishes Active days (活动天数) vs Activities (活动次数) + Duration */}
-        <div className="grid grid-cols-3 gap-2">
-          <div className="bg-white/60 px-2.5 py-2 rounded-[15px] border border-white/75 flex flex-col justify-between">
-            <span className="text-[10.5px] font-medium text-[#7A7895]">Active days</span>
-            <div className="flex items-baseline gap-1 mt-1">
-              <span className="text-[16px] font-bold text-[#26263F] leading-none">
-                {currentRecentData.activeDaysCount}
-              </span>
-              <span className="text-[10px] text-[#7A7895]">days</span>
+          {/* Recent Stats: Explicitly distinguishes Active days (活动天数) vs Activities (活动次数) + Duration */}
+          <div className="grid grid-cols-3 gap-2">
+            <div className="bg-white/60 px-2.5 py-2 rounded-[15px] border border-white/75 flex flex-col justify-between">
+              <span className="text-[10.5px] font-medium text-[#7A7895]">Active days</span>
+              <div className="flex items-baseline gap-1 mt-1">
+                <span className="text-[16px] font-bold text-[#26263F] leading-none">
+                  {currentRecentData.activeDaysCount}
+                </span>
+                <span className="text-[10px] text-[#7A7895]">days</span>
+              </div>
             </div>
-          </div>
 
-          <div className="bg-white/60 px-2.5 py-2 rounded-[15px] border border-white/75 flex flex-col justify-between">
-            <span className="text-[10.5px] font-medium text-[#7A7895]">Activities</span>
-            <div className="flex items-baseline gap-1 mt-1">
-              <span className="text-[16px] font-bold text-[#26263F] leading-none">
-                {currentRecentData.completedCount}
-              </span>
-              <span className="text-[10px] text-[#7A7895]">done</span>
+            <div className="bg-white/60 px-2.5 py-2 rounded-[15px] border border-white/75 flex flex-col justify-between">
+              <span className="text-[10.5px] font-medium text-[#7A7895]">Activities</span>
+              <div className="flex items-baseline gap-1 mt-1">
+                <span className="text-[16px] font-bold text-[#26263F] leading-none">
+                  {currentRecentData.completedCount}
+                </span>
+                <span className="text-[10px] text-[#7A7895]">done</span>
+              </div>
             </div>
-          </div>
 
-          <div className="bg-white/60 px-2.5 py-2 rounded-[15px] border border-white/75 flex flex-col justify-between">
-            <span className="text-[10.5px] font-medium text-[#7A7895]">Duration</span>
-            <div className="flex items-baseline gap-1 mt-1">
-              <span className="text-[16px] font-bold text-[#26263F] leading-none">
-                {currentRecentData.activeMinutes}
-              </span>
-              <span className="text-[10px] text-[#7A7895]">min</span>
+            <div className="bg-white/60 px-2.5 py-2 rounded-[15px] border border-white/75 flex flex-col justify-between">
+              <span className="text-[10.5px] font-medium text-[#7A7895]">Duration</span>
+              <div className="flex items-baseline gap-1 mt-1">
+                <span className="text-[16px] font-bold text-[#26263F] leading-none">
+                  {currentRecentData.activeMinutes}
+                </span>
+                <span className="text-[10px] text-[#7A7895]">min</span>
+              </div>
             </div>
           </div>
         </div>

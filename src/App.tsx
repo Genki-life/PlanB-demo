@@ -1181,31 +1181,31 @@ export default function App() {
 
           {/* A. Lightweight Real-Time Ambient Info Area (Weather, Steps, Heart Rate - Clearly Marked Sample Data) */}
           <div className="w-full shrink-0 z-10 mb-0.5">
-            <div className="w-full flex items-center justify-between py-1.5 px-0.5 border-b border-[#26263F]/[0.06] text-[11.5px] sm:text-[12px] text-[#5D5B78] tabular-nums">
-              <div className="flex items-center gap-1.5 sm:gap-2.5 overflow-x-auto scrollbar-none">
-                <span className="inline-flex items-center gap-1 whitespace-nowrap">
+            <div className="w-full flex items-center justify-between py-1.5 px-0 border-b border-[#26263F]/[0.06] text-[11px] sm:text-[12px] text-[#5D5B78] tabular-nums">
+              <div className="flex items-center gap-1 sm:gap-2 min-w-0">
+                <span className="inline-flex items-center gap-0.5 sm:gap-1 whitespace-nowrap">
                   <CloudSun className="w-3.5 h-3.5 text-[#6865B8] stroke-[2] shrink-0" />
                   <span className="font-semibold text-[#26263F]">18°C</span>
-                  <span className="text-[#7A7895] text-[11px]">Cloudy</span>
+                  <span className="text-[#7A7895] text-[10.5px] sm:text-[11px]">Cloudy</span>
                 </span>
                 <span className="text-[#26263F]/20 select-none" aria-hidden="true">·</span>
-                <span className="inline-flex items-center gap-1 whitespace-nowrap">
+                <span className="inline-flex items-center gap-0.5 sm:gap-1 whitespace-nowrap">
                   <Footprints className="w-3.5 h-3.5 text-[#6865B8] stroke-[2] shrink-0" />
                   <span className="font-semibold text-[#26263F]">3,420</span>
-                  <span className="text-[#7A7895] text-[11px]">steps</span>
+                  <span className="text-[#7A7895] text-[10.5px] sm:text-[11px]">steps</span>
                 </span>
                 <span className="text-[#26263F]/20 select-none" aria-hidden="true">·</span>
-                <span className="inline-flex items-center gap-1 whitespace-nowrap">
+                <span className="inline-flex items-center gap-0.5 sm:gap-1 whitespace-nowrap">
                   <Heart className="w-3.5 h-3.5 text-[#D96B52] stroke-[2] shrink-0" />
                   <span className="font-semibold text-[#26263F]">68</span>
-                  <span className="text-[#7A7895] text-[11px]">bpm</span>
+                  <span className="text-[#7A7895] text-[10.5px] sm:text-[11px]">bpm</span>
                 </span>
               </div>
 
               <button
                 type="button"
                 onClick={() => setShowSampleDataNote((prev) => !prev)}
-                className="text-[10.5px] font-medium text-[#7A7895] hover:text-[#46437B] underline decoration-[#7A7895]/40 underline-offset-2 shrink-0 ml-1.5 pl-2 border-l border-[#26263F]/10 cursor-pointer transition-colors"
+                className="text-[10px] sm:text-[10.5px] font-medium text-[#7A7895] hover:text-[#46437B] underline decoration-[#7A7895]/40 underline-offset-2 shrink-0 ml-1 pl-1.5 border-l border-[#26263F]/10 cursor-pointer transition-colors whitespace-nowrap"
                 title="Sample values shown before sensor connection"
               >
                 Sample data
@@ -1290,37 +1290,22 @@ export default function App() {
                     />
 
                     <div className="flex-1 min-w-0 relative z-10">
-                      {/* State-dependent status line */}
-                      <div className="flex items-center gap-1.5 text-[10.5px] leading-none mb-1">
-                        {planState === 'suggested' && (
-                          <>
-                            <Sparkles className="w-3 h-3 text-[#6865B8] stroke-[2.2] shrink-0" />
-                            <span className="font-bold uppercase tracking-wider text-[#6865B8]">
-                              Today’s suggestion
-                            </span>
-                            <span className="text-[#7A7895] font-normal">· Tap</span>
-                          </>
-                        )}
-                        {planState === 'accepted' && (
-                          <>
-                            <span className="font-bold uppercase tracking-wider text-[#5E5BAE]">
-                              Ready
-                            </span>
-                            <span className="text-[#26263F]/25" aria-hidden="true">·</span>
-                            <span className="text-[#706E8A] font-medium">Your plan</span>
-                          </>
-                        )}
-                        {planState === 'completed' && (
-                          <>
-                            <Check className="w-3 h-3 text-[#5E5BAE] stroke-[2.8] shrink-0" />
-                            <span className="font-bold uppercase tracking-wider text-[#5E5BAE]">
-                              Completed
-                            </span>
-                            <span className="text-[#26263F]/25" aria-hidden="true">·</span>
-                            <span className="text-[#706E8A] font-medium">Done today</span>
-                          </>
-                        )}
-                      </div>
+                      {/* State-dependent status line: hidden in 'suggested' state */}
+                      {planState === 'accepted' && (
+                        <div className="flex items-center gap-1 text-[10.5px] leading-none mb-1">
+                          <span className="font-bold uppercase tracking-wider text-[#5E5BAE]">
+                            Ready
+                          </span>
+                        </div>
+                      )}
+                      {planState === 'completed' && (
+                        <div className="flex items-center gap-1 text-[10.5px] leading-none mb-1">
+                          <Check className="w-3 h-3 text-[#5E5BAE] stroke-[2.8] shrink-0" />
+                          <span className="font-bold uppercase tracking-wider text-[#5E5BAE]">
+                            Completed
+                          </span>
+                        </div>
+                      )}
 
                       {/* Suggestion / Task Title */}
                       <div className="text-[13.5px] font-bold text-[#26263F] leading-snug line-clamp-2">
@@ -1684,33 +1669,36 @@ export default function App() {
           />
         </div>
 
-        {/* 4. Bottom Pinned Section: Conversational Input & 3 Navigation Tabs (Today / Plan / Discover) */}
+        {/* 4. Bottom Pinned Section: Conversational Input (Hidden on Plan) & 3 Navigation Tabs (Today / Plan / Discover) */}
         <div className="px-6 pt-2 pb-1.5 flex flex-col gap-1.5 shrink-0 z-20 bg-white/60 backdrop-blur-xl border-t border-white/65 shadow-[0_-4px_24px_rgba(90,80,140,0.04)]">
-          {/* Conversational Input Entry */}
-          <button 
-            type="button"
-            onClick={() => {
-              openChatWithTransition(() => {
-                setInputPlaceholder('Type your response…');
-                setChatMessages([
-                  {
-                    id: 'msg-open-input',
-                    sender: 'ai',
-                    text: "Hi! How's your day shaping up? Tell me whatever is on your mind."
-                  }
-                ]);
-              });
-            }}
-            className="w-full bg-white/70 hover:bg-white/85 backdrop-blur-md rounded-full px-5 py-3 flex items-center gap-3 border border-white/80 shadow-[0_2px_12px_rgba(90,80,140,0.04)] cursor-pointer min-h-[48px] transition-all text-left"
-            aria-label="Talk to Nova"
-          >
-            <span className="flex-1 text-[13.5px] text-[#7A7895] font-normal select-none">
-              Talk to Nova…
-            </span>
-            <div className="text-[#6865B8]">
-              <Mic className="w-5 h-5 stroke-[2]" />
-            </div>
-          </button>
+          {/* Conversational Input Entry (Hidden on Plan tab to increase viewport space) */}
+          {activeTab !== 'Plan' && (
+            <button 
+              type="button"
+              id="bottom-talk-to-nova-btn"
+              onClick={() => {
+                openChatWithTransition(() => {
+                  setInputPlaceholder('Type your response…');
+                  setChatMessages([
+                    {
+                      id: 'msg-open-input',
+                      sender: 'ai',
+                      text: "Hi! How's your day shaping up? Tell me whatever is on your mind."
+                    }
+                  ]);
+                });
+              }}
+              className="w-full bg-white/70 hover:bg-white/85 backdrop-blur-md rounded-full px-5 py-3 flex items-center gap-3 border border-white/80 shadow-[0_2px_12px_rgba(90,80,140,0.04)] cursor-pointer min-h-[48px] transition-all text-left"
+              aria-label="Talk to Nova"
+            >
+              <span className="flex-1 text-[13.5px] text-[#7A7895] font-normal select-none">
+                Talk to Nova…
+              </span>
+              <div className="text-[#6865B8]">
+                <Mic className="w-5 h-5 stroke-[2]" />
+              </div>
+            </button>
+          )}
 
           {/* 3 Bottom Navigation Tabs: Today / Plan / Discover */}
           <nav className="pt-1 px-2 grid grid-cols-3 gap-2 text-xs font-medium">
