@@ -1,0 +1,2110 @@
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
+import { 
+  Mic, 
+  Calendar, 
+  Sliders, 
+  Compass,
+  ArrowUp,
+  Check,
+  ChevronRight,
+  X,
+  Play,
+  Volume2,
+  Clock,
+  Sparkles,
+  Wifi,
+  CornerDownRight,
+  Bookmark,
+  CloudSun,
+  Footprints,
+  Heart
+} from 'lucide-react';
+
+import { MyPlanView } from './components/MyPlanView';
+import { DiscoverView } from './components/DiscoverView';
+
+import thumbImageUrl from './assets/images/mindful_walk_thumb_1793264566501.jpg';
+
+const IP_IMAGE_URL = '/kila-home.png';
+const NOVA_LISTENING_URL = '/kila-listening.png';
+const THUMB_IMAGE_URL = thumbImageUrl;
+
+// Plan Information Model
+interface PlanItem {
+  id: string;
+  title: string;
+  subtitle: string;
+  detailTitle: string;
+  audioTitle: string;
+  audioSubtitle: string;
+  tip1: string;
+  tip2: string;
+  thumbnailUrl: string;
+}
+
+const DEFAULT_WALK_PLAN: PlanItem = {
+  id: 'walk',
+  title: 'Take a 15-minute walk',
+  subtitle: 'After lunch could be a good time, based on your usual routine.',
+  detailTitle: '15-minute Mindful Walk',
+  audioTitle: 'Morning Tree Trail Audio',
+  audioSubtitle: 'Gentle birdsong & calming rhythm • 15:00',
+  tip1: 'Best window: right after lunch (1:15 PM) to aid light digestion and mental reset.',
+  tip2: 'Zero pace requirement. Walk as slowly as you like—just let your eyes rest from screens.',
+  thumbnailUrl: THUMB_IMAGE_URL
+};
+
+const STRETCH_PLAN: PlanItem = {
+  id: 'stretch',
+  title: '5-minute stretch at home',
+  subtitle: 'Gentle body reset in your living room whenever you have a moment.',
+  detailTitle: '5-minute Home Gentle Stretch',
+  audioTitle: 'Living Room Calming Flow',
+  audioSubtitle: 'Soft breathing cues & relaxing chime • 5:00',
+  tip1: 'No mat or workout clothes required. Stand or sit comfortably near your desk or couch.',
+  tip2: 'Focus on loosening tense shoulders, neck, and lower back with deep, unhurried breaths.',
+  thumbnailUrl: THUMB_IMAGE_URL
+};
+
+const TOMORROW_WALK_PLAN: PlanItem = {
+  id: 'tomorrow',
+  title: '15-minute walk (Moved to tomorrow)',
+  subtitle: 'Rescheduled for tomorrow morning. Take today to rest without guilt.',
+  detailTitle: 'Rescheduled Walk for Tomorrow',
+  audioTitle: 'Quiet Evening Wind-down Audio',
+  audioSubtitle: 'Calm ambient tone to release the day • 10:00',
+  tip1: 'Planned for tomorrow at 9:30 AM before your calendar fills up.',
+  tip2: 'Today is officially a recharge window. Rest is an essential part of the journey.',
+  thumbnailUrl: THUMB_IMAGE_URL
+};
+
+const REST_DAY_PLAN: PlanItem = {
+  id: 'rest',
+  title: 'Mindful rest day',
+  subtitle: 'Activity paused for today. Give yourself permission to unwind completely.',
+  detailTitle: 'Rest & Recovery Day',
+  audioTitle: 'Gentle Evening Soundscape',
+  audioSubtitle: 'Peaceful rain & soft piano • 20:00',
+  tip1: 'Stay hydrated and give your body space to recuperate.',
+  tip2: 'No checklists tonight. Nova will check back in tomorrow morning.',
+  thumbnailUrl: THUMB_IMAGE_URL
+};
+
+// Chat Action Chip
+interface ChatActionOption {
+  label: string;
+  action: 'accept' | 'show_another' | 'focus_input' | 'keep_plan';
+  targetPlan?: PlanItem;
+  primary?: boolean;
+}
+
+interface ChatMessage {
+  id: string;
+  sender: 'user' | 'ai';
+  text: string;
+  options?: ChatActionOption[];
+  disabled?: boolean;
+  selectedOptionLabel?: string;
+}
+
+export default function App() {
+  const [activeTab, setActiveTab] = useState<'Today' | 'Plan' | 'Discover'>('Today');
+  
+  // Current active plan & card states: 'suggested' | 'accepted' | 'completed'
+  const [currentPlan, setCurrentPlan] = useState<PlanItem>(DEFAULT_WALK_PLAN);
+  const [planState, setPlanState] = useState<'suggested' | 'accepted' | 'completed'>('suggested');
+  // Today home defaults to ambient normal state (card collapsed into bubble next to Nova)
+  const [isPlanCardOpen, setIsPlanCardOpen] = useState<boolean>(false);
+  const [showSampleDataNote, setShowSampleDataNote] = useState<boolean>(false);
+  
+  // "Find another way" light hint for first-time users (disappears once Plan B is tapped)
+  const [showPlanBHint, setShowPlanBHint] = useState<boolean>(true);
+
+  // Discover tab saved bookmarks state
+  const [savedItemIds, setSavedItemIds] = useState<string[]>(['walk-mindful', 'desk-decompression']);
+  const [isSavedSheetOpen, setIsSavedSheetOpen] = useState<boolean>(false);
+
+  const handleToggleSave = useCallback((id: string) => {
+    setSavedItemIds(prev => 
+      prev.includes(id) ? prev.filter(itemId => itemId !== id) : [...prev, id]
+    );
+  }, []);
+
+  // Hold-to-complete animation state (3 seconds = 3000ms)
+  const HOLD_DURATION_MS = 3000;
+  const [holdProgress, setHoldProgress] = useState(0);
+  const [isHolding, setIsHolding] = useState(false);
+  const [isAccessibleConfirmOpen, setIsAccessibleConfirmOpen] = useState(false);
+  const holdTimerRef = useRef<number | null>(null);
+  const holdStartRef = useRef<number>(0);
+  const isHoldingRef = useRef<boolean>(false);
+  const hasCompletedRef = useRef<boolean>(false);
+
+  // Detail Sheet state
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+
+  // Chat modal overlay state
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [sheetInput, setSheetInput] = useState('');
+  const [inputPlaceholder, setInputPlaceholder] = useState('Type your response…');
+  const chatInputRef = useRef<HTMLInputElement>(null);
+  const chatMessagesEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+  const isNearBottomRef = useRef<boolean>(true);
+
+  // Media Thumbnail continuous transition refs and states
+  const cardThumbnailRef = useRef<HTMLButtonElement>(null);
+  const detailSheetRef = useRef<HTMLDivElement>(null);
+  const detailHeaderRef = useRef<HTMLDivElement>(null);
+  const detailMediaHeroRef = useRef<HTMLDivElement>(null);
+  const floatingMediaRef = useRef<HTMLDivElement>(null);
+  const [detailSheetMeasuredHeight, setDetailSheetMeasuredHeight] = useState<number>(0);
+  const [detailHeaderHeight, setDetailHeaderHeight] = useState<number>(74);
+  const [detailTransitionPhase, setDetailTransitionPhase] = useState<'idle' | 'opening' | 'open' | 'closing'>('idle');
+  const [detailSourceRect, setDetailSourceRect] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
+  const [detailClosingStartRect, setDetailClosingStartRect] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
+
+  // Layout and transition geometry refs
+  const phoneFrameRef = useRef<HTMLDivElement>(null);
+  const homeAvatarRef = useRef<HTMLDivElement>(null);
+  const chatSheetRef = useRef<HTMLDivElement>(null);
+  const planCardRef = useRef<HTMLDivElement>(null);
+  const cardContentRef = useRef<HTMLDivElement>(null);
+  const [cardContentHeight, setCardContentHeight] = useState<number | null>(null);
+  const shouldReduceMotion = useReducedMotion();
+
+  const [frameSize, setFrameSize] = useState<{ width: number; height: number }>({ width: 393, height: 844 });
+  const [sheetMeasuredHeight, setSheetMeasuredHeight] = useState<number>(0);
+
+  // Transition state: 'idle' (resting on home) | 'opening' | 'open' (docked at drawer) | 'closing'
+  const [transitionPhase, setTransitionPhase] = useState<'idle' | 'opening' | 'open' | 'closing'>('idle');
+  // Exact source coordinates measured dynamically from homeAvatarRef
+  const [transitionSourceRect, setTransitionSourceRect] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
+
+  // Measure live rect of homeAvatar inside phoneFrame at this exact instant
+  const getLiveHomeAvatarRect = useCallback(() => {
+    if (homeAvatarRef.current && phoneFrameRef.current) {
+      const fRect = phoneFrameRef.current.getBoundingClientRect();
+      const hRect = homeAvatarRef.current.getBoundingClientRect();
+      if (fRect.width > 0 && fRect.height > 0 && hRect.width > 0 && hRect.height > 0) {
+        return {
+          top: hRect.top - fRect.top,
+          left: hRect.left - fRect.left,
+          width: hRect.width,
+          height: hRect.height,
+        };
+      }
+    }
+    const fWidth = phoneFrameRef.current?.clientWidth || 393;
+    return {
+      top: 145,
+      left: (fWidth - 204) / 2,
+      width: 204,
+      height: 204,
+    };
+  }, []);
+
+  // Measure live rect of cardThumbnail inside phoneFrame at this exact instant
+  const getLiveThumbnailRect = useCallback(() => {
+    if (cardThumbnailRef.current && phoneFrameRef.current) {
+      const fRect = phoneFrameRef.current.getBoundingClientRect();
+      const tRect = cardThumbnailRef.current.getBoundingClientRect();
+      if (fRect.width > 0 && fRect.height > 0 && tRect.width > 0 && tRect.height > 0) {
+        return {
+          top: tRect.top - fRect.top,
+          left: tRect.left - fRect.left,
+          width: tRect.width,
+          height: tRect.height,
+        };
+      }
+    }
+    const fWidth = phoneFrameRef.current?.clientWidth || 393;
+    return {
+      top: 360,
+      left: fWidth - 24 - 48,
+      width: 48,
+      height: 48,
+    };
+  }, []);
+
+  // Measure live rect of the detail media hero inside phoneFrame
+  const getLiveDetailMediaRect = useCallback(() => {
+    if (detailMediaHeroRef.current && phoneFrameRef.current) {
+      const fRect = phoneFrameRef.current.getBoundingClientRect();
+      const mRect = detailMediaHeroRef.current.getBoundingClientRect();
+      if (fRect.width > 0 && mRect.width > 0 && mRect.height > 0) {
+        return {
+          top: mRect.top - fRect.top,
+          left: mRect.left - fRect.left,
+          width: mRect.width,
+          height: mRect.height,
+        };
+      }
+    }
+    const fWidth = phoneFrameRef.current?.clientWidth || 393;
+    const effHeight = detailSheetMeasuredHeight > 0
+      ? detailSheetMeasuredHeight
+      : Math.min(frameSize.height * 0.75, 580);
+    const sTop = frameSize.height - effHeight;
+    return {
+      top: sTop + detailHeaderHeight + 16,
+      left: 24,
+      width: Math.max(fWidth - 48, 200),
+      height: 144,
+    };
+  }, [detailSheetMeasuredHeight, detailHeaderHeight, frameSize]);
+
+  // Update frame dimensions whenever phoneFrameRef resizes or viewport changes
+  useEffect(() => {
+    const frameEl = phoneFrameRef.current;
+    if (!frameEl) return;
+    const updateSize = () => {
+      const rect = frameEl.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0) {
+        setFrameSize({ width: rect.width, height: rect.height });
+      }
+    };
+    updateSize();
+
+    const ro = new ResizeObserver(() => updateSize());
+    ro.observe(frameEl);
+    window.addEventListener('resize', updateSize);
+
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', updateSize);
+    };
+  }, []);
+
+  // Dynamically observe chatSheet height when open or resizing
+  useEffect(() => {
+    const sheetEl = chatSheetRef.current;
+    if (!sheetEl) return;
+    const updateSheet = () => {
+      if (sheetEl.clientHeight > 0) {
+        setSheetMeasuredHeight(sheetEl.clientHeight);
+      }
+    };
+    updateSheet();
+    const ro = new ResizeObserver(() => updateSheet());
+    ro.observe(sheetEl);
+    return () => ro.disconnect();
+  }, [isChatOpen]);
+
+  // Dynamically observe detailSheet height when open or resizing
+  useEffect(() => {
+    const sheetEl = detailSheetRef.current;
+    if (!sheetEl) return;
+    const updateSheet = () => {
+      if (sheetEl.clientHeight > 0) {
+        setDetailSheetMeasuredHeight(sheetEl.clientHeight);
+      }
+    };
+    updateSheet();
+    const ro = new ResizeObserver(() => updateSheet());
+    ro.observe(sheetEl);
+    return () => ro.disconnect();
+  }, [isDetailOpen]);
+
+  // Dynamically observe detailHeader height to accommodate long titles
+  useEffect(() => {
+    const headerEl = detailHeaderRef.current;
+    if (!headerEl) return;
+    const updateHeader = () => {
+      if (headerEl.clientHeight > 0) {
+        setDetailHeaderHeight(headerEl.clientHeight);
+      }
+    };
+    updateHeader();
+    const ro = new ResizeObserver(() => updateHeader());
+    ro.observe(headerEl);
+    return () => ro.disconnect();
+  }, [isDetailOpen]);
+
+  // Dynamically observe planCard content height to animate height smoothly downward
+  useEffect(() => {
+    const el = cardContentRef.current;
+    if (!el) return;
+    const updateHeight = () => {
+      if (el.offsetHeight > 0) {
+        setCardContentHeight(el.offsetHeight);
+      }
+    };
+    updateHeight();
+    const ro = new ResizeObserver(() => updateHeight());
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [planState, currentPlan, isPlanCardOpen]);
+
+  // Target coordinates for Nova docked at top edge of chat sheet
+  const drawerWidth = 128;
+  const drawerHeight = 128;
+  const drawerLeft = (frameSize.width - drawerWidth) / 2;
+  const effectiveSheetHeight = sheetMeasuredHeight > 0
+    ? sheetMeasuredHeight
+    : Math.min(frameSize.height * 0.74, 580);
+  const sheetTop = frameSize.height - effectiveSheetHeight;
+  const drawerTop = sheetTop - 64; // Nova peeks over the drawer edge by 64px (-top-16)
+
+  // Target coordinates for media banner in detail sheet
+  const effectiveDetailSheetHeight = detailSheetMeasuredHeight > 0
+    ? detailSheetMeasuredHeight
+    : Math.min(frameSize.height * 0.75, 580);
+  const detailSheetTop = frameSize.height - effectiveDetailSheetHeight;
+  const targetMediaTop = detailSheetTop + detailHeaderHeight + 16;
+  const targetMediaLeft = 24;
+  const targetMediaWidth = Math.max(frameSize.width - 48, 200);
+  const targetMediaHeight = 144;
+
+  // Open & Close triggers for Continuous Detail Transition
+  const openDetailWithTransition = useCallback(() => {
+    // If mid-flight during closing, measure current floating position or thumbnail
+    let startRect = getLiveThumbnailRect();
+    if (floatingMediaRef.current && detailTransitionPhase === 'closing' && phoneFrameRef.current) {
+      const fRect = phoneFrameRef.current.getBoundingClientRect();
+      const mRect = floatingMediaRef.current.getBoundingClientRect();
+      if (mRect.width > 0 && mRect.height > 0) {
+        startRect = {
+          top: mRect.top - fRect.top,
+          left: mRect.left - fRect.left,
+          width: mRect.width,
+          height: mRect.height,
+        };
+      }
+    }
+    setDetailSourceRect(startRect);
+    setDetailClosingStartRect(null);
+    setIsDetailOpen(true);
+    setDetailTransitionPhase('opening');
+  }, [getLiveThumbnailRect, detailTransitionPhase]);
+
+  const closeDetailWithTransition = useCallback(() => {
+    const liveThumbRect = getLiveThumbnailRect();
+    let liveMediaRect = getLiveDetailMediaRect();
+
+    // If mid-flight during opening, capture live mid-flight position
+    if (floatingMediaRef.current && detailTransitionPhase === 'opening' && phoneFrameRef.current) {
+      const fRect = phoneFrameRef.current.getBoundingClientRect();
+      const mRect = floatingMediaRef.current.getBoundingClientRect();
+      if (mRect.width > 0 && mRect.height > 0) {
+        liveMediaRect = {
+          top: mRect.top - fRect.top,
+          left: mRect.left - fRect.left,
+          width: mRect.width,
+          height: mRect.height,
+        };
+      }
+    }
+
+    setDetailSourceRect(liveThumbRect);
+    setDetailClosingStartRect(liveMediaRect);
+    setIsDetailOpen(false);
+    setDetailTransitionPhase('closing');
+  }, [getLiveThumbnailRect, getLiveDetailMediaRect, detailTransitionPhase]);
+
+  // Handle escape key to close detail modal or expanded suggestion card
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (isDetailOpen) {
+          closeDetailWithTransition();
+        } else if (!isChatOpen && isPlanCardOpen) {
+          setIsPlanCardOpen(false);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isDetailOpen, isChatOpen, isPlanCardOpen, closeDetailWithTransition]);
+
+  // Coordinated Transition Open / Close triggers
+  const openChatWithTransition = useCallback((chatSetup?: () => void) => {
+    const liveRect = getLiveHomeAvatarRect();
+    setTransitionSourceRect(liveRect);
+    if (chatSetup) chatSetup();
+    setIsChatOpen(true);
+    setTransitionPhase('opening');
+  }, [getLiveHomeAvatarRect]);
+
+  const closeChatWithTransition = useCallback(() => {
+    const liveRect = getLiveHomeAvatarRect();
+    setTransitionSourceRect(liveRect);
+    setIsChatOpen(false);
+    setTransitionPhase('closing');
+  }, [getLiveHomeAvatarRect]);
+
+  // Monitor user scrolling: if user scrolls up, do not force scroll down on new messages
+  const handleChatScroll = useCallback(() => {
+    const el = chatContainerRef.current;
+    if (!el) return;
+    const distanceToBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    isNearBottomRef.current = distanceToBottom < 80;
+  }, []);
+
+  // Auto-scroll chat to latest message only if user is already near bottom
+  useEffect(() => {
+    if (!isChatOpen) return;
+    if (isNearBottomRef.current) {
+      const timer = setTimeout(() => {
+        chatMessagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [chatMessages, isChatOpen]);
+
+  // Adjust scroll when virtual keyboard / visualViewport shifts
+  useEffect(() => {
+    if (!isChatOpen || typeof window === 'undefined' || !window.visualViewport) return;
+    const handleViewportChange = () => {
+      if (isNearBottomRef.current) {
+        chatMessagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      }
+    };
+    window.visualViewport.addEventListener('resize', handleViewportChange);
+    return () => {
+      window.visualViewport?.removeEventListener('resize', handleViewportChange);
+    };
+  }, [isChatOpen]);
+
+  // 1. Initial State Handlers
+  // "Sounds good" directly accepts current recommendation into "YOUR PLAN"
+  const handleSoundsGood = () => {
+    hasCompletedRef.current = false;
+    isHoldingRef.current = false;
+    setPlanState('accepted');
+    setHoldProgress(0);
+  };
+
+  // Click "Plan B" on initial suggestion: Opens chat with proactive alternative
+  const handleInitialPlanB = () => {
+    openChatWithTransition(() => {
+      setShowPlanBHint(false);
+      setInputPlaceholder('Tell Nova what changed…');
+      isNearBottomRef.current = true;
+      setChatMessages([
+        {
+          id: 'msg-init-alt',
+          sender: 'ai',
+          text: 'How about a 5-minute stretch at home instead?',
+          options: [
+            {
+              label: 'Sounds good',
+              action: 'accept',
+              targetPlan: STRETCH_PLAN
+            },
+            {
+              label: 'Show me another option',
+              action: 'show_another'
+            },
+            {
+              label: 'Tell Nova what changed',
+              action: 'focus_input'
+            }
+          ]
+        }
+      ]);
+    });
+  };
+
+  // 2. Accepted State Handlers
+  // Click "Plan B" on already accepted plan: Proactively offers alternative while keeping current plan until accepted
+  const handleAcceptedPlanB = () => {
+    openChatWithTransition(() => {
+      setInputPlaceholder('Tell Nova what changed…');
+      isNearBottomRef.current = true;
+      const alternative = currentPlan.id === 'walk' ? STRETCH_PLAN : TOMORROW_WALK_PLAN;
+      const alternativeText = currentPlan.id === 'walk'
+        ? 'How about a 5-minute stretch at home instead?'
+        : 'Would moving your walk to tomorrow work better?';
+
+      setChatMessages([
+        {
+          id: 'msg-accepted-alt',
+          sender: 'ai',
+          text: alternativeText,
+          options: [
+            {
+              label: 'Sounds good',
+              action: 'accept',
+              targetPlan: alternative
+            },
+            {
+              label: 'Show me another option',
+              action: 'show_another'
+            },
+            {
+              label: 'Tell Nova what changed',
+              action: 'focus_input'
+            }
+          ]
+        }
+      ]);
+    });
+  };
+
+  // "Not today" on accepted plan: opens dialogue without auto-modifying or canceling
+  const handleNotToday = () => {
+    openChatWithTransition(() => {
+      setInputPlaceholder('Tell Nova what changed…');
+      isNearBottomRef.current = true;
+      setChatMessages([
+        {
+          id: 'msg-not-today',
+          sender: 'ai',
+          text: 'Totally fine! Rest days are just as healthy. Shall we take today off and reset tomorrow?',
+          options: [
+            {
+              label: 'Sounds good (Take today off)',
+              action: 'accept',
+              targetPlan: REST_DAY_PLAN
+            },
+            {
+              label: 'Keep plan for now',
+              action: 'keep_plan'
+            },
+            {
+              label: 'Tell Nova what changed',
+              action: 'focus_input'
+            }
+          ]
+        }
+      ]);
+    });
+  };
+
+  // 3. Option Action Handler inside chat
+  const handleOptionClick = (option: ChatActionOption, messageId?: string) => {
+    isNearBottomRef.current = true;
+    if (option.action === 'accept' && option.targetPlan) {
+      // User accepts alternative: update plan in background, switch to accepted state, keep drawer open
+      hasCompletedRef.current = false;
+      isHoldingRef.current = false;
+      setCurrentPlan(option.targetPlan);
+      setPlanState('accepted');
+      setHoldProgress(0);
+
+      // Determine Nova confirmation copy matching the accepted alternative
+      let replyText = 'Sounds good. I’ve added the 5-minute stretch to your plan.';
+      if (option.targetPlan.id === 'tomorrow' || option.targetPlan.id === 'tomorrow_walk') {
+        replyText = 'Sounds good. I’ve moved your walk to tomorrow.';
+      } else if (option.targetPlan.id === 'rest') {
+        replyText = 'Sounds good. I’ve updated today to a rest day.';
+      } else if (option.targetPlan.id === 'stretch') {
+        replyText = 'Sounds good. I’ve added the 5-minute stretch to your plan.';
+      } else {
+        replyText = `Sounds good. I’ve updated your plan to ${option.targetPlan.title.toLowerCase()}.`;
+      }
+
+      const now = Date.now();
+      setChatMessages((prev) => [
+        ...prev.map((m) =>
+          m.id === messageId
+            ? { ...m, disabled: true, selectedOptionLabel: option.label }
+            : { ...m, disabled: true }
+        ),
+        {
+          id: `usr-${now}`,
+          sender: 'user',
+          text: 'Sounds good.'
+        },
+        {
+          id: `ai-${now + 1}`,
+          sender: 'ai',
+          text: replyText
+        }
+      ]);
+      // Chat drawer remains OPEN so user can continue chatting; no setIsChatOpen(false)
+    } else if (option.action === 'show_another') {
+      // Show next alternative option: disable prior cards, record user's choice
+      setChatMessages((prev) => {
+        const disabledPrev = prev.map((m) =>
+          m.id === messageId
+            ? { ...m, disabled: true, selectedOptionLabel: option.label }
+            : { ...m, disabled: true }
+        );
+        const hasTomorrowWalk = prev.some((m) =>
+          m.options?.some((o) => o.targetPlan?.id === 'tomorrow' || o.targetPlan?.id === 'tomorrow_walk')
+        );
+
+        const nextAiMsg: ChatMessage = !hasTomorrowWalk
+          ? {
+              id: `ai-${Date.now() + 1}`,
+              sender: 'ai',
+              text: 'Would moving your walk to tomorrow work better?',
+              options: [
+                {
+                  label: 'Sounds good',
+                  action: 'accept',
+                  targetPlan: TOMORROW_WALK_PLAN
+                },
+                {
+                  label: 'Show me another option',
+                  action: 'show_another'
+                },
+                {
+                  label: 'Tell Nova what changed',
+                  action: 'focus_input'
+                }
+              ]
+            }
+          : {
+              id: `ai-${Date.now() + 1}`,
+              sender: 'ai',
+              text: 'How about taking today as a gentle rest day? No pressure at all—we can reset tomorrow.',
+              options: [
+                {
+                  label: 'Sounds good (Take today off)',
+                  action: 'accept',
+                  targetPlan: REST_DAY_PLAN
+                },
+                {
+                  label: 'Tell Nova what changed',
+                  action: 'focus_input'
+                }
+              ]
+            };
+
+        return [
+          ...disabledPrev,
+          {
+            id: `usr-${Date.now()}`,
+            sender: 'user',
+            text: 'Show me another option'
+          },
+          nextAiMsg
+        ];
+      });
+    } else if (option.action === 'focus_input') {
+      // Keep conversation open, disable option card, Nova replies with pure prompt, focus input
+      setInputPlaceholder('Tell Nova what changed…');
+      isNearBottomRef.current = true;
+      const now = Date.now();
+      setChatMessages((prev) => [
+        ...prev.map((m) =>
+          m.id === messageId
+            ? { ...m, disabled: true, selectedOptionLabel: option.label }
+            : { ...m, disabled: true }
+        ),
+        {
+          id: `usr-${now}`,
+          sender: 'user',
+          text: 'Tell Nova what changed'
+        },
+        {
+          id: `ai-${now + 1}`,
+          sender: 'ai',
+          text: 'Of course. What changed for you today?'
+        }
+      ]);
+      setTimeout(() => {
+        chatInputRef.current?.focus();
+        chatMessagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      }, 120);
+    } else if (option.action === 'keep_plan') {
+      setChatMessages((prev) =>
+        prev.map((m) =>
+          m.id === messageId
+            ? { ...m, disabled: true, selectedOptionLabel: option.label }
+            : m
+        )
+      );
+      closeChatWithTransition();
+    }
+  };
+
+  // 4. Send freeform chat message
+  const handleSendChatMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!sheetInput.trim()) return;
+    const text = sheetInput.trim();
+    setSheetInput('');
+    isNearBottomRef.current = true;
+
+    setChatMessages((prev) => [
+      ...prev.map((m) => ({ ...m, disabled: true })),
+      {
+        id: `usr-${Date.now()}`,
+        sender: 'user',
+        text
+      },
+      {
+        id: `ai-${Date.now()}`,
+        sender: 'ai',
+        text: "Got it! Listening to your body is what matters most. How about a 5-minute breather or taking today off?",
+        options: [
+          {
+            label: 'Sounds good (5-min stretch)',
+            action: 'accept',
+            targetPlan: STRETCH_PLAN
+          },
+          {
+            label: 'Take today off',
+            action: 'accept',
+            targetPlan: REST_DAY_PLAN
+          },
+          {
+            label: 'Keep current plan',
+            action: 'keep_plan'
+          }
+        ]
+      }
+    ]);
+  };
+
+  // Hold-to-complete logic (3 seconds = 3000ms)
+  const cancelHold = useCallback(() => {
+    if (planState === 'completed' || hasCompletedRef.current) return;
+    if (holdTimerRef.current) {
+      cancelAnimationFrame(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
+    isHoldingRef.current = false;
+    setIsHolding(false);
+    setHoldProgress(0);
+    holdStartRef.current = 0;
+  }, [planState]);
+
+  const startHold = useCallback((e?: React.SyntheticEvent | Event) => {
+    if (planState === 'completed') return;
+    // Only accept primary mouse click (button === 0) if mouse event
+    if (e && 'button' in e && (e as React.MouseEvent).button !== 0) return;
+
+    if (holdTimerRef.current) {
+      cancelAnimationFrame(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
+
+    isHoldingRef.current = true;
+    hasCompletedRef.current = false;
+    setIsHolding(true);
+    setHoldProgress(0);
+    holdStartRef.current = performance.now();
+
+    const update = () => {
+      if (!isHoldingRef.current) return;
+      const elapsed = performance.now() - holdStartRef.current;
+      const progress = Math.min((elapsed / HOLD_DURATION_MS) * 100, 100);
+      setHoldProgress(progress);
+
+      if (progress >= 100) {
+        // Successfully held for the full 3 seconds
+        if (!hasCompletedRef.current) {
+          hasCompletedRef.current = true;
+          isHoldingRef.current = false;
+          setIsHolding(false);
+          setHoldProgress(100);
+          setPlanState('completed');
+          if (typeof navigator !== 'undefined' && navigator.vibrate) {
+            try { navigator.vibrate(50); } catch (_) {}
+          }
+        }
+      } else {
+        holdTimerRef.current = requestAnimationFrame(update);
+      }
+    };
+
+    holdTimerRef.current = requestAnimationFrame(update);
+  }, [planState]);
+
+  // Handle touch moving outside button boundary (finger slide out)
+  const handleTouchMove = (e: React.TouchEvent<HTMLButtonElement>) => {
+    if (!isHoldingRef.current) return;
+    const touch = e.touches[0];
+    if (!touch) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const isInside =
+      touch.clientX >= rect.left &&
+      touch.clientX <= rect.right &&
+      touch.clientY >= rect.top &&
+      touch.clientY <= rect.bottom;
+    if (!isInside) {
+      cancelHold();
+    }
+  };
+
+  // Keyboard accessibility: Enter or Space activates confirmation dialog
+  const handleDoneKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (planState === 'completed') return;
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      cancelHold();
+      setIsAccessibleConfirmOpen(true);
+    }
+  };
+
+  // Screen reader / assistive technology click: detail === 0
+  const handleDoneClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    // Assistive technology (screen reader) or keyboard synthesized click
+    if (e.detail === 0 && planState !== 'completed' && !hasCompletedRef.current) {
+      cancelHold();
+      setIsAccessibleConfirmOpen(true);
+      return;
+    }
+    // Standard mouse click or touch tap: do nothing;
+    // cancelHold() already reset progress to 0 on release.
+  };
+
+  // Global listeners when user is actively holding: mouseup, touchend, blur, window visibility
+  useEffect(() => {
+    if (!isHolding) return;
+
+    const handleWindowBlur = () => cancelHold();
+    const handleVisibility = () => {
+      if (document.hidden) cancelHold();
+    };
+    const handleGlobalMouseUp = () => cancelHold();
+    const handleGlobalTouchEnd = () => cancelHold();
+
+    window.addEventListener('blur', handleWindowBlur);
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+    window.addEventListener('touchend', handleGlobalTouchEnd);
+    window.addEventListener('touchcancel', handleGlobalTouchEnd);
+
+    return () => {
+      window.removeEventListener('blur', handleWindowBlur);
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('mouseup', handleGlobalMouseUp);
+      window.removeEventListener('touchend', handleGlobalTouchEnd);
+      window.removeEventListener('touchcancel', handleGlobalTouchEnd);
+    };
+  }, [isHolding, cancelHold]);
+
+  // Clean up RAF on unmount
+  useEffect(() => {
+    return () => {
+      if (holdTimerRef.current) cancelAnimationFrame(holdTimerRef.current);
+    };
+  }, []);
+
+  // Handle push message action
+  const handleTellPlanB = () => {
+    openChatWithTransition(() => {
+      setChatMessages([
+        {
+          id: 'msg-push',
+          sender: 'user',
+          text: "About yesterday's walk..."
+        },
+        {
+          id: 'ai-push',
+          sender: 'ai',
+          text: "I'm listening! Did you get a chance to step outside, or did life get in the way?",
+          options: [
+            {
+              label: 'Did 5-minute stretch instead',
+              action: 'accept',
+              targetPlan: STRETCH_PLAN
+            },
+            {
+              label: 'Life got busy, took rest',
+              action: 'accept',
+              targetPlan: REST_DAY_PLAN
+            },
+            {
+              label: 'Tell Nova what changed',
+              action: 'focus_input'
+            }
+          ]
+        }
+      ]);
+    });
+  };
+
+  // SVG circular progress calculation (enlarged by ~1.4x, radius 34)
+  const circleRadius = 34;
+  const circumference = 2 * Math.PI * circleRadius;
+  const strokeDashoffset = circumference - (holdProgress / 100) * circumference;
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-[#EAE6F4] via-[#EDE9F6] to-[#E5E0F2] flex items-center justify-center p-0 sm:py-6 font-sans antialiased select-none text-[#26263F]">
+      {/* 393 × 852 px Native Smartphone Frame */}
+      <div 
+        ref={phoneFrameRef}
+        className="w-full max-w-[393px] h-[100dvh] sm:h-[844px] sm:max-h-[852px] bg-[#FAF8F5] relative flex flex-col justify-between overflow-hidden sm:rounded-[44px] sm:shadow-[0_28px_72px_-16px_rgba(90,80,140,0.18)] sm:border sm:border-white/80"
+      >
+        
+        {/* Soft Ambient Light Glows (Low-saturation, ethereal warmth & lavender mist as in reference) */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden -z-0">
+          {/* Subtle peach / apricot gentle warmth in upper-right */}
+          <div className="absolute -top-12 -right-16 w-80 h-80 rounded-full bg-radial from-[#FCEEE5]/65 via-[#FAF3ED]/30 to-transparent blur-3xl" />
+          {/* Delicate celestial lavender / lilac glow in center */}
+          <div className="absolute top-48 -left-20 w-80 h-80 rounded-full bg-radial from-[#EEE9FC]/70 via-[#F4F1FD]/35 to-transparent blur-3xl" />
+          {/* Soft serene sky mist near bottom */}
+          <div className="absolute -bottom-16 right-0 w-80 h-72 rounded-full bg-radial from-[#EBF2FD]/55 via-[#F3EEFD]/30 to-transparent blur-3xl" />
+          {/* Central diffused light aura behind companion & card */}
+          <div className="absolute top-[38%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full bg-radial from-white/60 via-white/20 to-transparent blur-2xl" />
+        </div>
+
+        {/* Unified Animated Transition Nova (Active during opening, open, or closing) */}
+        {(isChatOpen || transitionPhase !== 'idle') && (
+          <motion.div
+            className="absolute pointer-events-none select-none z-50 flex items-center justify-center"
+            initial={
+              transitionSourceRect
+                ? {
+                    top: transitionSourceRect.top,
+                    left: transitionSourceRect.left,
+                    width: transitionSourceRect.width,
+                    height: transitionSourceRect.height,
+                  }
+                : false
+            }
+            animate={{
+              top: isChatOpen ? drawerTop : (transitionSourceRect?.top ?? 145),
+              left: isChatOpen ? drawerLeft : (transitionSourceRect?.left ?? ((frameSize.width - 204) / 2)),
+              width: isChatOpen ? 128 : (transitionSourceRect?.width ?? 204),
+              height: isChatOpen ? 128 : (transitionSourceRect?.height ?? 204),
+            }}
+            transition={
+              shouldReduceMotion
+                ? { duration: 0.05 }
+                : {
+                    duration: isChatOpen ? 0.42 : 0.36,
+                    ease: isChatOpen ? [0.32, 0.72, 0, 1] : [0.25, 1, 0.5, 1],
+                  }
+            }
+            onAnimationComplete={() => {
+              if (!isChatOpen) {
+                setTransitionPhase('idle');
+              } else {
+                setTransitionPhase('open');
+              }
+            }}
+          >
+            {/* Soft lilac & warm cream halo behind character (fades out as Nova descends to drawer) */}
+            <motion.div 
+              animate={{ opacity: isChatOpen ? 0 : 0.85, scale: isChatOpen ? 0.6 : 1 }}
+              transition={{ duration: isChatOpen ? 0.25 : 0.32 }}
+              className="absolute inset-1 rounded-full bg-radial from-[#F3EEFE]/80 via-[#FDF3ED]/35 to-transparent blur-2xl pointer-events-none -z-10" 
+            />
+
+            {/* Home Nova image (smoothly crossfades out as it approaches drawer rim) */}
+            <motion.img
+              src={IP_IMAGE_URL}
+              alt="Plan B Companion Nova"
+              referrerPolicy="no-referrer"
+              animate={{ opacity: isChatOpen ? 0 : 1 }}
+              transition={{ 
+                duration: shouldReduceMotion ? 0.05 : (isChatOpen ? 0.20 : 0.24),
+                delay: shouldReduceMotion ? 0 : (isChatOpen ? 0.12 : 0)
+              }}
+              className="w-full h-full object-contain pointer-events-none drop-shadow-xs [mask-image:linear-gradient(to_bottom,black_86%,transparent_100%)] absolute inset-0"
+            />
+
+            {/* Listening Nova image (smoothly crossfades in as it arrives at drawer rim) */}
+            <motion.img
+              src={NOVA_LISTENING_URL}
+              alt="Nova listening"
+              referrerPolicy="no-referrer"
+              animate={{ opacity: isChatOpen ? 1 : 0 }}
+              transition={{ 
+                duration: shouldReduceMotion ? 0.05 : (isChatOpen ? 0.24 : 0.20),
+                delay: shouldReduceMotion ? 0 : (isChatOpen ? 0.16 : 0)
+              }}
+              className="w-full h-full object-contain pointer-events-none drop-shadow-xs absolute inset-0"
+            />
+          </motion.div>
+        )}
+
+        {/* Continuous Shared-Element Media Transition Element */}
+        {detailTransitionPhase !== 'idle' && detailSourceRect && (
+          <motion.div
+            key={detailTransitionPhase === 'closing' ? 'closing' : 'opening'}
+            ref={floatingMediaRef}
+            initial={
+              detailTransitionPhase === 'opening'
+                ? {
+                    top: detailSourceRect.top,
+                    left: detailSourceRect.left,
+                    width: detailSourceRect.width,
+                    height: detailSourceRect.height,
+                    borderRadius: 16,
+                  }
+                : (detailClosingStartRect
+                    ? {
+                        top: detailClosingStartRect.top,
+                        left: detailClosingStartRect.left,
+                        width: detailClosingStartRect.width,
+                        height: detailClosingStartRect.height,
+                        borderRadius: 22,
+                      }
+                    : {
+                        top: targetMediaTop,
+                        left: targetMediaLeft,
+                        width: targetMediaWidth,
+                        height: targetMediaHeight,
+                        borderRadius: 22,
+                      })
+            }
+            animate={{
+              top: isDetailOpen ? targetMediaTop : detailSourceRect.top,
+              left: isDetailOpen ? targetMediaLeft : detailSourceRect.left,
+              width: isDetailOpen ? targetMediaWidth : detailSourceRect.width,
+              height: isDetailOpen ? targetMediaHeight : detailSourceRect.height,
+              borderRadius: isDetailOpen ? 22 : 16,
+            }}
+            transition={
+              shouldReduceMotion
+                ? { duration: 0.05 }
+                : {
+                    duration: isDetailOpen ? 0.40 : 0.36,
+                    ease: isDetailOpen ? [0.32, 0.72, 0, 1] : [0.25, 1, 0.5, 1],
+                  }
+            }
+            onAnimationComplete={() => {
+              if (isDetailOpen) {
+                setDetailTransitionPhase('open');
+              } else {
+                setDetailTransitionPhase('idle');
+              }
+            }}
+            className={`absolute z-[55] overflow-hidden border border-white/80 shadow-[0_4px_20px_rgba(90,80,140,0.14)] pointer-events-none transition-opacity duration-75 ${
+              detailTransitionPhase === 'open' ? 'opacity-0' : 'opacity-100'
+            }`}
+          >
+            {/* The image */}
+            <img
+              src={currentPlan.thumbnailUrl}
+              alt={currentPlan.title}
+              referrerPolicy="no-referrer"
+              className="w-full h-full object-cover absolute inset-0"
+            />
+
+            {/* Thumbnail Play Badge (Center): fades out as it expands */}
+            <motion.div
+              animate={{ opacity: isDetailOpen ? 0 : 1 }}
+              transition={{ duration: shouldReduceMotion ? 0.05 : 0.16 }}
+              className="absolute inset-0 bg-black/25 flex items-center justify-center pointer-events-none"
+            >
+              <div className="w-5 h-5 rounded-full bg-white/95 flex items-center justify-center shadow-xs">
+                <Play className="w-2.5 h-2.5 fill-[#26263F] text-[#26263F] ml-0.5" />
+              </div>
+            </motion.div>
+
+            {/* Detail Audio Banner Info (Bottom): fades in as it expands toward target */}
+            <motion.div
+              animate={{ opacity: isDetailOpen ? 1 : 0 }}
+              transition={{
+                duration: shouldReduceMotion ? 0.05 : 0.24,
+                delay: shouldReduceMotion ? 0 : (isDetailOpen ? 0.16 : 0),
+              }}
+              className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent flex items-end p-4 pointer-events-none"
+            >
+              <div className="flex items-center justify-between w-full text-white">
+                <div>
+                  <div className="text-xs font-bold leading-tight">{currentPlan.audioTitle}</div>
+                  <div className="text-[10.5px] text-white/85 mt-0.5">{currentPlan.audioSubtitle}</div>
+                </div>
+                <div className="w-9 h-9 rounded-full bg-[#5E5BAE] text-white flex items-center justify-center shadow-xs">
+                  {isPlayingAudio ? (
+                    <Volume2 className="w-4 h-4 stroke-[2.4] text-white" />
+                  ) : (
+                    <Play className="w-4 h-4 fill-white text-white ml-0.5" />
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {/* 1. iOS Status Bar (44px Height Standard Safe Area) */}
+        <div className="pt-3.5 pb-1 px-7 flex items-center justify-between text-xs font-semibold text-[#26263F] select-none shrink-0 z-30">
+          <span>9:41</span>
+          <div className="flex items-center gap-1.5">
+            {/* Cellular signal bars */}
+            <svg className="w-4 h-3 fill-current" viewBox="0 0 17 12">
+              <rect x="0" y="9" width="2.5" height="3" rx="0.5" />
+              <rect x="4" y="6" width="2.5" height="6" rx="0.5" />
+              <rect x="8" y="3" width="2.5" height="9" rx="0.5" />
+              <rect x="12" y="0" width="2.5" height="12" rx="0.5" />
+            </svg>
+            <Wifi className="w-3.5 h-3.5 stroke-[2.4]" />
+            {/* Battery icon */}
+            <div className="w-5 h-2.5 border border-[#26263F] rounded-[3px] p-0.5 flex items-center">
+              <div className="w-full h-full bg-[#26263F] rounded-[1px]" />
+            </div>
+          </div>
+        </div>
+
+        {/* 2. Top Header Bar (24px horizontal padding) */}
+        <header 
+          onClick={() => {
+            if (activeTab === 'Today' && isPlanCardOpen) {
+              setIsPlanCardOpen(false);
+            }
+          }}
+          className="px-6 pt-1 pb-1.5 flex items-center justify-between shrink-0 z-20"
+        >
+          <span className="text-[24px] font-bold tracking-tight text-[#26263F]">
+            {activeTab === 'Today' ? 'Plan B' : activeTab}
+          </span>
+          {activeTab === 'Discover' && (
+            <button
+              type="button"
+              id="top-saved-btn"
+              onClick={() => setIsSavedSheetOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/75 hover:bg-white/95 border border-white/85 shadow-2xs text-xs font-semibold text-[#5E5BAE] transition-all cursor-pointer active:scale-95"
+              aria-label="View saved items"
+            >
+              <Bookmark className="w-3.5 h-3.5 fill-current" />
+              <span>Saved ({savedItemIds.length})</span>
+            </button>
+          )}
+        </header>
+
+        {/* 3. Main Body Content: Today View */}
+        <div 
+          className={`flex-1 relative overflow-hidden px-6 pt-1 pb-2 flex-col items-center justify-start z-10 ${
+            activeTab === 'Today' ? 'flex' : 'hidden'
+          }`}
+        >
+          {/* Click-outside backdrop when suggestion card is expanded */}
+          <AnimatePresence>
+            {isPlanCardOpen && (
+              <motion.div
+                key="today-card-backdrop"
+                id="today-card-backdrop"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: shouldReduceMotion ? 0.05 : 0.2 }}
+                onClick={() => setIsPlanCardOpen(false)}
+                className="absolute inset-0 z-20 cursor-pointer"
+                aria-label="Close suggestion card"
+              />
+            )}
+          </AnimatePresence>
+
+          {/* A. Lightweight Real-Time Ambient Info Area (Weather, Steps, Heart Rate - Clearly Marked Sample Data) */}
+          <div className="w-full shrink-0 z-10 mb-0.5">
+            <div className="w-full flex items-center justify-between py-1.5 px-0.5 border-b border-[#26263F]/[0.06] text-[11.5px] sm:text-[12px] text-[#5D5B78] tabular-nums">
+              <div className="flex items-center gap-1.5 sm:gap-2.5 overflow-x-auto scrollbar-none">
+                <span className="inline-flex items-center gap-1 whitespace-nowrap">
+                  <CloudSun className="w-3.5 h-3.5 text-[#6865B8] stroke-[2] shrink-0" />
+                  <span className="font-semibold text-[#26263F]">18°C</span>
+                  <span className="text-[#7A7895] text-[11px]">Cloudy</span>
+                </span>
+                <span className="text-[#26263F]/20 select-none" aria-hidden="true">·</span>
+                <span className="inline-flex items-center gap-1 whitespace-nowrap">
+                  <Footprints className="w-3.5 h-3.5 text-[#6865B8] stroke-[2] shrink-0" />
+                  <span className="font-semibold text-[#26263F]">3,420</span>
+                  <span className="text-[#7A7895] text-[11px]">steps</span>
+                </span>
+                <span className="text-[#26263F]/20 select-none" aria-hidden="true">·</span>
+                <span className="inline-flex items-center gap-1 whitespace-nowrap">
+                  <Heart className="w-3.5 h-3.5 text-[#D96B52] stroke-[2] shrink-0" />
+                  <span className="font-semibold text-[#26263F]">68</span>
+                  <span className="text-[#7A7895] text-[11px]">bpm</span>
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowSampleDataNote((prev) => !prev)}
+                className="text-[10.5px] font-medium text-[#7A7895] hover:text-[#46437B] underline decoration-[#7A7895]/40 underline-offset-2 shrink-0 ml-1.5 pl-2 border-l border-[#26263F]/10 cursor-pointer transition-colors"
+                title="Sample values shown before sensor connection"
+              >
+                Sample data
+              </button>
+            </div>
+
+            <AnimatePresence initial={false}>
+              {showSampleDataNote && (
+                <motion.p
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="text-[11px] text-[#706E8A] pt-1 px-1 leading-snug overflow-hidden"
+                >
+                  Sample values for preview — live weather and wearable health sensors are not connected yet.
+                </motion.p>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* B. Visual Center Nova + Suggestion Bubble + Overlay Plan Card Stage */}
+          <div className="w-full flex-1 relative flex flex-col items-center justify-start min-h-0">
+            
+            {/* Enlarged Companion Stage: Centered lower in ambient state, glides up gently when card opens so Nova's face & smile stay 100% visible */}
+            <motion.div 
+              animate={{ y: isPlanCardOpen ? -14 : 22 }}
+              transition={
+                shouldReduceMotion
+                  ? { duration: 0.05 }
+                  : { duration: 0.34, ease: [0.32, 0.72, 0, 1] }
+              }
+              className="w-full relative flex flex-col items-center justify-center shrink-0 -mt-2 sm:mt-0"
+            >
+              {/* Enlarged Centered IP Character Bust */}
+              <div 
+                ref={homeAvatarRef}
+                className="relative w-[256px] h-[256px] sm:w-[276px] sm:h-[276px] flex items-center justify-center pointer-events-none shrink-0"
+              >
+                {/* In-place Home Nova: Visible when idle on home, hidden during active chat transition */}
+                <div 
+                  className={`w-full h-full relative transition-opacity duration-200 ${
+                    transitionPhase === 'idle' && !isChatOpen ? 'opacity-100' : 'opacity-0'
+                  }`}
+                >
+                  {/* Soft lilac & warm cream halo behind character */}
+                  <div className="absolute inset-0 rounded-full bg-radial from-[#F3EEFE]/95 via-[#FDF3ED]/50 to-transparent blur-2xl pointer-events-none -z-10" />
+
+                  {/* Home Nova image */}
+                  <img
+                    src={IP_IMAGE_URL}
+                    alt="Plan B Companion Nova"
+                    referrerPolicy="no-referrer"
+                    className="w-full h-full object-contain pointer-events-none drop-shadow-xs [mask-image:linear-gradient(to_bottom,black_88%,transparent_100%)] absolute inset-0"
+                  />
+                </div>
+              </div>
+
+              {/* Clickable Suggestion Bubble beside Nova (Positioned below chin/face level so Nova's face is 100% unobstructed) */}
+              <AnimatePresence>
+                {!isPlanCardOpen && (
+                  <motion.button
+                    key="nova-suggestion-bubble"
+                    id="nova-suggestion-bubble"
+                    type="button"
+                    onClick={() => setIsPlanCardOpen(true)}
+                    initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.86, y: 6 }}
+                    animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, scale: 1, y: 0 }}
+                    exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.88, y: 4 }}
+                    transition={
+                      shouldReduceMotion
+                        ? { duration: 0.05 }
+                        : { duration: 0.28, ease: [0.32, 0.72, 0, 1] }
+                    }
+                    style={{ transformOrigin: '25% 0%' }}
+                    className="absolute top-[166px] sm:top-[180px] right-0 z-20 max-w-[238px] sm:max-w-[248px] rounded-[22px] rounded-tl-[6px] bg-white/90 hover:bg-white/95 active:scale-[0.98] backdrop-blur-xl border border-white/95 shadow-[0_10px_28px_-6px_rgba(94,91,174,0.18),0_1px_1px_rgba(255,255,255,0.95)_inset] px-3.5 py-2.5 text-left flex items-center gap-2.5 cursor-pointer group transition-colors min-h-[52px]"
+                    aria-label={`Open today's suggestion: ${currentPlan.title}`}
+                  >
+                    {/* Speech bubble tail pointing up-left toward Nova */}
+                    <span
+                      aria-hidden="true"
+                      className="absolute -top-1.5 left-3.5 w-3 h-3 rotate-45 bg-white/90 border-l border-t border-white/95 rounded-tl-[2px] pointer-events-none"
+                    />
+
+                    <div className="flex-1 min-w-0 relative z-10">
+                      {/* State-dependent status line */}
+                      <div className="flex items-center gap-1.5 text-[10.5px] leading-none mb-1">
+                        {planState === 'suggested' && (
+                          <>
+                            <Sparkles className="w-3 h-3 text-[#6865B8] stroke-[2.2] shrink-0" />
+                            <span className="font-bold uppercase tracking-wider text-[#6865B8]">
+                              Today’s suggestion
+                            </span>
+                            <span className="text-[#7A7895] font-normal">· Tap</span>
+                          </>
+                        )}
+                        {planState === 'accepted' && (
+                          <>
+                            <span className="font-bold uppercase tracking-wider text-[#5E5BAE]">
+                              Ready
+                            </span>
+                            <span className="text-[#26263F]/25" aria-hidden="true">·</span>
+                            <span className="text-[#706E8A] font-medium">Your plan</span>
+                          </>
+                        )}
+                        {planState === 'completed' && (
+                          <>
+                            <Check className="w-3 h-3 text-[#5E5BAE] stroke-[2.8] shrink-0" />
+                            <span className="font-bold uppercase tracking-wider text-[#5E5BAE]">
+                              Completed
+                            </span>
+                            <span className="text-[#26263F]/25" aria-hidden="true">·</span>
+                            <span className="text-[#706E8A] font-medium">Done today</span>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Suggestion / Task Title */}
+                      <div className="text-[13.5px] font-bold text-[#26263F] leading-snug line-clamp-2">
+                        {currentPlan.title}
+                      </div>
+                    </div>
+
+                    {/* Subtle Tap Affordance Icon */}
+                    <div className="w-6 h-6 rounded-full bg-[#F4F1FD] group-hover:bg-[#EAE5FA] text-[#5E5BAE] flex items-center justify-center shrink-0 transition-colors">
+                      <ChevronRight className="w-3.5 h-3.5 stroke-[2.4]" />
+                    </div>
+                  </motion.button>
+                )}
+              </AnimatePresence>
+
+              {/* 1. Centered Nickname "Nova" & 2. Short Greeting (Visible in normal state, fades smoothly when card covers lower half) */}
+              <div
+                className={`flex flex-col items-center transition-opacity duration-200 ${
+                  isPlanCardOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
+                }`}
+              >
+                <h2 className="text-[20px] font-bold text-[#26263F] tracking-tight text-center mt-2 select-none leading-none">
+                  Nova
+                </h2>
+
+                <div className="mt-2.5 sm:mt-3 text-center px-4">
+                  <p className="text-[14.5px] font-normal text-[#5D5B78] leading-snug tracking-normal">
+                    Hope your morning is going a little easier.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* 3. Expanded Plan Card: Covers Nova's lower half while keeping Nova's face & expression visible */}
+            <AnimatePresence>
+              {isPlanCardOpen && (
+                <motion.div
+                  key="expanded-plan-card-wrapper"
+                  initial={
+                    shouldReduceMotion
+                      ? { opacity: 0 }
+                      : { opacity: 0, scale: 0.72, y: -10 }
+                  }
+                  animate={
+                    shouldReduceMotion
+                      ? { opacity: 1 }
+                      : { opacity: 1, scale: 1, y: 0 }
+                  }
+                  exit={
+                    shouldReduceMotion
+                      ? { opacity: 0 }
+                      : { opacity: 0, scale: 0.76, y: -8 }
+                  }
+                  transition={
+                    shouldReduceMotion
+                      ? { duration: 0.05 }
+                      : { duration: 0.34, ease: [0.32, 0.72, 0, 1] }
+                  }
+                  style={{ transformOrigin: '78% 0%' }}
+                  className="absolute top-[136px] sm:top-[158px] -inset-x-4 px-4 z-30 max-h-[calc(100%-132px)] sm:max-h-[calc(100%-154px)] overflow-y-auto scrollbar-none pb-4"
+                >
+                  <motion.div 
+                    ref={planCardRef}
+                    animate={{
+                      height: cardContentHeight !== null ? cardContentHeight : 'auto'
+                    }}
+                    transition={
+                      shouldReduceMotion
+                        ? { duration: 0.05 }
+                        : { duration: 0.36, ease: [0.32, 0.72, 0, 1] }
+                    }
+                    className={`w-full rounded-[28px] shrink-0 relative overflow-hidden backdrop-blur-xl transition-[background-color,border-color,box-shadow] duration-300 ${
+                      planState === 'suggested'
+                        ? 'bg-white/88 border border-white/95 shadow-[0_14px_40px_-8px_rgba(94,91,174,0.16),0_1px_1px_rgba(255,255,255,0.95)_inset]'
+                        : 'bg-white/92 border border-white/95 shadow-[0_16px_44px_-8px_rgba(94,91,174,0.18),0_1px_1px_rgba(255,255,255,0.95)_inset]'
+                    }`}
+                  >
+                    {/* Subtle top edge frosted light reflection inside the card */}
+                    <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white to-transparent pointer-events-none" />
+
+                    {/* Inner Measurable Content Container */}
+                    <div ref={cardContentRef} className="p-5 sm:p-5.5 w-full flex flex-col">
+                      
+                      {/* 1. Header Area: Crossfading Label + Close Button + Continuous Title + Thumbnail */}
+                      <div className="w-full">
+                        {/* Top Row: Crossfading Section Label + Close Button */}
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <div className="relative h-4 flex-1 select-none">
+                            <span 
+                              className={`text-[11px] font-bold uppercase tracking-wider text-[#6865B8] absolute inset-0 transition-opacity ${
+                                shouldReduceMotion ? 'duration-75' : 'duration-200'
+                              } ${
+                                planState === 'suggested' ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                              }`}
+                            >
+                              Today’s suggestion
+                            </span>
+                            <span 
+                              className={`text-[11px] font-bold uppercase tracking-wider text-[#6865B8] absolute inset-0 transition-opacity ${
+                                shouldReduceMotion ? 'duration-75' : 'duration-250 delay-100'
+                              } ${
+                                planState !== 'suggested' ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                              }`}
+                            >
+                              YOUR PLAN
+                            </span>
+                          </div>
+
+                          {/* Close Card Button (Always visible on all screen sizes) */}
+                          <button
+                            type="button"
+                            id="close-plan-card-btn"
+                            onClick={() => setIsPlanCardOpen(false)}
+                            className="-mr-1.5 -mt-1 w-8 h-8 rounded-full flex items-center justify-center text-[#706E8A] hover:text-[#26263F] bg-[#26263F]/[0.05] hover:bg-[#26263F]/[0.10] active:scale-95 transition-all cursor-pointer shrink-0"
+                            aria-label="Close suggestion card"
+                          >
+                            <X className="w-4 h-4 stroke-[2.2]" />
+                          </button>
+                        </div>
+
+                        {/* Title & Thumbnail Row */}
+                        <div className="flex items-center justify-between gap-3">
+                          {/* Continuous Plan Title: Always in DOM, never jumps */}
+                          <h2 className="text-[19px] sm:text-[20px] font-bold tracking-tight text-[#26263F] leading-snug flex-1">
+                            {currentPlan.title}
+                          </h2>
+
+                          {/* Rich Media Thumbnail Entry (Only in Accepted State, fades in softly) */}
+                          <div 
+                            className={`transition-all duration-300 ${
+                              planState !== 'suggested'
+                                ? 'opacity-100 scale-100 pointer-events-auto'
+                                : 'opacity-0 scale-90 pointer-events-none w-0 h-0 overflow-hidden'
+                            }`}
+                          >
+                            {planState !== 'suggested' && (
+                              <button
+                                ref={cardThumbnailRef}
+                                type="button"
+                                onClick={openDetailWithTransition}
+                                className="relative w-12 h-12 rounded-[16px] overflow-hidden shrink-0 border border-white/80 shadow-[0_2px_8px_rgba(38,38,63,0.06)] group active:scale-95 transition-all cursor-pointer"
+                                title="View plan guide"
+                                aria-label="View plan guide"
+                              >
+                                <div
+                                  className={`w-full h-full relative transition-opacity duration-150 ${
+                                    detailTransitionPhase !== 'idle' || isDetailOpen ? 'opacity-0' : 'opacity-100'
+                                  }`}
+                                >
+                                  <img
+                                    src={currentPlan.thumbnailUrl}
+                                    alt="Plan preview"
+                                    referrerPolicy="no-referrer"
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                  />
+                                  <div className="absolute inset-0 bg-black/25 flex items-center justify-center">
+                                    <div className="w-5 h-5 rounded-full bg-white/95 flex items-center justify-center shadow-xs">
+                                      <Play className="w-2.5 h-2.5 fill-[#26263F] text-[#26263F] ml-0.5" />
+                                    </div>
+                                  </div>
+                                </div>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 2. SUGGESTED EXTRA: Subtitle + Initial Action Buttons (Fades out when accepting) */}
+                      <AnimatePresence initial={false}>
+                        {planState === 'suggested' && (
+                          <motion.div
+                            key="suggested-extra"
+                            initial={{ opacity: 1, height: 'auto' }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={
+                              shouldReduceMotion
+                                ? { opacity: 0, height: 0 }
+                                : {
+                                    opacity: 0,
+                                    height: 0,
+                                    transition: {
+                                      opacity: { duration: 0.18, ease: "easeOut" },
+                                      height: { duration: 0.36, ease: [0.32, 0.72, 0, 1] }
+                                    }
+                                  }
+                            }
+                            className="overflow-hidden flex flex-col gap-3.5 pt-1.5"
+                          >
+                            <p className="text-[13.5px] sm:text-[14px] text-[#5D5B78] leading-relaxed">
+                              {currentPlan.subtitle}
+                            </p>
+
+                            <div className="grid grid-cols-2 gap-3 pt-1.5 pb-0.5">
+                              <button
+                                type="button"
+                                onClick={handleSoundsGood}
+                                className="h-11 sm:h-12 px-4 rounded-[18px] bg-[#5E5BAE] hover:bg-[#524FA0] active:bg-[#484591] active:scale-[0.98] text-white text-[14px] font-bold shadow-[0_4px_16px_rgba(94,91,174,0.22)] border border-white/20 transition-all flex items-center justify-center text-center min-h-[44px] cursor-pointer"
+                              >
+                                Sounds good
+                              </button>
+                              <div className="flex flex-col">
+                                <button
+                                  type="button"
+                                  onClick={handleInitialPlanB}
+                                  className="h-11 sm:h-12 w-full px-4 rounded-[18px] bg-white/75 hover:bg-white/95 active:scale-[0.98] text-[#46437B] border border-white/90 shadow-[0_2px_10px_rgba(94,91,174,0.05)] text-[14px] font-semibold transition-all flex items-center justify-center text-center min-h-[44px] backdrop-blur-md cursor-pointer"
+                                >
+                                  Plan B
+                                </button>
+                                {showPlanBHint && (
+                                  <span className="text-[11px] text-[#706E8A] text-center mt-1 select-none animate-in fade-in font-normal tracking-tight">
+                                    Find another way
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+
+                      {/* 3. ACCEPTED EXTRA: Circular Done Button + Auxiliary Operations (Fades in softly when expanding) */}
+                      <AnimatePresence initial={false}>
+                        {planState !== 'suggested' && (
+                          <motion.div
+                            key="accepted-extra"
+                            initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -6 }}
+                            transition={{
+                              duration: shouldReduceMotion ? 0.05 : 0.32,
+                              delay: shouldReduceMotion ? 0 : 0.12,
+                              ease: [0.32, 0.72, 0, 1]
+                            }}
+                            className="flex flex-col gap-3 pt-2"
+                          >
+                            {/* Horizontally Centered Circular Done Button + "Hold to complete" */}
+                            <div className="flex flex-col items-center justify-center py-0.5">
+                              <div className="relative w-[72px] h-[72px] sm:w-[76px] sm:h-[76px] flex items-center justify-center">
+                                {/* SVG Progress Ring */}
+                                <svg className="w-full h-full -rotate-90 pointer-events-none" viewBox="0 0 76 76">
+                                  <circle
+                                    cx="38"
+                                    cy="38"
+                                    r={circleRadius}
+                                    className="stroke-[#EAE7F6]/80"
+                                    strokeWidth="4"
+                                    fill="transparent"
+                                  />
+                                  <circle
+                                    cx="38"
+                                    cy="38"
+                                    r={circleRadius}
+                                    className={`stroke-[#FF7A32] ${isHolding ? 'transition-none' : 'transition-all duration-150'}`}
+                                    strokeWidth="4.5"
+                                    strokeDasharray={circumference}
+                                    strokeDashoffset={planState === 'completed' ? 0 : strokeDashoffset}
+                                    strokeLinecap="round"
+                                    fill="transparent"
+                                  />
+                                </svg>
+
+                                {/* Circular Button Core (58-60px diameter, min 44px target) */}
+                                <button
+                                  type="button"
+                                  onMouseDown={startHold}
+                                  onMouseUp={cancelHold}
+                                  onMouseLeave={cancelHold}
+                                  onTouchStart={startHold}
+                                  onTouchEnd={cancelHold}
+                                  onTouchCancel={cancelHold}
+                                  onTouchMove={handleTouchMove}
+                                  onContextMenu={(e) => e.preventDefault()}
+                                  onKeyDown={handleDoneKeyDown}
+                                  onClick={handleDoneClick}
+                                  aria-label={planState === 'completed' ? 'Plan completed' : 'Press and hold for 3 seconds to complete, or press Enter for confirmation dialog'}
+                                  className={`absolute w-[58px] h-[58px] sm:w-[60px] sm:h-[60px] rounded-full flex items-center justify-center font-bold transition-all duration-200 select-none shadow-sm touch-none border border-white/20 cursor-pointer ${
+                                    planState === 'completed'
+                                      ? 'bg-[#54519E] text-white shadow-[0_4px_16px_rgba(84,81,158,0.25)]'
+                                      : isHolding
+                                      ? 'bg-[#484591] text-white scale-95 shadow-inner'
+                                      : 'bg-[#5E5BAE] hover:bg-[#524FA0] active:bg-[#484591] text-white shadow-[0_4px_18px_rgba(94,91,174,0.28)]'
+                                  }`}
+                                >
+                                  {planState === 'completed' ? (
+                                    <Check className="w-6 h-6 stroke-[3] text-white" />
+                                  ) : (
+                                    <span className="font-bold text-[15px] sm:text-[16px] tracking-tight text-white">Done</span>
+                                  )}
+                                </button>
+                              </div>
+
+                              <span className="text-[11.5px] sm:text-[12px] mt-1.5 whitespace-nowrap text-center font-normal">
+                                {planState === 'completed' ? (
+                                  <span className="text-[#5E5BAE] font-semibold">Completed</span>
+                                ) : (
+                                  <span className="text-[#706E8A]">Hold to complete</span>
+                                )}
+                              </span>
+                            </div>
+
+                            {/* Bottom Section: Side-by-Side "Plan B" and "Not today" (or Undo completion) */}
+                            <div className="flex items-center justify-center gap-7 pt-2 border-t border-[#26263F]/[0.06]">
+                              {planState === 'completed' ? (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    hasCompletedRef.current = false;
+                                    isHoldingRef.current = false;
+                                    setPlanState('accepted');
+                                    setHoldProgress(0);
+                                  }}
+                                  className="text-xs font-semibold text-[#46437B] hover:text-[#26263F] py-1.5 px-3 transition-colors whitespace-nowrap underline underline-offset-3 cursor-pointer min-h-[40px] flex items-center"
+                                >
+                                  Undo completion
+                                </button>
+                              ) : (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={handleAcceptedPlanB}
+                                    className="text-xs font-semibold text-[#46437B] hover:text-[#26263F] py-1.5 px-3 rounded-full hover:bg-white/50 transition-colors whitespace-nowrap cursor-pointer active:scale-95 min-h-[40px] flex items-center"
+                                  >
+                                    Plan B
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={handleNotToday}
+                                    className="text-xs font-semibold text-[#46437B] hover:text-[#26263F] py-1.5 px-3 rounded-full hover:bg-white/50 transition-colors whitespace-nowrap cursor-pointer active:scale-95 min-h-[40px] flex items-center"
+                                  >
+                                    Not today
+                                  </button>
+                                </>
+                              )}
+                            </div>
+
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+
+                    </div>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+          </div>
+        </div>
+
+        {/* 3. Main Body Content: Plan View (Merged My Plan + Memory) */}
+        <div className={`flex-1 flex flex-col min-h-0 ${activeTab === 'Plan' ? 'flex' : 'hidden'}`}>
+          <MyPlanView phoneFrameRef={phoneFrameRef} />
+        </div>
+
+        {/* 3. Main Body Content: Discover View */}
+        <div className={`flex-1 flex flex-col min-h-0 ${activeTab === 'Discover' ? 'flex' : 'hidden'}`}>
+          <DiscoverView
+            phoneFrameRef={phoneFrameRef}
+            savedItemIds={savedItemIds}
+            onToggleSave={handleToggleSave}
+            isSavedSheetOpen={isSavedSheetOpen}
+            setIsSavedSheetOpen={setIsSavedSheetOpen}
+          />
+        </div>
+
+        {/* 4. Bottom Pinned Section: Conversational Input & 3 Navigation Tabs (Today / Plan / Discover) */}
+        <div className="px-6 pt-2 pb-1.5 flex flex-col gap-1.5 shrink-0 z-20 bg-white/60 backdrop-blur-xl border-t border-white/65 shadow-[0_-4px_24px_rgba(90,80,140,0.04)]">
+          {/* Conversational Input Entry */}
+          <button 
+            type="button"
+            onClick={() => {
+              openChatWithTransition(() => {
+                setInputPlaceholder('Type your response…');
+                setChatMessages([
+                  {
+                    id: 'msg-open-input',
+                    sender: 'ai',
+                    text: "Hi! How's your day shaping up? Tell me whatever is on your mind."
+                  }
+                ]);
+              });
+            }}
+            className="w-full bg-white/70 hover:bg-white/85 backdrop-blur-md rounded-full px-5 py-3 flex items-center gap-3 border border-white/80 shadow-[0_2px_12px_rgba(90,80,140,0.04)] cursor-pointer min-h-[48px] transition-all text-left"
+            aria-label="Talk to Nova"
+          >
+            <span className="flex-1 text-[13.5px] text-[#7A7895] font-normal select-none">
+              Talk to Nova…
+            </span>
+            <div className="text-[#6865B8]">
+              <Mic className="w-5 h-5 stroke-[2]" />
+            </div>
+          </button>
+
+          {/* 3 Bottom Navigation Tabs: Today / Plan / Discover */}
+          <nav className="pt-1 px-2 grid grid-cols-3 gap-2 text-xs font-medium">
+            {[
+              { id: 'Today', icon: Calendar },
+              { id: 'Plan', icon: Sliders },
+              { id: 'Discover', icon: Compass },
+            ].map((tab) => {
+              const isActive = activeTab === tab.id;
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id as 'Today' | 'Plan' | 'Discover')}
+                  className={`flex flex-col items-center gap-1 py-1 px-3 rounded-[16px] transition-all min-h-[44px] justify-center cursor-pointer ${
+                    isActive
+                      ? 'bg-white/80 backdrop-blur-sm text-[#5E5BAE] shadow-2xs border border-white/80 font-bold'
+                      : 'text-[#7A7895] hover:text-[#26263F]'
+                  }`}
+                >
+                  <Icon className={`w-5 h-5 ${isActive ? 'stroke-[2.5]' : 'stroke-[1.8]'}`} />
+                  <span className="text-[11px] tracking-tight">{tab.id}</span>
+                </button>
+              );
+            })}
+          </nav>
+
+          {/* 5. iOS Home Gesture Indicator Bar (34px Height Safe Area) */}
+          <div className="pt-1 pb-1.5 flex items-center justify-center select-none shrink-0">
+            <div className="w-32 h-1 bg-[#26263F]/20 rounded-full" />
+          </div>
+        </div>
+
+        {/* 6. Rich Media Plan Detail Sheet with Smooth Entrance & Exit */}
+        <AnimatePresence>
+          {isDetailOpen && (
+            <div className="absolute inset-0 z-50 overflow-hidden flex flex-col justify-end pointer-events-auto">
+              {/* Dimmed Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={shouldReduceMotion ? { duration: 0.05 } : { duration: 0.36, ease: "easeInOut" }}
+                onClick={closeDetailWithTransition}
+                className="absolute inset-0 bg-black/20 backdrop-blur-xs"
+              />
+
+              {/* Sheet Container */}
+              <motion.div
+                ref={detailSheetRef}
+                initial={shouldReduceMotion ? { y: 0, opacity: 0 } : { y: '100%' }}
+                animate={shouldReduceMotion ? { y: 0, opacity: 1 } : { y: 0 }}
+                exit={shouldReduceMotion ? { y: 0, opacity: 0 } : { y: '100%' }}
+                transition={
+                  shouldReduceMotion
+                    ? { duration: 0.05 }
+                    : {
+                        duration: 0.40,
+                        ease: [0.32, 0.72, 0, 1],
+                      }
+                }
+                className="relative bg-[#FAF8FD]/94 backdrop-blur-2xl rounded-t-[34px] border-t border-white/80 shadow-[0_-16px_48px_rgba(90,80,140,0.12)] flex flex-col h-[75%] max-h-[580px] z-10"
+              >
+                {/* Sheet Header */}
+                <div 
+                  ref={detailHeaderRef}
+                  className="px-6 pt-5 pb-3.5 border-b border-[#26263F]/[0.06] flex items-center justify-between shrink-0"
+                >
+                  <div>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#6865B8]">
+                      Plan Details
+                    </span>
+                    <h3 className="text-base font-bold text-[#26263F] mt-0.5">{currentPlan.detailTitle}</h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={closeDetailWithTransition}
+                    className="w-9 h-9 rounded-full flex items-center justify-center text-[#706E8A] bg-white/60 hover:bg-white/90 border border-white/70 shadow-2xs active:scale-95 transition-all cursor-pointer"
+                    aria-label="Close"
+                  >
+                    <X className="w-4 h-4 stroke-[2.2]" />
+                  </button>
+                </div>
+
+                {/* Sheet Content: Media & Action Guide */}
+                <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+                  {/* Media Hero Banner: In-place slot */}
+                  <div
+                    ref={detailMediaHeroRef}
+                    className="relative w-full h-36 rounded-[22px] overflow-hidden border border-white/80 shadow-xs shrink-0"
+                  >
+                    <div
+                      className={`w-full h-full relative transition-opacity duration-150 ${
+                        detailTransitionPhase === 'open' ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+                      }`}
+                    >
+                      <img
+                        src={currentPlan.thumbnailUrl}
+                        alt={currentPlan.title}
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent flex items-end p-4">
+                        <div className="flex items-center justify-between w-full text-white">
+                          <div>
+                            <div className="text-xs font-bold leading-tight">{currentPlan.audioTitle}</div>
+                            <div className="text-[10.5px] text-white/85 mt-0.5">{currentPlan.audioSubtitle}</div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setIsPlayingAudio(!isPlayingAudio)}
+                            className="w-9 h-9 rounded-full bg-[#5E5BAE] hover:bg-[#524FA0] text-white flex items-center justify-center shadow-xs active:scale-95 transition-transform cursor-pointer"
+                            aria-label={isPlayingAudio ? "Pause audio guide" : "Play audio guide"}
+                          >
+                            {isPlayingAudio ? (
+                              <Volume2 className="w-4 h-4 stroke-[2.4] text-white" />
+                            ) : (
+                              <Play className="w-4 h-4 fill-white text-white ml-0.5" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Clean Practical Tips: Fades in gracefully with slight delay */}
+                  <motion.div
+                    initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={
+                      shouldReduceMotion
+                        ? { duration: 0.05 }
+                        : {
+                            delay: 0.16,
+                            duration: 0.26,
+                            ease: "easeOut",
+                          }
+                    }
+                    className="space-y-2.5"
+                  >
+                    <h4 className="text-xs font-bold text-[#26263F]">Gentle Guidelines</h4>
+                    <div className="p-3.5 rounded-[20px] bg-white/75 backdrop-blur-md border border-white/80 text-xs text-[#5D5B78] space-y-2.5 shadow-2xs">
+                      <div className="flex items-start gap-2.5">
+                        <Clock className="w-4 h-4 text-[#6865B8] mt-0.5 shrink-0 stroke-[2]" />
+                        <span>{currentPlan.tip1}</span>
+                      </div>
+                      <div className="flex items-start gap-2.5">
+                        <Sparkles className="w-4 h-4 text-[#FF7A32] mt-0.5 shrink-0 stroke-[2]" />
+                        <span>{currentPlan.tip2}</span>
+                      </div>
+                    </div>
+                  </motion.div>
+                </div>
+
+                {/* Sheet Bottom Safe Area & Action */}
+                <div className="p-5 pb-6 border-t border-[#26263F]/[0.06] bg-[#FAF8FD]/90 backdrop-blur-md flex flex-col gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={closeDetailWithTransition}
+                    className="w-full py-3 rounded-[18px] bg-white/75 hover:bg-white/90 border border-white/90 text-[#46437B] text-xs font-semibold text-center active:scale-98 transition-all min-h-[44px] shadow-2xs backdrop-blur-md cursor-pointer"
+                  >
+                    Back to Today
+                  </button>
+                  <div className="w-32 h-1 bg-[#26263F]/20 rounded-full mx-auto" />
+                </div>
+
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* 7. AI Conversation Drawer / Sheet with smooth entrance and exit */}
+        <AnimatePresence>
+          {isChatOpen && (
+            <div className="absolute inset-0 z-40 overflow-hidden flex flex-col justify-end pointer-events-auto">
+              {/* Dimmed Backdrop (Softened to bg-black/16 backdrop-blur-[1.5px] so Home contours remain discernible) */}
+              <motion.div 
+                onClick={closeChatWithTransition} 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={shouldReduceMotion ? { duration: 0.05 } : { duration: 0.36, ease: "easeInOut" }}
+                className="absolute inset-0 bg-black/16 backdrop-blur-[1.5px]" 
+              />
+
+              {/* Drawer Sheet */}
+              <motion.div 
+                ref={chatSheetRef}
+                initial={shouldReduceMotion ? { y: 0, opacity: 0 } : { y: '100%' }}
+                animate={shouldReduceMotion ? { y: 0, opacity: 1 } : { y: 0 }}
+                exit={shouldReduceMotion ? { y: 0, opacity: 0 } : { y: '100%' }}
+                transition={
+                  shouldReduceMotion
+                    ? { duration: 0.05 }
+                    : {
+                        duration: 0.40,
+                        ease: [0.32, 0.72, 0, 1],
+                      }
+                }
+                className="relative bg-[#FAF8FD]/94 backdrop-blur-2xl rounded-t-[36px] border-t border-white/85 shadow-[0_-16px_48px_rgba(90,80,140,0.14)] flex flex-col h-[74%] max-h-[580px] z-10"
+              >
+                {/* Close Button Top-Right (Independent of Nova) */}
+                <button
+                  type="button"
+                  onClick={closeChatWithTransition}
+                  className="absolute top-3.5 right-4 z-40 w-9 h-9 rounded-full flex items-center justify-center text-[#706E8A] bg-white/60 hover:bg-white/90 border border-white/70 shadow-2xs active:scale-95 transition-all"
+                  aria-label="Close"
+                >
+                  <X className="w-4 h-4 stroke-[2.2]" />
+                </button>
+
+                {/* Header with Centered Nickname "Nova" */}
+                <div className="pt-14 pb-2 px-5 border-b border-[#26263F]/[0.05] flex items-center justify-center shrink-0">
+                  <h3 className="text-[16px] font-bold text-[#26263F] tracking-tight text-center">
+                    Nova
+                  </h3>
+                </div>
+
+                {/* Animated Inner Content (Header, Messages, Input) */}
+                <motion.div
+                  initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0 }}
+                  transition={
+                    shouldReduceMotion
+                      ? { duration: 0.05 }
+                      : {
+                          delay: 0.16,
+                          duration: 0.26,
+                          ease: "easeOut",
+                        }
+                  }
+                  className="flex-1 flex flex-col overflow-hidden"
+                >
+                  {/* Chat Messages Body */}
+                  <div 
+                    ref={chatContainerRef}
+                    onScroll={handleChatScroll}
+                    className="flex-1 overflow-y-auto overscroll-contain px-5 py-4 space-y-3.5 text-xs leading-relaxed"
+                  >
+                    {chatMessages.map((msg) => {
+                      // If AI message has options, render as a genuine frosted chat bubble
+                      if (msg.sender === 'ai' && msg.options && msg.options.length > 0) {
+                        return (
+                          <div
+                            key={msg.id}
+                            className="flex flex-col items-start transition-opacity duration-200"
+                          >
+                            <div className="max-w-[85%] bg-white/85 backdrop-blur-md rounded-[22px] rounded-bl-xs border border-white/90 p-4 shadow-[0_2px_12px_rgba(90,80,140,0.04)] space-y-2.5">
+                              {/* Suggestion Text */}
+                              <p className="text-[13.5px] leading-relaxed text-[#26263F]">
+                                {msg.text}
+                              </p>
+
+                              {/* Action Options: If active (not disabled), show all selectable options */}
+                              {!msg.disabled && (
+                                <div className="flex flex-col items-start gap-2 pt-1">
+                                  {msg.options.map((opt, optIdx) => (
+                                    <button
+                                      key={optIdx}
+                                      type="button"
+                                      onClick={() => handleOptionClick(opt, msg.id)}
+                                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[18px] border border-white/90 bg-[#F4F1FD]/85 hover:bg-[#ECE7FB] active:scale-[0.98] text-[#46437B] text-xs font-semibold text-left transition-all select-none min-h-[38px] shadow-2xs cursor-pointer"
+                                    >
+                                      <span>{opt.label}</span>
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+
+                              {/* If handled/disabled message: unselected operations are collapsed.
+                                  Only the chosen option (if any) is shown as a subtle, non-clickable status chip. */}
+                              {msg.disabled && msg.selectedOptionLabel && (
+                                <div className="pt-0.5">
+                                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[14px] border border-[#5E5BAE]/20 bg-[#EBE7FA]/80 text-[11.5px] font-medium text-[#46437B] select-none cursor-default">
+                                    <Check className="w-3 h-3 stroke-[2.5] text-[#5E5BAE]" />
+                                    <span>{msg.selectedOptionLabel}</span>
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      // Standard chat bubble (e.g. user messages or regular AI text)
+                      return (
+                        <div
+                          key={msg.id}
+                          className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}
+                        >
+                          <div
+                            className={`max-w-[85%] px-4 py-2.5 rounded-[20px] ${
+                              msg.sender === 'user'
+                                ? 'bg-[#5E5BAE] text-white rounded-br-xs shadow-[0_3px_12px_rgba(94,91,174,0.2)] font-medium'
+                                : 'bg-white/85 backdrop-blur-md text-[#26263F] border border-white/90 rounded-bl-xs shadow-2xs'
+                            }`}
+                          >
+                            {msg.text}
+                          </div>
+                        </div>
+                      );
+                    })}
+                    <div ref={chatMessagesEndRef} />
+                  </div>
+
+                  {/* Chat Input Bar inside sheet with Home Indicator safe area */}
+                  <form
+                    onSubmit={handleSendChatMessage}
+                    className="p-4 pb-6 border-t border-[#26263F]/[0.05] bg-[#FAF8FD]/95 backdrop-blur-md shrink-0 flex flex-col gap-2"
+                  >
+                    <div className="bg-white/80 backdrop-blur-sm rounded-full px-4 py-2.5 flex items-center gap-2 border border-white/85 shadow-2xs focus-within:border-[#5E5BAE]/60 focus-within:ring-2 focus-within:ring-[#5E5BAE]/15 transition-all">
+                      <input
+                        ref={chatInputRef}
+                        type="text"
+                        value={sheetInput}
+                        onChange={(e) => setSheetInput(e.target.value)}
+                        onFocus={() => {
+                          isNearBottomRef.current = true;
+                          setTimeout(() => {
+                            chatMessagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                          }, 150);
+                        }}
+                        placeholder={inputPlaceholder}
+                        className="flex-1 bg-transparent text-xs text-[#26263F] placeholder-[#8E8EA8] outline-none"
+                      />
+                      <button
+                        type="submit"
+                        disabled={!sheetInput.trim()}
+                        aria-label="Send message"
+                        className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                          sheetInput.trim()
+                            ? 'bg-[#5E5BAE] hover:bg-[#524FA0] text-white active:scale-95 shadow-2xs'
+                            : 'bg-[#EDEAF4] text-[#A2A0B8]'
+                        }`}
+                      >
+                        <ArrowUp className="w-4 h-4 stroke-[2.5]" />
+                      </button>
+                    </div>
+                    <div className="w-32 h-1 bg-[#26263F]/20 rounded-full mx-auto" />
+                  </form>
+                </motion.div>
+
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* 7. Accessible Confirmation Dialog (Keyboard & Screen Reader Users) */}
+        {isAccessibleConfirmOpen && (
+          <div 
+            className="absolute inset-0 z-50 bg-black/25 backdrop-blur-xs flex items-center justify-center p-6 animate-in fade-in duration-150"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="accessible-dialog-title"
+          >
+            <div className="bg-[#FAF8FD]/95 backdrop-blur-2xl border border-white/90 rounded-[24px] p-6 w-full max-w-[310px] shadow-[0_16px_48px_rgba(90,80,140,0.18)] animate-in zoom-in-95 duration-150 flex flex-col gap-3.5">
+              <div>
+                <h3 id="accessible-dialog-title" className="text-base font-bold text-[#26263F]">
+                  Mark plan as complete?
+                </h3>
+                <p className="text-xs text-[#5D5B78] mt-1.5 leading-relaxed">
+                  Confirm that you’ve completed <span className="font-semibold text-[#26263F]">“{currentPlan.title}”</span> for today.
+                </p>
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsAccessibleConfirmOpen(false)}
+                  className="px-3.5 py-2 rounded-[16px] bg-white/70 hover:bg-white/90 border border-white/85 text-xs font-semibold text-[#46437B] active:scale-95 transition-all min-h-[44px]"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    hasCompletedRef.current = true;
+                    isHoldingRef.current = false;
+                    setIsAccessibleConfirmOpen(false);
+                    setPlanState('completed');
+                    setHoldProgress(100);
+                  }}
+                  className="px-4 py-2 rounded-[16px] bg-[#5E5BAE] hover:bg-[#524FA0] active:bg-[#484591] text-white text-xs font-bold shadow-[0_4px_14px_rgba(94,91,174,0.22)] active:scale-95 transition-all min-h-[44px]"
+                >
+                  Confirm Done
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+      </div>
+    </div>
+  );
+}
