@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { createBlobCreature, type BlobCreature } from './blobCreature.ts';
 import { createGPUFurPhysics, type GPUFurPhysics } from './gpuPhysics.ts';
 import { createGPUFurSystem, type FurSystem } from './furSystem.ts';
+import { FurryNovaStaticAvatar } from './FurryNovaStaticAvatar';
 
 export interface NovaAvatar3DProps {
   /** Whether the current page/tab is active and visible (pauses loop when false) */
@@ -453,11 +454,9 @@ export function NovaAvatar3D({
         {/* Soft radial glow halo */}
         <div className="absolute inset-0 rounded-full bg-radial from-[#F4EEFE]/90 via-[#FDF1F5]/45 to-transparent blur-2xl pointer-events-none -z-10" />
 
-        <img
-          src={fallbackImage}
-          alt="Nova Companion"
-          referrerPolicy="no-referrer"
-          className="w-full h-full object-contain pointer-events-none drop-shadow-xs [mask-image:linear-gradient(to_bottom,black_60%,black_75%,rgba(0,0,0,0.65)_88%,rgba(0,0,0,0.2)_96%,transparent_100%)]"
+        <FurryNovaStaticAvatar
+          size={240}
+          className="w-full h-full object-contain pointer-events-none drop-shadow-xs"
         />
 
         {hasError && (

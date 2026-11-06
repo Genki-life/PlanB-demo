@@ -18,6 +18,7 @@ import {
   RefreshCw,
   RotateCcw
 } from 'lucide-react';
+import { FurryNovaStaticAvatar } from './Avatar3D/FurryNovaStaticAvatar';
 
 export interface MemoryItem {
   id: string;
@@ -371,12 +372,8 @@ export const MemoryView: React.FC<MemoryViewProps> = ({ phoneFrameRef }) => {
         <div className="absolute -top-12 -right-12 w-36 h-36 bg-[#EBDDF9]/40 rounded-full blur-2xl pointer-events-none" />
 
         <div className="flex items-center gap-3.5 relative z-10">
-          <div className="relative w-12 h-12 shrink-0 rounded-full bg-gradient-to-b from-[#FAF8FD] to-[#EAE6F8] p-1 border border-white/90 shadow-2xs flex items-center justify-center overflow-hidden">
-            <img
-              src="/kila-listening.png"
-              alt="Nova"
-              className="w-full h-full object-contain drop-shadow-sm select-none"
-            />
+          <div className="relative w-12 h-12 shrink-0 rounded-full bg-gradient-to-b from-[#FAF8FD] to-[#EAE6F8] p-0.5 border border-white/90 shadow-2xs flex items-center justify-center overflow-hidden">
+            <FurryNovaStaticAvatar size={48} className="w-full h-full" />
             <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-[#5E5BAE] border-2 border-white flex items-center justify-center">
               <Sparkles className="w-2 h-2 text-white stroke-[2.5]" />
             </div>
@@ -820,11 +817,7 @@ export const MemoryView: React.FC<MemoryViewProps> = ({ phoneFrameRef }) => {
               <div className="pt-3 pb-3 px-5 flex items-center justify-between border-b border-[#26263F]/[0.06] bg-white/50 backdrop-blur-md">
                 <div className="flex items-center gap-3">
                   <div className="relative w-9 h-9 rounded-full bg-gradient-to-b from-[#FAF8FD] to-[#EAE6F8] p-0.5 border border-white/90 shadow-2xs flex items-center justify-center overflow-hidden">
-                    <img
-                      src="/kila-listening.png"
-                      alt="Nova"
-                      className="w-full h-full object-contain drop-shadow-sm"
-                    />
+                    <FurryNovaStaticAvatar size={36} className="w-full h-full" />
                   </div>
                   <div className="flex flex-col">
                     <div className="flex items-center gap-1.5">

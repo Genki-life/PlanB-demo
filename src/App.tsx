@@ -25,11 +25,10 @@ import {
 import { MyPlanView } from './components/MyPlanView';
 import { DiscoverView } from './components/DiscoverView';
 import { NovaAvatar3D } from './components/Avatar3D/NovaAvatar3D';
+import { FurryNovaStaticAvatar } from './components/Avatar3D/FurryNovaStaticAvatar';
 
 import thumbImageUrl from './assets/images/mindful_walk_thumb_1793264566501.jpg';
 
-const IP_IMAGE_URL = '/kila-home.png';
-const NOVA_LISTENING_URL = '/kila-listening.png';
 const THUMB_IMAGE_URL = thumbImageUrl;
 
 // Plan Information Model
@@ -983,38 +982,25 @@ export default function App() {
               }
             }}
           >
-            {/* Soft lilac & warm blush halo behind character (fades out as Nova descends to drawer) */}
+            {/* Soft lilac & warm blush halo behind character */}
             <motion.div 
-              animate={{ opacity: isChatOpen ? 0 : 0.85, scale: isChatOpen ? 0.6 : 1 }}
+              animate={{ opacity: isChatOpen ? 0.35 : 0.85, scale: isChatOpen ? 0.8 : 1 }}
               transition={{ duration: isChatOpen ? 0.25 : 0.32 }}
               className="absolute inset-1 rounded-full bg-radial from-[#F4EEFE]/90 via-[#FDF1F5]/45 to-transparent blur-2xl pointer-events-none -z-10" 
             />
 
-            {/* Home Nova image (smoothly crossfades out as it approaches drawer rim) */}
-            <motion.img
-              src={IP_IMAGE_URL}
-              alt="Plan B Companion Nova"
-              referrerPolicy="no-referrer"
-              animate={{ opacity: isChatOpen ? 0 : 1 }}
-              transition={{ 
-                duration: shouldReduceMotion ? 0.05 : (isChatOpen ? 0.20 : 0.24),
-                delay: shouldReduceMotion ? 0 : (isChatOpen ? 0.12 : 0)
-              }}
-              className="w-full h-full object-contain pointer-events-none drop-shadow-xs [mask-image:linear-gradient(to_bottom,black_60%,black_75%,rgba(0,0,0,0.65)_88%,rgba(0,0,0,0.2)_96%,transparent_100%)] absolute inset-0"
-            />
-
-            {/* Listening Nova image (smoothly crossfades in as it arrives at drawer rim) */}
-            <motion.img
-              src={NOVA_LISTENING_URL}
-              alt="Nova listening"
-              referrerPolicy="no-referrer"
-              animate={{ opacity: isChatOpen ? 1 : 0 }}
-              transition={{ 
-                duration: shouldReduceMotion ? 0.05 : (isChatOpen ? 0.24 : 0.20),
-                delay: shouldReduceMotion ? 0 : (isChatOpen ? 0.16 : 0)
-              }}
-              className="w-full h-full object-contain pointer-events-none drop-shadow-xs absolute inset-0"
-            />
+            {/* Consistent Furry Nova Character matching 3D Home Avatar */}
+            <motion.div
+              className="w-full h-full relative flex items-center justify-center pointer-events-none"
+              animate={{ scale: isChatOpen ? 0.95 : 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              <FurryNovaStaticAvatar
+                size={isChatOpen ? 128 : 204}
+                isListening={isChatOpen}
+                className="w-full h-full"
+              />
+            </motion.div>
           </motion.div>
         )}
 
@@ -1170,83 +1156,96 @@ export default function App() {
             activeTab === 'Today' ? 'flex' : 'hidden'
           }`}
         >
-          {/* Click-outside backdrop when suggestion card is expanded */}
+          {/* Click-outside backdrop: transparent hit-area across entire screen, with soft glass blur ONLY below Nova */}
           <AnimatePresence>
             {isPlanCardOpen && (
-              <motion.div
-                key="today-card-backdrop"
-                id="today-card-backdrop"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: shouldReduceMotion ? 0.05 : 0.2 }}
-                onClick={() => setIsPlanCardOpen(false)}
-                className="absolute inset-0 z-15 cursor-pointer"
-                aria-label="Close suggestion card"
-              />
+              <>
+                {/* Full-screen click-outside dismiss target */}
+                <motion.div
+                  key="today-card-backdrop-dismiss"
+                  id="today-card-backdrop"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: shouldReduceMotion ? 0.05 : 0.2 }}
+                  onClick={() => setIsPlanCardOpen(false)}
+                  className="absolute inset-0 z-15 cursor-pointer"
+                  aria-label="Close suggestion card"
+                />
+
+                {/* Soft glass blur: ONLY below Nova's face (top-[270px] downwards) so Nova remains crystal clear */}
+                <motion.div
+                  key="today-card-backdrop-blur"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: shouldReduceMotion ? 0.05 : 0.24 }}
+                  className="absolute inset-x-0 bottom-0 top-[260px] sm:top-[280px] z-15 bg-white/30 backdrop-blur-md pointer-events-none"
+                />
+              </>
             )}
           </AnimatePresence>
 
-          {/* 1. Top Layer: Today's Suggestion Title & Arrow (Tap to expand/collapse card) */}
-          <div className="w-full flex justify-center shrink-0 z-25 mb-1 sm:mb-1.5">
-            <button
-              id="today-top-suggestion-btn"
-              type="button"
-              onClick={() => setIsPlanCardOpen(prev => !prev)}
-              aria-expanded={isPlanCardOpen}
-              aria-label={`${isPlanCardOpen ? 'Collapse' : 'Expand'} today's suggestion: ${currentPlan.title}`}
-              className="liquid-glass-bubble w-full max-w-[344px] px-3.5 py-2 rounded-full text-left flex items-center justify-between gap-2.5 cursor-pointer active:scale-[0.98] transition-all min-h-[40px] group select-none shadow-xs"
+          {/* Unified Companion Cluster (Bubble + Nova + Greeting + Telemetry as a balanced centered whole) */}
+          <div className="w-full flex-1 min-h-0 flex flex-col items-center justify-center my-auto relative z-20 py-1">
+            
+            {/* 1. Today's Suggestion Speech Bubble: Close to Nova, fades out when card expands */}
+            <div 
+              className={`w-full flex justify-center shrink-0 mb-0.5 sm:mb-1 transition-all duration-200 ${
+                isPlanCardOpen ? 'opacity-0 scale-95 pointer-events-none' : 'opacity-100 scale-100 pointer-events-auto'
+              }`}
             >
-              <div className="flex items-center gap-2 min-w-0 flex-1">
-                {planState === 'completed' ? (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#5E5BAE]/10 text-[#5E5BAE] text-[10px] font-bold shrink-0">
-                    <Check className="w-2.5 h-2.5 stroke-[3]" />
-                    <span>DONE</span>
-                  </span>
-                ) : planState === 'accepted' ? (
-                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-[#5E5BAE]/10 text-[#5E5BAE] text-[10px] font-bold shrink-0">
-                    READY
-                  </span>
-                ) : (
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#5E5BAE] shrink-0 animate-pulse" />
-                )}
-                <span className="text-[13px] sm:text-[13.5px] font-semibold text-[#1C1C1E] tracking-[-0.01em] truncate">
-                  {currentPlan.title}
-                </span>
-              </div>
+              <div className="relative">
+                <button
+                  id="today-top-suggestion-btn"
+                  type="button"
+                  onClick={() => setIsPlanCardOpen(true)}
+                  aria-expanded={isPlanCardOpen}
+                  aria-label={`Open today's suggestion: ${currentPlan.title}`}
+                  className="liquid-glass-bubble relative z-10 px-4 py-2 rounded-[22px] text-left flex items-center justify-between gap-2.5 cursor-pointer active:scale-[0.98] transition-all max-w-[344px] shadow-[0_4px_16px_rgba(94,91,174,0.08)] group select-none"
+                >
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    {planState === 'completed' ? (
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#5E5BAE]/10 text-[#5E5BAE] text-[10px] font-bold shrink-0">
+                        <Check className="w-2.5 h-2.5 stroke-[3]" />
+                        <span>DONE</span>
+                      </span>
+                    ) : planState === 'accepted' ? (
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-[#5E5BAE]/10 text-[#5E5BAE] text-[10px] font-bold shrink-0">
+                        READY
+                      </span>
+                    ) : (
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#5E5BAE] shrink-0 animate-pulse" />
+                    )}
+                    <span className="text-[13.5px] sm:text-[14px] font-semibold text-[#1C1C1E] tracking-[-0.01em] truncate">
+                      {currentPlan.title}
+                    </span>
+                  </div>
 
-              <div className="w-5 h-5 rounded-full liquid-glass-icon-well group-hover:bg-[#5E5BAE]/14 text-[#5E5BAE] flex items-center justify-center shrink-0 transition-colors">
-                <ChevronDown
-                  className={`w-3.5 h-3.5 stroke-[2.4] transition-transform duration-250 ${
-                    isPlanCardOpen ? 'rotate-180' : 'rotate-0'
-                  }`}
-                />
-              </div>
-            </button>
-          </div>
+                  <div className="w-5 h-5 rounded-full liquid-glass-icon-well group-hover:bg-[#5E5BAE]/14 text-[#5E5BAE] flex items-center justify-center shrink-0 transition-colors ml-1">
+                    <ChevronDown className="w-3.5 h-3.5 stroke-[2.4]" />
+                  </div>
+                </button>
 
-          {/* 2. Middle Layer: Centered 3D Nova Avatar */}
-          <motion.div
-            animate={{
-              y: isPlanCardOpen ? (frameSize.height < 720 ? -6 : -2) : 0,
-              scale: isPlanCardOpen ? (frameSize.height < 720 ? 0.82 : 0.90) : 1
-            }}
-            transition={
-              shouldReduceMotion
-                ? { duration: 0.05 }
-                : { duration: 0.32, ease: [0.32, 0.72, 0, 1] }
-            }
-            className="w-full relative flex flex-col items-center justify-center shrink-0 z-20 origin-top"
-          >
+                {/* Downward Speech Bubble Tail pointing towards Nova */}
+                <div 
+                  className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-4 h-2 overflow-hidden pointer-events-none z-10"
+                  aria-hidden="true"
+                >
+                  <div className="w-2.5 h-2.5 bg-white/90 backdrop-blur-md rotate-45 mx-auto -translate-y-1.5 border-r border-b border-black/[0.06] shadow-xs" />
+                </div>
+              </div>
+            </div>
+
+            {/* 2. 3D Nova Avatar: Stationary, crystal clear, unblurred, fur simulation active */}
             <div 
               ref={homeAvatarRef}
               className={`relative flex items-center justify-center shrink-0 transition-all duration-300 ${
-                isPlanCardOpen 
-                  ? (frameSize.height < 720 ? 'w-[160px] h-[160px]' : 'w-[185px] h-[185px]')
-                  : (frameSize.height < 720 ? 'w-[200px] h-[200px]' : 'w-[226px] h-[226px] sm:w-[246px] sm:h-[246px]')
+                frameSize.height < 700 
+                  ? 'w-[200px] h-[200px]' 
+                  : 'w-[230px] h-[230px] sm:w-[248px] sm:h-[248px]'
               }`}
             >
-              {/* In-place Home Nova: Visible when idle on home, hidden during active chat transition */}
               <div 
                 className={`w-full h-full relative transition-opacity duration-200 ${
                   transitionPhase === 'idle' && !isChatOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
@@ -1255,418 +1254,386 @@ export default function App() {
                 {avatarMode === '3d' ? (
                   <NovaAvatar3D
                     isActiveTab={activeTab === 'Today' && !isChatOpen}
-                    fallbackImage={IP_IMAGE_URL}
                     className="w-full h-full"
                     mode="3d"
                   />
                 ) : (
-                  <>
-                    {/* Soft lilac & warm blush halo behind character */}
-                    <div className="absolute inset-0 rounded-full bg-radial from-[#F4EEFE]/90 via-[#FDF1F5]/45 to-transparent blur-2xl pointer-events-none -z-10" />
-
-                    {/* Home Nova image */}
-                    <img
-                      src={IP_IMAGE_URL}
-                      alt="Plan B Companion Nova"
-                      referrerPolicy="no-referrer"
-                      className="w-full h-full object-contain pointer-events-none drop-shadow-xs [mask-image:linear-gradient(to_bottom,black_60%,black_75%,rgba(0,0,0,0.65)_88%,rgba(0,0,0,0.2)_96%,transparent_100%)] absolute inset-0"
-                    />
-                  </>
+                  <FurryNovaStaticAvatar size={230} className="w-full h-full" />
                 )}
               </div>
             </div>
-          </motion.div>
 
-          {/* Below Nova Stage: Switch smoothly between Normal (3. Greeting + 4. Watermark Data) and (Expanded Plan Card) */}
-          <div className="w-full flex-1 min-h-0 relative flex flex-col items-center justify-start z-25 mt-0.5 sm:mt-1">
-            <AnimatePresence initial={false} mode="wait">
-              {!isPlanCardOpen ? (
-                <motion.div
-                  key="today-ambient-summary"
-                  initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 4 }}
-                  transition={{ duration: shouldReduceMotion ? 0.05 : 0.22, ease: [0.32, 0.72, 0, 1] }}
-                  className="w-full flex flex-col items-center justify-start"
+            {/* 3. Nova Nickname & Greeting (Tightly unified with Nova, discreet 3D toggle) */}
+            <div className="flex flex-col items-center text-center mt-1 sm:mt-1.5 shrink-0">
+              <div className="flex items-center justify-center gap-1.5">
+                <h2 className="text-[20px] font-bold text-[#1C1C1E] tracking-[-0.024em] select-none leading-none">
+                  Nova
+                </h2>
+                {/* 弱化 3D 调试开关: Discreet, understated pill */}
+                <button
+                  type="button"
+                  onClick={() => setAvatarMode(prev => prev === '3d' ? '2d' : '3d')}
+                  className="px-1.5 py-0.5 rounded-full text-[9px] font-medium text-[#8E8E93]/70 hover:text-[#5E5BAE] bg-black/[0.03] hover:bg-[#5E5BAE]/10 active:scale-95 transition-all cursor-pointer select-none border border-black/[0.04]"
+                  title={avatarMode === '3d' ? "Switch to 2D Nova" : "Switch to 3D Fur Avatar"}
+                  aria-label="Toggle 3D/2D Avatar"
                 >
-                  {/* 3. Nova Nickname & Greeting */}
-                  <div className="flex flex-col items-center text-center">
-                    <div className="flex items-center justify-center gap-2">
-                      <h2 className="text-[19px] sm:text-[20px] font-bold text-[#1C1C1E] tracking-[-0.02em] select-none leading-none">
-                        Nova
-                      </h2>
-                      <button
-                        type="button"
-                        onClick={() => setAvatarMode(prev => prev === '3d' ? '2d' : '3d')}
-                        className="liquid-glass-bubble px-2 py-0.5 rounded-full text-[10px] font-semibold text-[#5E5BAE] active:scale-95 transition-all cursor-pointer select-none"
-                        title={avatarMode === '3d' ? "Switch to 2D Nova image" : "Switch to 3D Fur Avatar"}
-                        aria-label="Toggle 3D Avatar or 2D image"
-                      >
-                        {avatarMode === '3d' ? '3D' : '2D'}
-                      </button>
-                    </div>
+                  {avatarMode === '3d' ? '3D' : '2D'}
+                </button>
+              </div>
 
-                    <div className="mt-1.5 px-4 max-w-[320px]">
-                      <p className="text-[13.5px] sm:text-[14px] font-normal text-[#6C6C70] leading-snug tracking-[-0.01em]">
-                        Hope your morning is going a little easier.
-                      </p>
-                    </div>
-                  </div>
+              <div className="mt-1 px-4 max-w-[320px]">
+                <p className="text-[13.5px] sm:text-[14px] font-normal text-[#6C6C70] leading-snug tracking-[-0.01em]">
+                  Hope your morning is going a little easier.
+                </p>
+              </div>
+            </div>
 
-                  {/* 4. Ambient Metrics: Weather, Steps, Heart Rate (Watermark style) */}
-                  <div className="w-full flex flex-col items-center mt-3.5 sm:mt-4">
-                    <div className="flex items-center justify-center flex-wrap gap-x-2 gap-y-1 text-[11px] text-[#6C6C70]/75 tabular-nums select-none">
-                      {/* Weather */}
-                      <span className="inline-flex items-center gap-1 shrink-0">
-                        <CloudSun className="w-3 h-3 text-[#6C6C70]/60 stroke-[2] shrink-0" />
-                        <span className="font-medium text-[#3C3C43]/85">18°C</span>
-                        <span className="text-[#8E8E93]/80 text-[10px] hidden min-[360px]:inline">Cloudy</span>
-                      </span>
+            {/* 4. Ambient Telemetry: Distinct grouping, low contrast watermark, legible values and sample data */}
+            <div className="w-full flex flex-col items-center mt-3.5 sm:mt-4 pt-0.5 shrink-0">
+              <div className="flex items-center justify-center flex-wrap gap-x-3 sm:gap-x-4 gap-y-1 select-none">
+                {/* Weather */}
+                <span className="inline-flex items-center gap-1.5 shrink-0">
+                  <CloudSun className="w-3.5 h-3.5 text-[#8E8E93]/65 stroke-[1.6] shrink-0" />
+                  <span className="text-[14.5px] sm:text-[15px] font-light text-[#3C3C43]/70 tabular-nums tracking-tight">18°C</span>
+                  <span className="text-[11.5px] sm:text-[12px] font-light text-[#8E8E93]/75 hidden min-[370px]:inline">Cloudy</span>
+                </span>
 
-                      <span className="text-black/15 select-none shrink-0" aria-hidden="true">·</span>
+                <span className="text-black/10 select-none shrink-0" aria-hidden="true">·</span>
 
-                      {/* Steps */}
-                      <span className="inline-flex items-center gap-1 shrink-0">
-                        <Footprints className="w-3 h-3 text-[#6C6C70]/60 stroke-[2] shrink-0" />
-                        <span className="font-medium text-[#3C3C43]/85">3,420</span>
-                        <span className="text-[#8E8E93]/80 text-[10px]">steps</span>
-                      </span>
+                {/* Steps */}
+                <span className="inline-flex items-center gap-1.5 shrink-0">
+                  <Footprints className="w-3.5 h-3.5 text-[#8E8E93]/65 stroke-[1.6] shrink-0" />
+                  <span className="text-[14.5px] sm:text-[15px] font-light text-[#3C3C43]/70 tabular-nums tracking-tight">3,420</span>
+                  <span className="text-[11.5px] sm:text-[12px] font-light text-[#8E8E93]/75">steps</span>
+                </span>
 
-                      <span className="text-black/15 select-none shrink-0" aria-hidden="true">·</span>
+                <span className="text-black/10 select-none shrink-0" aria-hidden="true">·</span>
 
-                      {/* Heart rate */}
-                      <span className="inline-flex items-center gap-1 shrink-0">
-                        <Heart className="w-3 h-3 text-[#FF2D55]/55 stroke-[2] shrink-0" />
-                        <span className="font-medium text-[#3C3C43]/85">68</span>
-                        <span className="text-[#8E8E93]/80 text-[10px]">bpm</span>
-                      </span>
+                {/* Heart rate */}
+                <span className="inline-flex items-center gap-1.5 shrink-0">
+                  <Heart className="w-3.5 h-3.5 text-[#FF2D55]/45 stroke-[1.6] shrink-0" />
+                  <span className="text-[14.5px] sm:text-[15px] font-light text-[#3C3C43]/70 tabular-nums tracking-tight">68</span>
+                  <span className="text-[11.5px] sm:text-[12px] font-light text-[#8E8E93]/75">bpm</span>
+                </span>
 
-                      <span className="text-black/15 select-none shrink-0" aria-hidden="true">·</span>
+                <span className="text-black/10 select-none shrink-0" aria-hidden="true">·</span>
 
-                      {/* Sample data toggle */}
-                      <button
-                        type="button"
-                        onClick={() => setShowSampleDataNote(prev => !prev)}
-                        className="text-[10px] text-[#8E8E93]/80 hover:text-[#3C3C43] underline decoration-[#8E8E93]/40 underline-offset-2 cursor-pointer transition-colors shrink-0"
-                        title="Sample values shown before sensor connection"
-                      >
-                        Sample data
-                      </button>
-                    </div>
-
-                    <AnimatePresence initial={false}>
-                      {showSampleDataNote && (
-                        <motion.p
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: 'auto' }}
-                          exit={{ opacity: 0, height: 0 }}
-                          className="text-[10.5px] text-[#8E8E93] text-center pt-1.5 px-4 max-w-[320px] leading-snug overflow-hidden"
-                        >
-                          Sample values for preview — live weather and wearable health sensors are not connected yet.
-                        </motion.p>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="today-expanded-card-flow"
-                  initial={
-                    shouldReduceMotion
-                      ? { opacity: 0 }
-                      : { opacity: 0, scale: 0.94, y: 10 }
-                  }
-                  animate={
-                    shouldReduceMotion
-                      ? { opacity: 1 }
-                      : { opacity: 1, scale: 1, y: 0 }
-                  }
-                  exit={
-                    shouldReduceMotion
-                      ? { opacity: 0 }
-                      : { opacity: 0, scale: 0.95, y: 6 }
-                  }
-                  transition={
-                    shouldReduceMotion
-                      ? { duration: 0.05 }
-                      : { duration: 0.32, ease: [0.32, 0.72, 0, 1] }
-                  }
-                  className="w-full max-w-[350px] flex-1 min-h-0 overflow-y-auto scrollbar-none pb-2 z-30 flex flex-col"
+                {/* Sample data toggle */}
+                <button
+                  type="button"
+                  onClick={() => setShowSampleDataNote(prev => !prev)}
+                  className="text-[11px] sm:text-[11.5px] font-light text-[#8E8E93]/75 hover:text-[#1C1C1E] underline decoration-[#8E8E93]/35 underline-offset-3 cursor-pointer transition-colors shrink-0"
+                  title="Sample values shown before sensor connection"
                 >
-                  <motion.div 
-                    ref={planCardRef}
-                    animate={{
-                      height: cardContentHeight !== null ? cardContentHeight : 'auto'
-                    }}
-                    transition={
-                      shouldReduceMotion
-                        ? { duration: 0.05 }
-                        : { duration: 0.34, ease: [0.32, 0.72, 0, 1] }
-                    }
-                    className="w-full rounded-[26px] shrink-0 relative overflow-hidden today-suggestion-card transition-shadow duration-300 my-auto"
+                  Sample data
+                </button>
+              </div>
+
+              <AnimatePresence initial={false}>
+                {showSampleDataNote && (
+                  <motion.p
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="text-[11px] font-light text-[#8E8E93] text-center pt-2 px-4 max-w-[320px] leading-snug overflow-hidden"
                   >
-                    {/* Inner Measurable Content Container */}
-                    <div ref={cardContentRef} className="p-4 sm:p-5 w-full flex flex-col gap-3 sm:gap-3.5">
-                      
-                      {/* Top Header Row: Label + Close Button */}
-                      <div className="w-full">
-                        <div className="flex items-center justify-between gap-2 mb-1">
-                          <div className="relative h-4 flex-1 select-none">
-                            <span 
-                              className={`text-[11px] font-bold uppercase tracking-wider text-[#5E5BAE] absolute inset-0 transition-opacity ${
-                                shouldReduceMotion ? 'duration-75' : 'duration-200'
-                              } ${
-                                planState === 'suggested' ? 'opacity-100' : 'opacity-0 pointer-events-none'
-                              }`}
-                            >
-                              Today’s suggestion
-                            </span>
-                            <span 
-                              className={`text-[11px] font-bold uppercase tracking-wider text-[#5E5BAE] absolute inset-0 transition-opacity ${
-                                shouldReduceMotion ? 'duration-75' : 'duration-250 delay-100'
-                              } ${
-                                planState !== 'suggested' ? 'opacity-100' : 'opacity-0 pointer-events-none'
-                              }`}
-                            >
-                              YOUR PLAN
-                            </span>
-                          </div>
+                    Sample values for preview — live weather and wearable health sensors are not connected yet.
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
 
-                          {/* Close Card Button */}
-                          <button
-                            type="button"
-                            id="close-plan-card-btn"
-                            onClick={() => setIsPlanCardOpen(false)}
-                            className="-mr-1 -mt-0.5 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-[#6C6C70] hover:text-[#1C1C1E] bg-[#F2F2F7] hover:bg-[#E5E5EA] active:scale-95 transition-all cursor-pointer shrink-0"
-                            aria-label="Close suggestion card"
-                          >
-                            <X className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.2]" />
-                          </button>
-                        </div>
-
-                        {/* Title & Thumbnail Row */}
-                        <div className="flex items-center justify-between gap-3">
-                          <h2 className="text-[18px] sm:text-[19px] font-bold tracking-[-0.02em] text-[#1C1C1E] leading-snug flex-1">
-                            {currentPlan.title}
-                          </h2>
-
-                          {/* Rich Media Thumbnail Entry (Only in Accepted State, fades in softly) */}
-                          <div 
-                            className={`transition-all duration-300 ${
-                              planState !== 'suggested'
-                                ? 'opacity-100 scale-100 pointer-events-auto'
-                                : 'opacity-0 scale-90 pointer-events-none w-0 h-0 overflow-hidden'
+          {/* 3. Floating Suggestion Card: Emerges below Nova, with ample space from bottom bar */}
+          <AnimatePresence>
+            {isPlanCardOpen && (
+              <motion.div
+                key="today-floating-plan-card"
+                id="expanded-plan-card"
+                initial={
+                  shouldReduceMotion
+                    ? { opacity: 0 }
+                    : { opacity: 0, y: 32, scale: 0.96 }
+                }
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={
+                  shouldReduceMotion
+                    ? { opacity: 0 }
+                    : { opacity: 0, y: 20, scale: 0.96 }
+                }
+                transition={
+                  shouldReduceMotion
+                    ? { duration: 0.05 }
+                    : { duration: 0.32, ease: [0.32, 0.72, 0, 1] }
+                }
+                className="absolute inset-x-4 sm:inset-x-6 bottom-[130px] z-30 flex flex-col items-center justify-end pointer-events-none max-h-[calc(100%-250px)] sm:max-h-[calc(100%-270px)]"
+              >
+                <div 
+                  ref={planCardRef}
+                  className="w-full max-w-[360px] rounded-[28px] overflow-hidden today-suggestion-card shadow-[0_16px_40px_rgba(38,38,63,0.18)] border border-white/95 flex flex-col pointer-events-auto max-h-full"
+                >
+                  {/* Inner Content Container: Scrollable if needed on short screens */}
+                  <div 
+                    ref={cardContentRef} 
+                    className="p-4 sm:p-5 w-full flex flex-col gap-3 sm:gap-3.5 overflow-y-auto scrollbar-none"
+                  >
+                    {/* Top Header Row: Label + Close Button */}
+                    <div className="w-full">
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <div className="relative h-4 flex-1 select-none">
+                          <span 
+                            className={`text-[11px] font-bold uppercase tracking-wider text-[#5E5BAE] absolute inset-0 transition-opacity ${
+                              shouldReduceMotion ? 'duration-75' : 'duration-200'
+                            } ${
+                              planState === 'suggested' ? 'opacity-100' : 'opacity-0 pointer-events-none'
                             }`}
                           >
-                            {planState !== 'suggested' && (
-                              <button
-                                ref={cardThumbnailRef}
-                                type="button"
-                                onClick={openDetailWithTransition}
-                                className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-[15px] overflow-hidden shrink-0 border border-white/80 shadow-[0_2px_8px_rgba(38,38,63,0.06)] group active:scale-95 transition-all cursor-pointer"
-                                title="View plan guide"
-                                aria-label="View plan guide"
-                              >
-                                <div
-                                  className={`w-full h-full relative transition-opacity duration-150 ${
-                                    detailTransitionPhase !== 'idle' || isDetailOpen ? 'opacity-0' : 'opacity-100'
-                                  }`}
-                                >
-                                  <img
-                                    src={currentPlan.thumbnailUrl}
-                                    alt="Plan preview"
-                                    referrerPolicy="no-referrer"
-                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                                  />
-                                  <div className="absolute inset-0 bg-black/25 flex items-center justify-center">
-                                    <div className="w-5 h-5 rounded-full bg-white/95 flex items-center justify-center shadow-xs">
-                                      <Play className="w-2.5 h-2.5 fill-[#26263F] text-[#26263F] ml-0.5" />
-                                    </div>
-                                  </div>
-                                </div>
-                              </button>
-                            )}
-                          </div>
+                            Today’s suggestion
+                          </span>
+                          <span 
+                            className={`text-[11px] font-bold uppercase tracking-wider text-[#5E5BAE] absolute inset-0 transition-opacity ${
+                              shouldReduceMotion ? 'duration-75' : 'duration-250 delay-100'
+                            } ${
+                              planState !== 'suggested' ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                            }`}
+                          >
+                            YOUR PLAN
+                          </span>
                         </div>
+
+                        {/* Close Card Button */}
+                        <button
+                          type="button"
+                          id="close-plan-card-btn"
+                          onClick={() => setIsPlanCardOpen(false)}
+                          className="-mr-1 -mt-0.5 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-[#6C6C70] hover:text-[#1C1C1E] bg-[#F2F2F7] hover:bg-[#E5E5EA] active:scale-95 transition-all cursor-pointer shrink-0"
+                          aria-label="Close suggestion card"
+                        >
+                          <X className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.2]" />
+                        </button>
                       </div>
 
-                      {/* 2. SUGGESTED EXTRA: Subtitle + Initial Action Buttons */}
-                      <AnimatePresence initial={false}>
-                        {planState === 'suggested' && (
-                          <motion.div
-                            key="suggested-extra"
-                            initial={{ opacity: 1, height: 'auto' }}
-                            animate={{ opacity: 1, height: 'auto' }}
-                            exit={
-                              shouldReduceMotion
-                                ? { opacity: 0, height: 0 }
-                                : {
-                                    opacity: 0,
-                                    height: 0,
-                                    transition: {
-                                      opacity: { duration: 0.18, ease: "easeOut" },
-                                      height: { duration: 0.34, ease: [0.32, 0.72, 0, 1] }
-                                    }
-                                  }
-                            }
-                            className="overflow-hidden flex flex-col gap-3 pt-1"
-                          >
-                            <p className="text-[13.5px] sm:text-[14px] text-[#6C6C70] leading-relaxed">
-                              {currentPlan.subtitle}
-                            </p>
+                      {/* Title & Thumbnail Row */}
+                      <div className="flex items-center justify-between gap-3">
+                        <h2 className="text-[18px] sm:text-[19px] font-bold tracking-[-0.02em] text-[#1C1C1E] leading-snug flex-1">
+                          {currentPlan.title}
+                        </h2>
 
-                            <div className="flex flex-col gap-2 pt-1 pb-0.5">
-                              <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+                        {/* Rich Media Thumbnail Entry (Only in Accepted State, fades in softly) */}
+                        <div 
+                          className={`transition-all duration-300 ${
+                            planState !== 'suggested'
+                              ? 'opacity-100 scale-100 pointer-events-auto'
+                              : 'opacity-0 scale-90 pointer-events-none w-0 h-0 overflow-hidden'
+                          }`}
+                        >
+                          {planState !== 'suggested' && (
+                            <button
+                              ref={cardThumbnailRef}
+                              type="button"
+                              onClick={openDetailWithTransition}
+                              className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-[15px] overflow-hidden shrink-0 border border-white/80 shadow-[0_2px_8px_rgba(38,38,63,0.06)] group active:scale-95 transition-all cursor-pointer"
+                              title="View plan guide"
+                              aria-label="View plan guide"
+                            >
+                              <div
+                                className={`w-full h-full relative transition-opacity duration-150 ${
+                                  detailTransitionPhase !== 'idle' || isDetailOpen ? 'opacity-0' : 'opacity-100'
+                                }`}
+                              >
+                                <img
+                                  src={currentPlan.thumbnailUrl}
+                                  alt="Plan preview"
+                                  referrerPolicy="no-referrer"
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                />
+                                <div className="absolute inset-0 bg-black/25 flex items-center justify-center">
+                                  <div className="w-5 h-5 rounded-full bg-white/95 flex items-center justify-center shadow-xs">
+                                    <Play className="w-2.5 h-2.5 fill-[#26263F] text-[#26263F] ml-0.5" />
+                                  </div>
+                                </div>
+                              </div>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 2. SUGGESTED EXTRA: Subtitle + Initial Action Buttons */}
+                    <AnimatePresence initial={false}>
+                      {planState === 'suggested' && (
+                        <motion.div
+                          key="suggested-extra"
+                          initial={{ opacity: 1, height: 'auto' }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={
+                            shouldReduceMotion
+                              ? { opacity: 0, height: 0 }
+                              : {
+                                  opacity: 0,
+                                  height: 0,
+                                  transition: {
+                                    opacity: { duration: 0.18, ease: "easeOut" },
+                                    height: { duration: 0.34, ease: [0.32, 0.72, 0, 1] }
+                                  }
+                                }
+                          }
+                          className="overflow-hidden flex flex-col gap-3 pt-1"
+                        >
+                          <p className="text-[13.5px] sm:text-[14px] text-[#6C6C70] leading-relaxed">
+                            {currentPlan.subtitle}
+                          </p>
+
+                          <div className="flex flex-col gap-2 pt-1 pb-0.5">
+                            <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+                              <button
+                                type="button"
+                                onClick={handleSoundsGood}
+                                className="h-11 sm:h-12 px-4 rounded-[16px] bg-[#5E5BAE] hover:bg-[#524FA0] active:bg-[#484591] active:scale-[0.98] text-white text-[14px] font-semibold shadow-[0_4px_14px_rgba(94,91,174,0.22)] transition-all flex items-center justify-center text-center min-h-[44px] cursor-pointer"
+                              >
+                                Sounds good
+                              </button>
+                              <button
+                                type="button"
+                                onClick={handleInitialPlanB}
+                                className="h-11 sm:h-12 w-full px-4 rounded-[16px] bg-[#F2F2F7] hover:bg-[#E5E5EA] active:scale-[0.98] text-[#1C1C1E] text-[14px] font-semibold transition-all flex items-center justify-center text-center min-h-[44px] cursor-pointer"
+                              >
+                                Plan B
+                              </button>
+                            </div>
+                            {showPlanBHint && (
+                              <span className="text-[11px] text-[#8E8E93] text-center select-none animate-in fade-in font-normal tracking-tight">
+                                Find another way
+                              </span>
+                            )}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
+                    {/* 3. ACCEPTED EXTRA: Circular Done Button + Auxiliary Operations */}
+                    <AnimatePresence initial={false}>
+                      {planState !== 'suggested' && (
+                        <motion.div
+                          key="accepted-extra"
+                          initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -6 }}
+                          transition={{
+                            duration: shouldReduceMotion ? 0.05 : 0.32,
+                            delay: shouldReduceMotion ? 0 : 0.1,
+                            ease: [0.32, 0.72, 0, 1]
+                          }}
+                          className="flex flex-col gap-3 pt-1"
+                        >
+                          {/* Horizontally Centered Circular Done Button + "Hold to complete" */}
+                          <div className="flex flex-col items-center justify-center py-0.5">
+                            <div className="relative w-[68px] h-[68px] sm:w-[72px] sm:h-[72px] flex items-center justify-center">
+                              <svg className="w-full h-full -rotate-90 pointer-events-none" viewBox="0 0 76 76">
+                                <circle
+                                  cx="38"
+                                  cy="38"
+                                  r={circleRadius}
+                                  className="stroke-[#EAE7F6]/80"
+                                  strokeWidth="4"
+                                  fill="transparent"
+                                />
+                                <circle
+                                  cx="38"
+                                  cy="38"
+                                  r={circleRadius}
+                                  className={`stroke-[#FF7A32] ${isHolding ? 'transition-none' : 'transition-all duration-150'}`}
+                                  strokeWidth="4.5"
+                                  strokeDasharray={circumference}
+                                  strokeDashoffset={planState === 'completed' ? 0 : strokeDashoffset}
+                                  strokeLinecap="round"
+                                  fill="transparent"
+                                />
+                              </svg>
+
+                              <button
+                                type="button"
+                                onMouseDown={startHold}
+                                onMouseUp={cancelHold}
+                                onMouseLeave={cancelHold}
+                                onTouchStart={startHold}
+                                touch-action="none"
+                                onTouchEnd={cancelHold}
+                                onTouchCancel={cancelHold}
+                                onTouchMove={handleTouchMove}
+                                onContextMenu={(e) => e.preventDefault()}
+                                onKeyDown={handleDoneKeyDown}
+                                onClick={handleDoneClick}
+                                aria-label={planState === 'completed' ? 'Plan completed' : 'Press and hold for 3 seconds to complete, or press Enter for confirmation dialog'}
+                                className={`absolute w-[54px] h-[54px] sm:w-[58px] sm:h-[58px] rounded-full flex items-center justify-center font-bold transition-all duration-200 select-none shadow-sm touch-none border border-white/20 cursor-pointer ${
+                                  planState === 'completed'
+                                    ? 'bg-[#54519E] text-white shadow-[0_4px_16px_rgba(84,81,158,0.25)]'
+                                    : isHolding
+                                    ? 'bg-[#484591] text-white scale-95 shadow-inner'
+                                    : 'bg-[#5E5BAE] hover:bg-[#524FA0] active:bg-[#484591] text-white shadow-[0_4px_18px_rgba(94,91,174,0.28)]'
+                                }`}
+                              >
+                                {planState === 'completed' ? (
+                                  <Check className="w-5 h-5 sm:w-6 sm:h-6 stroke-[3] text-white" />
+                                ) : (
+                                  <span className="font-bold text-[14px] sm:text-[15px] tracking-tight text-white">Done</span>
+                                )}
+                              </button>
+                            </div>
+
+                            <span className="text-[11px] sm:text-[11.5px] mt-1 whitespace-nowrap text-center font-normal">
+                              {planState === 'completed' ? (
+                                <span className="text-[#5E5BAE] font-semibold">Completed</span>
+                              ) : (
+                                <span className="text-[#706E8A]">Hold to complete</span>
+                              )}
+                            </span>
+                          </div>
+
+                          {/* Bottom Section: Side-by-Side "Plan B" and "Not today" (or Undo completion) */}
+                          <div className="flex items-center justify-center gap-6 pt-2 border-t border-black/[0.06]">
+                            {planState === 'completed' ? (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  hasCompletedRef.current = false;
+                                  isHoldingRef.current = false;
+                                  setPlanState('accepted');
+                                  setHoldProgress(0);
+                                }}
+                                className="text-xs font-semibold text-[#5E5BAE] hover:text-[#494692] py-1 px-3 transition-colors whitespace-nowrap underline underline-offset-3 cursor-pointer min-h-[36px] flex items-center"
+                              >
+                                Undo completion
+                              </button>
+                            ) : (
+                              <>
                                 <button
                                   type="button"
-                                  onClick={handleSoundsGood}
-                                  className="h-11 sm:h-12 px-4 rounded-[16px] bg-[#5E5BAE] hover:bg-[#524FA0] active:bg-[#484591] active:scale-[0.98] text-white text-[14px] font-semibold shadow-[0_4px_14px_rgba(94,91,174,0.22)] transition-all flex items-center justify-center text-center min-h-[44px] cursor-pointer"
-                                >
-                                  Sounds good
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={handleInitialPlanB}
-                                  className="h-11 sm:h-12 w-full px-4 rounded-[16px] bg-[#F2F2F7] hover:bg-[#E5E5EA] active:scale-[0.98] text-[#1C1C1E] text-[14px] font-semibold transition-all flex items-center justify-center text-center min-h-[44px] cursor-pointer"
+                                  onClick={handleAcceptedPlanB}
+                                  className="text-xs font-semibold text-[#5E5BAE] hover:text-[#494692] py-1 px-3 rounded-full hover:bg-[#5E5BAE]/8 transition-colors whitespace-nowrap cursor-pointer active:scale-95 min-h-[36px] flex items-center"
                                 >
                                   Plan B
                                 </button>
-                              </div>
-                              {showPlanBHint && (
-                                <span className="text-[11px] text-[#8E8E93] text-center select-none animate-in fade-in font-normal tracking-tight">
-                                  Find another way
-                                </span>
-                              )}
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-
-                      {/* 3. ACCEPTED EXTRA: Circular Done Button + Auxiliary Operations */}
-                      <AnimatePresence initial={false}>
-                        {planState !== 'suggested' && (
-                          <motion.div
-                            key="accepted-extra"
-                            initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -6 }}
-                            transition={{
-                              duration: shouldReduceMotion ? 0.05 : 0.32,
-                              delay: shouldReduceMotion ? 0 : 0.1,
-                              ease: [0.32, 0.72, 0, 1]
-                            }}
-                            className="flex flex-col gap-3 pt-1"
-                          >
-                            {/* Horizontally Centered Circular Done Button + "Hold to complete" */}
-                            <div className="flex flex-col items-center justify-center py-0.5">
-                              <div className="relative w-[68px] h-[68px] sm:w-[72px] sm:h-[72px] flex items-center justify-center">
-                                {/* SVG Progress Ring */}
-                                <svg className="w-full h-full -rotate-90 pointer-events-none" viewBox="0 0 76 76">
-                                  <circle
-                                    cx="38"
-                                    cy="38"
-                                    r={circleRadius}
-                                    className="stroke-[#EAE7F6]/80"
-                                    strokeWidth="4"
-                                    fill="transparent"
-                                  />
-                                  <circle
-                                    cx="38"
-                                    cy="38"
-                                    r={circleRadius}
-                                    className={`stroke-[#FF7A32] ${isHolding ? 'transition-none' : 'transition-all duration-150'}`}
-                                    strokeWidth="4.5"
-                                    strokeDasharray={circumference}
-                                    strokeDashoffset={planState === 'completed' ? 0 : strokeDashoffset}
-                                    strokeLinecap="round"
-                                    fill="transparent"
-                                  />
-                                </svg>
-
-                                {/* Circular Button Core */}
                                 <button
                                   type="button"
-                                  onMouseDown={startHold}
-                                  onMouseUp={cancelHold}
-                                  onMouseLeave={cancelHold}
-                                  onTouchStart={startHold}
-                                  onTouchEnd={cancelHold}
-                                  onTouchCancel={cancelHold}
-                                  onTouchMove={handleTouchMove}
-                                  onContextMenu={(e) => e.preventDefault()}
-                                  onKeyDown={handleDoneKeyDown}
-                                  onClick={handleDoneClick}
-                                  aria-label={planState === 'completed' ? 'Plan completed' : 'Press and hold for 3 seconds to complete, or press Enter for confirmation dialog'}
-                                  className={`absolute w-[54px] h-[54px] sm:w-[58px] sm:h-[58px] rounded-full flex items-center justify-center font-bold transition-all duration-200 select-none shadow-sm touch-none border border-white/20 cursor-pointer ${
-                                    planState === 'completed'
-                                      ? 'bg-[#54519E] text-white shadow-[0_4px_16px_rgba(84,81,158,0.25)]'
-                                      : isHolding
-                                      ? 'bg-[#484591] text-white scale-95 shadow-inner'
-                                      : 'bg-[#5E5BAE] hover:bg-[#524FA0] active:bg-[#484591] text-white shadow-[0_4px_18px_rgba(94,91,174,0.28)]'
-                                  }`}
+                                  onClick={handleNotToday}
+                                  className="text-xs font-semibold text-[#6C6C70] hover:text-[#1C1C1E] py-1 px-3 rounded-full hover:bg-black/[0.04] transition-colors whitespace-nowrap cursor-pointer active:scale-95 min-h-[36px] flex items-center"
                                 >
-                                  {planState === 'completed' ? (
-                                    <Check className="w-5 h-5 sm:w-6 sm:h-6 stroke-[3] text-white" />
-                                  ) : (
-                                    <span className="font-bold text-[14px] sm:text-[15px] tracking-tight text-white">Done</span>
-                                  )}
+                                  Not today
                                 </button>
-                              </div>
+                              </>
+                            )}
+                          </div>
 
-                              <span className="text-[11px] sm:text-[11.5px] mt-1 whitespace-nowrap text-center font-normal">
-                                {planState === 'completed' ? (
-                                  <span className="text-[#5E5BAE] font-semibold">Completed</span>
-                                ) : (
-                                  <span className="text-[#706E8A]">Hold to complete</span>
-                                )}
-                              </span>
-                            </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
 
-                            {/* Bottom Section: Side-by-Side "Plan B" and "Not today" (or Undo completion) */}
-                            <div className="flex items-center justify-center gap-6 pt-2 border-t border-black/[0.06]">
-                              {planState === 'completed' ? (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    hasCompletedRef.current = false;
-                                    isHoldingRef.current = false;
-                                    setPlanState('accepted');
-                                    setHoldProgress(0);
-                                  }}
-                                  className="text-xs font-semibold text-[#5E5BAE] hover:text-[#494692] py-1 px-3 transition-colors whitespace-nowrap underline underline-offset-3 cursor-pointer min-h-[36px] flex items-center"
-                                >
-                                  Undo completion
-                                </button>
-                              ) : (
-                                <>
-                                  <button
-                                    type="button"
-                                    onClick={handleAcceptedPlanB}
-                                    className="text-xs font-semibold text-[#5E5BAE] hover:text-[#494692] py-1 px-3 rounded-full hover:bg-[#5E5BAE]/8 transition-colors whitespace-nowrap cursor-pointer active:scale-95 min-h-[36px] flex items-center"
-                                  >
-                                    Plan B
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={handleNotToday}
-                                    className="text-xs font-semibold text-[#6C6C70] hover:text-[#1C1C1E] py-1 px-3 rounded-full hover:bg-black/[0.04] transition-colors whitespace-nowrap cursor-pointer active:scale-95 min-h-[36px] flex items-center"
-                                  >
-                                    Not today
-                                  </button>
-                                </>
-                              )}
-                            </div>
-
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-
-                    </div>
-                  </motion.div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* 3. Main Body Content: Plan View (Merged My Plan + Memory) */}
@@ -1784,33 +1751,32 @@ export default function App() {
                 }
                 className="relative bg-white/95 backdrop-blur-2xl rounded-t-[32px] border-t border-white/90 shadow-[0_-16px_48px_rgba(28,28,45,0.12)] flex flex-col h-[75%] max-h-[580px] z-10 text-[#1C1C1E]"
               >
-                {/* Sheet Header */}
+                {/* Sheet Header: Apple HIG Clean Title, No Redundant Pills */}
                 <div 
                   ref={detailHeaderRef}
                   className="px-5 sm:px-6 pt-5 pb-3.5 border-b border-black/[0.06] flex items-center justify-between shrink-0"
                 >
-                  <div>
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#5E5BAE]">
-                      Plan Details
-                    </span>
-                    <h3 className="text-base font-bold text-[#1C1C1E] mt-0.5">{currentPlan.detailTitle}</h3>
+                  <div className="flex-1 min-w-0 pr-3">
+                    <h3 className="text-[19px] sm:text-[20px] font-bold text-[#1C1C1E] tracking-[-0.02em] leading-tight">
+                      {currentPlan.detailTitle}
+                    </h3>
                   </div>
                   <button
                     type="button"
                     onClick={closeDetailWithTransition}
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-[#6C6C70] hover:text-[#1C1C1E] bg-[#F2F2F7] hover:bg-[#E5E5EA] active:scale-95 transition-all cursor-pointer"
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-[#6C6C70] hover:text-[#1C1C1E] bg-[#F2F2F7] hover:bg-[#E5E5EA] active:scale-95 transition-all cursor-pointer shrink-0"
                     aria-label="Close"
                   >
                     <X className="w-4 h-4 stroke-[2.2]" />
                   </button>
                 </div>
 
-                {/* Sheet Content: Media & Action Guide */}
-                <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-4 space-y-4">
+                {/* Sheet Content: Media & Clean Guideline Rows (No Nested Card-in-Card) */}
+                <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-4 space-y-5">
                   {/* Media Hero Banner: In-place slot */}
                   <div
                     ref={detailMediaHeroRef}
-                    className="relative w-full h-36 rounded-[20px] overflow-hidden border border-black/[0.04] shadow-xs shrink-0"
+                    className="relative w-full h-40 sm:h-44 rounded-[22px] overflow-hidden border border-black/[0.04] shadow-xs shrink-0"
                   >
                     <div
                       className={`w-full h-full relative transition-opacity duration-150 ${
@@ -1823,16 +1789,20 @@ export default function App() {
                         referrerPolicy="no-referrer"
                         className="w-full h-full object-cover"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent flex items-end p-4">
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/25 to-transparent flex items-end p-4 sm:p-4.5">
                         <div className="flex items-center justify-between w-full text-white">
-                          <div>
-                            <div className="text-xs font-bold leading-tight">{currentPlan.audioTitle}</div>
-                            <div className="text-[10.5px] text-white/85 mt-0.5">{currentPlan.audioSubtitle}</div>
+                          <div className="flex-1 min-w-0 pr-3">
+                            <div className="text-[13.5px] sm:text-[14px] font-bold leading-tight tracking-[-0.01em]">
+                              {currentPlan.audioTitle}
+                            </div>
+                            <div className="text-[11px] sm:text-[11.5px] text-white/85 mt-0.5 font-normal">
+                              {currentPlan.audioSubtitle}
+                            </div>
                           </div>
                           <button
                             type="button"
                             onClick={() => setIsPlayingAudio(!isPlayingAudio)}
-                            className="w-8 h-8 rounded-full bg-[#5E5BAE] hover:bg-[#524FA0] text-white flex items-center justify-center shadow-xs active:scale-95 transition-transform cursor-pointer"
+                            className="w-9 h-9 rounded-full bg-[#5E5BAE] hover:bg-[#524FA0] text-white flex items-center justify-center shadow-xs active:scale-95 transition-transform cursor-pointer shrink-0"
                             aria-label={isPlayingAudio ? "Pause audio guide" : "Play audio guide"}
                           >
                             {isPlayingAudio ? (
@@ -1846,7 +1816,7 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Clean Practical Tips: Fades in gracefully with slight delay */}
+                  {/* Clean Practical Guidelines (Airy white rows with subtle divider, no nested grey cards) */}
                   <motion.div
                     initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -1859,17 +1829,33 @@ export default function App() {
                             ease: "easeOut",
                           }
                     }
-                    className="space-y-2.5"
+                    className="space-y-3.5 pt-1"
                   >
-                    <h4 className="text-xs font-bold text-[#1C1C1E]">Gentle Guidelines</h4>
-                    <div className="p-3.5 rounded-[18px] bg-[#F2F2F7]/75 border border-black/[0.03] text-xs text-[#3C3C43] space-y-2.5">
-                      <div className="flex items-start gap-2.5">
-                        <Clock className="w-4 h-4 text-[#5E5BAE] mt-0.5 shrink-0 stroke-[2]" />
-                        <span>{currentPlan.tip1}</span>
+                    <h4 className="text-[14px] font-semibold text-[#1C1C1E] tracking-tight">
+                      Gentle Guidelines
+                    </h4>
+                    
+                    <div className="space-y-3">
+                      {/* Tip 1 */}
+                      <div className="flex items-start gap-3">
+                        <div className="w-7 h-7 rounded-full bg-[#5E5BAE]/10 flex items-center justify-center shrink-0 mt-0.5">
+                          <Clock className="w-3.5 h-3.5 text-[#5E5BAE] stroke-[2.2]" />
+                        </div>
+                        <p className="text-[13.5px] text-[#3C3C43] leading-relaxed flex-1">
+                          {currentPlan.tip1}
+                        </p>
                       </div>
-                      <div className="flex items-start gap-2.5">
-                        <Sparkles className="w-4 h-4 text-[#FF7A32] mt-0.5 shrink-0 stroke-[2]" />
-                        <span>{currentPlan.tip2}</span>
+
+                      <div className="h-px bg-black/[0.04]" />
+
+                      {/* Tip 2 */}
+                      <div className="flex items-start gap-3">
+                        <div className="w-7 h-7 rounded-full bg-[#FF7A32]/10 flex items-center justify-center shrink-0 mt-0.5">
+                          <Sparkles className="w-3.5 h-3.5 text-[#FF7A32] stroke-[2.2]" />
+                        </div>
+                        <p className="text-[13.5px] text-[#3C3C43] leading-relaxed flex-1">
+                          {currentPlan.tip2}
+                        </p>
                       </div>
                     </div>
                   </motion.div>
@@ -1880,7 +1866,7 @@ export default function App() {
                   <button
                     type="button"
                     onClick={closeDetailWithTransition}
-                    className="w-full py-3 rounded-[18px] bg-[#F2F2F7] hover:bg-[#E5E5EA] text-[#5E5BAE] text-xs font-semibold text-center active:scale-98 transition-all min-h-[44px] cursor-pointer"
+                    className="w-full py-3 rounded-[18px] bg-[#F2F2F7] hover:bg-[#E5E5EA] text-[#5E5BAE] text-[13.5px] font-semibold text-center active:scale-[0.99] transition-all min-h-[44px] cursor-pointer"
                   >
                     Back to Today
                   </button>
