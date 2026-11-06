@@ -25,3 +25,164 @@
     letter-spacing: -0.02em;
   }
 }
+
+/* ==========================================================================
+   Apple Health Inspired Liquid Glass Materials (with @supports Fallback)
+   Placed in @layer components so Tailwind utility classes (e.g. .absolute)
+   always take precedence.
+   ========================================================================== */
+@layer components {
+  /* 1. Floating Navigation Capsule & Talk to Nova Bar */
+  .liquid-glass-pill {
+    position: relative;
+    overflow: hidden;
+    /* Readable fallback when backdrop-filter is unsupported */
+    background-color: rgba(255, 255, 255, 0.90);
+    border: 1px solid rgba(255, 255, 255, 0.92);
+    box-shadow:
+      0 6px 20px -4px rgba(28, 28, 30, 0.07),
+      0 1px 3px rgba(0, 0, 0, 0.03);
+  }
+
+  .liquid-glass-pill > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  @supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+    .liquid-glass-pill {
+      background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.42) 0%,
+        rgba(255, 255, 255, 0.26) 100%
+      );
+      border: 1px solid rgba(255, 255, 255, 0.64);
+      box-shadow:
+        inset 0 1px 0.5px rgba(255, 255, 255, 0.86),
+        inset 0 -0.5px 0.5px rgba(255, 255, 255, 0.38),
+        0 8px 22px -6px rgba(38, 35, 65, 0.07),
+        0 1px 2px rgba(0, 0, 0, 0.03);
+    }
+
+    .liquid-glass-pill::before {
+      content: "";
+      position: absolute;
+      inset: -12px -12px -42px -12px;
+      -webkit-backdrop-filter: blur(9px) saturate(175%);
+      backdrop-filter: blur(9px) saturate(175%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .liquid-glass-pill-interactive:hover {
+      background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.52) 0%,
+        rgba(255, 255, 255, 0.34) 100%
+      );
+    }
+  }
+
+  /* 2. Active Tab Highlight Layer Inside Liquid Glass Capsule */
+  .liquid-glass-active-tab {
+    /* Readable fallback */
+    background-color: rgba(238, 236, 248, 0.88);
+  }
+
+  @supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+    .liquid-glass-active-tab {
+      background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.56) 0%,
+        rgba(235, 232, 248, 0.36) 100%
+      );
+      box-shadow:
+        inset 0 1px 0.5px rgba(255, 255, 255, 0.86),
+        inset 0 0 0 0.5px rgba(255, 255, 255, 0.50),
+        0 1px 4px rgba(28, 28, 30, 0.03);
+    }
+  }
+
+  /* 3. Today Suggestion Bubble & Floating Glass Pills */
+  .liquid-glass-bubble {
+    position: relative;
+    overflow: hidden;
+    /* Readable fallback when backdrop-filter is unsupported */
+    background-color: rgba(255, 255, 255, 0.94);
+    border: 1px solid rgba(255, 255, 255, 0.96);
+    box-shadow:
+      0 6px 20px -3px rgba(28, 28, 45, 0.06),
+      0 1px 3px rgba(0, 0, 0, 0.02);
+  }
+
+  .liquid-glass-bubble > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  @supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+    .liquid-glass-bubble {
+      background: linear-gradient(
+        170deg,
+        rgba(255, 255, 255, 0.88) 0%,
+        rgba(255, 255, 255, 0.78) 100%
+      );
+      border: 1px solid rgba(255, 255, 255, 0.90);
+      box-shadow:
+        inset 0 1px 0.5px rgba(255, 255, 255, 0.95),
+        inset 0 -0.5px 0.5px rgba(255, 255, 255, 0.45),
+        0 8px 24px -4px rgba(28, 28, 45, 0.07),
+        0 1px 2px rgba(0, 0, 0, 0.02);
+    }
+
+    .liquid-glass-bubble::before {
+      content: "";
+      position: absolute;
+      inset: -12px -12px -42px -12px;
+      -webkit-backdrop-filter: blur(16px) saturate(160%);
+      backdrop-filter: blur(16px) saturate(160%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .liquid-glass-bubble:hover {
+      background: linear-gradient(
+        170deg,
+        rgba(255, 255, 255, 0.92) 0%,
+        rgba(255, 255, 255, 0.84) 100%
+      );
+    }
+  }
+
+  /* 4. Today Expanded Suggestion Card: Restrained White with Light Glass Touch */
+  .today-suggestion-card {
+    background-color: #FFFFFF;
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    box-shadow:
+      0 16px 44px -8px rgba(28, 28, 45, 0.09),
+      0 2px 6px rgba(0, 0, 0, 0.03);
+  }
+
+  @supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+    .today-suggestion-card {
+      background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.96) 0%,
+        rgba(255, 255, 255, 0.91) 100%
+      );
+      -webkit-backdrop-filter: blur(24px) saturate(160%);
+      backdrop-filter: blur(24px) saturate(160%);
+      border: 1px solid rgba(255, 255, 255, 0.88);
+      box-shadow:
+        inset 0 1px 0.5px rgba(255, 255, 255, 0.95),
+        0 16px 44px -8px rgba(28, 28, 45, 0.09),
+        0 2px 6px rgba(0, 0, 0, 0.03);
+    }
+  }
+
+  /* 5. Subtle inner icon well inside liquid glass controls */
+  .liquid-glass-icon-well {
+    background-color: rgba(94, 91, 174, 0.11);
+    box-shadow: inset 0 0.5px 0.5px rgba(255, 255, 255, 0.65);
+  }
+}

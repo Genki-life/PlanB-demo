@@ -1608,7 +1608,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto px-6 pt-1 pb-6 flex flex-col gap-3.5 z-10 scrollbar-none select-none">
+    <div className="flex-1 overflow-y-auto px-4 sm:px-5 pt-2 pb-[96px] flex flex-col gap-3 sm:gap-3.5 z-10 scrollbar-none select-none">
       {/* Toast Notifications */}
       <AnimatePresence>
         {directionToast && (
@@ -1650,9 +1650,9 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
       <section
         id="plan-nova-observation"
         aria-label="Nova's observation"
-        className="bg-white rounded-[22px] px-4 py-3.5 border border-black/[0.03] shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex items-start gap-3"
+        className="bg-white rounded-[24px] p-4 sm:p-4.5 border border-black/[0.04] shadow-[0_4px_16px_-4px_rgba(28,28,45,0.05),0_1px_3px_rgba(0,0,0,0.02)] flex items-start gap-3.5"
       >
-        <div className="w-9 h-9 rounded-full bg-gradient-to-b from-[#E5DDFB] to-[#F3EEFE] border border-black/[0.04] shadow-2xs overflow-hidden shrink-0 flex items-center justify-center mt-0.5">
+        <div className="w-9 h-9 rounded-full bg-gradient-to-b from-[#F4EEFE] to-[#FDF1F5] border border-black/[0.04] shadow-2xs overflow-hidden shrink-0 flex items-center justify-center mt-0.5">
           <img
             src={NOVA_LISTENING_URL}
             alt="Nova"
@@ -1661,11 +1661,11 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
           />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[13.5px] font-medium text-[#1C1C1E] leading-snug tracking-[-0.01em]">
+          <p className="text-[14px] font-medium text-[#1C1C1E] leading-snug tracking-[-0.01em]">
             “{novaTopObservation}”
           </p>
           {isNovaObservationSample && (
-            <span className="inline-block mt-1 text-[10.5px] font-medium text-[#6C6C70] bg-[#F2F2F7] px-2 py-0.5 rounded-full">
+            <span className="inline-block mt-1.5 text-[10.5px] font-medium text-[#6C6C70] bg-[#F2F2F7] px-2.5 py-0.5 rounded-full">
               Based on sample data
             </span>
           )}
@@ -1677,11 +1677,11 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
       {/* ============================================================ */}
       <section
         id="plan-module-activity"
-        className="bg-white rounded-[22px] p-4.5 border border-black/[0.03] shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-col gap-2.5 relative"
+        className="bg-white rounded-[24px] p-4 sm:p-4.5 border border-black/[0.04] shadow-[0_4px_16px_-4px_rgba(28,28,45,0.05),0_1px_3px_rgba(0,0,0,0.02)] flex flex-col gap-3 relative"
         aria-label="Activity Monthly Records"
       >
         <div className="flex items-center justify-between gap-1.5">
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-1.5 min-w-0 shrink">
             <span className="text-[17px] font-bold text-[#1C1C1E] tracking-[-0.02em] shrink-0">Activity</span>
             <button
               type="button"
@@ -1689,7 +1689,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                 setPickerYear(viewYear);
                 setIsMonthPickerOpen(true);
               }}
-              className="flex items-center gap-1 text-[12px] font-semibold text-[#1C1C1E] bg-[#F2F2F7] hover:bg-[#E5E5EA] active:scale-95 px-2.5 py-1 rounded-full transition-all cursor-pointer whitespace-nowrap shrink-0"
+              className="flex items-center gap-1 text-[11.5px] sm:text-[12px] font-semibold text-[#1C1C1E] bg-[#F2F2F7] hover:bg-[#E5E5EA] active:scale-95 px-2.5 py-1 rounded-full transition-all cursor-pointer whitespace-nowrap shrink-0"
               aria-label="Select month"
             >
               <span>
@@ -1709,7 +1709,8 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                 aria-label="Return to this month"
               >
                 <RotateCcw className="w-2.5 h-2.5 stroke-[2.2]" />
-                <span>This month</span>
+                <span className="hidden min-[380px]:inline">This month</span>
+                <span className="min-[380px]:hidden">Now</span>
               </button>
             )}
 
@@ -1718,7 +1719,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
               type="button"
               id="activity-history-entry-btn"
               onClick={() => setSelectedModule('activity')}
-              className="flex items-center gap-0.5 text-[11.5px] font-semibold text-[#5E5BAE] hover:text-[#46437B] bg-[#F2F2F7] hover:bg-[#E5E5EA] px-2.5 py-1 rounded-full transition-all cursor-pointer active:scale-95 whitespace-nowrap shrink-0"
+              className="flex items-center gap-0.5 text-[11.5px] font-semibold text-[#5E5BAE] hover:text-[#4B4895] bg-[#F2F2F7] hover:bg-[#E5E5EA] px-2.5 py-1 rounded-full transition-all cursor-pointer active:scale-95 whitespace-nowrap shrink-0"
               aria-label="Open Activity History"
             >
               <span>History</span>
@@ -1780,11 +1781,11 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                     isToday ? 'ring-2 ring-[#5E5BAE] ring-offset-2 ring-offset-white' : ''
                   } ${
                     record?.type === 'active'
-                      ? 'bg-[#5E5BAE] shadow-[0_2px_6px_rgba(94,91,174,0.28)] hover:brightness-105'
+                      ? 'bg-[#5E5BAE] shadow-[0_2px_6px_rgba(94,91,174,0.25)] hover:brightness-105'
                       : record?.type === 'rest'
-                      ? 'bg-[#E59980] shadow-[0_2px_6px_rgba(229,153,128,0.28)] hover:brightness-105'
+                      ? 'bg-[#E59980] shadow-[0_2px_6px_rgba(229,153,128,0.25)] hover:brightness-105'
                       : isFuture
-                      ? 'bg-[#F2F2F7]/70 border border-dashed border-[#C7C7CC] hover:bg-[#E5E5EA]'
+                      ? 'bg-[#F2F2F7]/70 border border-dashed border-[#D1D1D6] hover:bg-[#E5E5EA]'
                       : 'bg-[#F2F2F7] hover:bg-[#E5E5EA]'
                   }`}
                 >
@@ -1798,7 +1799,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
         </div>
 
         {/* Status Legend & Sample Data Label */}
-        <div className="pt-2 border-t border-black/[0.05] flex items-center justify-between text-[11px] text-[#6C6C70]">
+        <div className="pt-2.5 border-t border-black/[0.05] flex items-center justify-between text-[11px] text-[#6C6C70]">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-[4px] bg-[#5E5BAE]" />
@@ -1831,7 +1832,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
         tabIndex={0}
         onKeyDown={(e) => e.key === 'Enter' && setSelectedModule('rhythm')}
         aria-label="View Your rhythm details"
-        className="group bg-white hover:bg-[#FAFAFC] active:scale-[0.99] transition-all duration-200 rounded-[22px] p-4.5 border border-black/[0.03] shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-col gap-3 relative cursor-pointer"
+        className="group bg-white hover:bg-[#FAFAFC] active:scale-[0.99] transition-all duration-200 rounded-[24px] p-4 sm:p-4.5 border border-black/[0.04] shadow-[0_4px_16px_-4px_rgba(28,28,45,0.05),0_1px_3px_rgba(0,0,0,0.02)] flex flex-col gap-3 relative cursor-pointer"
       >
         <div className="flex items-center justify-between">
           <span className="text-[17px] font-bold text-[#1C1C1E] tracking-[-0.02em]">Your rhythm</span>
@@ -1839,31 +1840,31 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
         </div>
 
         {/* 6-Month Trend Curve (Active days per month) with explicit "6-month trend" tag */}
-        <div className="bg-[#F2F2F7]/85 px-3.5 py-2.5 rounded-[16px] flex flex-col gap-1">
+        <div className="bg-[#F2F2F7]/75 px-3.5 py-2.5 rounded-[18px] flex flex-col gap-1">
           <div className="flex items-center justify-between">
-            <span className="text-[11.5px] font-semibold text-[#3C3C43]">6-month trend</span>
+            <span className="text-[11.5px] font-semibold text-[#1C1C1E]">6-month trend</span>
             <span className="text-[10.5px] font-medium text-[#6C6C70]">Active days</span>
           </div>
           <MonthlyTrendCurve series={monthlyTrendSeries} compact={true} />
         </div>
 
         {/* Recent Stats Header + 7 days / Month Toggle (Explicitly scopes toggle to recent stats below) */}
-        <div className="flex flex-col gap-2 pt-0.5 border-t border-black/[0.05]">
-          <div className="flex items-center justify-between gap-2 pt-1">
-            <span className="text-[12px] font-semibold text-[#3C3C43] truncate">
+        <div className="flex flex-col gap-2 pt-1 border-t border-black/[0.05]">
+          <div className="flex items-center justify-between gap-2 pt-0.5">
+            <span className="text-[12px] font-semibold text-[#1C1C1E] truncate">
               {currentRecentData.rangeLabel}
             </span>
 
             <div
               onClick={(e) => e.stopPropagation()}
-              className="bg-[#EFEFF4] p-0.5 rounded-full inline-flex shrink-0"
+              className="bg-[#E5E5EA] p-0.5 rounded-full inline-flex shrink-0"
             >
               <button
                 type="button"
                 onClick={() => setRhythmFilter('7d')}
                 className={`px-2.5 py-1 text-[11px] rounded-full transition-all cursor-pointer ${
                   rhythmFilter === '7d'
-                    ? 'bg-white text-[#1C1C1E] font-semibold shadow-[0_1px_4px_rgba(0,0,0,0.08)]'
+                    ? 'bg-white text-[#1C1C1E] font-semibold shadow-[0_1px_3px_rgba(0,0,0,0.1)]'
                     : 'text-[#6C6C70] font-medium hover:text-[#1C1C1E]'
                 }`}
               >
@@ -1874,7 +1875,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                 onClick={() => setRhythmFilter('month')}
                 className={`px-2.5 py-1 text-[11px] rounded-full transition-all cursor-pointer ${
                   rhythmFilter === 'month'
-                    ? 'bg-white text-[#1C1C1E] font-semibold shadow-[0_1px_4px_rgba(0,0,0,0.08)]'
+                    ? 'bg-white text-[#1C1C1E] font-semibold shadow-[0_1px_3px_rgba(0,0,0,0.1)]'
                     : 'text-[#6C6C70] font-medium hover:text-[#1C1C1E]'
                 }`}
               >
@@ -1885,33 +1886,33 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
 
           {/* Recent Stats: Explicitly distinguishes Active days (活动天数) vs Activities (活动次数) + Duration */}
           <div className="grid grid-cols-3 gap-2">
-            <div className="bg-[#F2F2F7]/85 px-2.5 py-2.5 rounded-[14px] flex flex-col justify-between">
+            <div className="bg-[#F2F2F7]/75 px-2.5 py-2.5 rounded-[16px] flex flex-col justify-between min-h-[64px]">
               <span className="text-[11px] font-medium text-[#6C6C70]">Active days</span>
               <div className="flex items-baseline gap-1 mt-1 tabular-nums">
-                <span className="text-[18px] font-bold text-[#1C1C1E] tracking-[-0.02em] leading-none">
+                <span className="text-[20px] font-bold text-[#1C1C1E] tracking-[-0.02em] leading-none">
                   {currentRecentData.activeDaysCount}
                 </span>
-                <span className="text-[10.5px] font-medium text-[#6C6C70]">days</span>
+                <span className="text-[10.5px] font-medium text-[#8E8E93]">days</span>
               </div>
             </div>
 
-            <div className="bg-[#F2F2F7]/85 px-2.5 py-2.5 rounded-[14px] flex flex-col justify-between">
+            <div className="bg-[#F2F2F7]/75 px-2.5 py-2.5 rounded-[16px] flex flex-col justify-between min-h-[64px]">
               <span className="text-[11px] font-medium text-[#6C6C70]">Activities</span>
               <div className="flex items-baseline gap-1 mt-1 tabular-nums">
-                <span className="text-[18px] font-bold text-[#1C1C1E] tracking-[-0.02em] leading-none">
+                <span className="text-[20px] font-bold text-[#1C1C1E] tracking-[-0.02em] leading-none">
                   {currentRecentData.completedCount}
                 </span>
-                <span className="text-[10.5px] font-medium text-[#6C6C70]">done</span>
+                <span className="text-[10.5px] font-medium text-[#8E8E93]">done</span>
               </div>
             </div>
 
-            <div className="bg-[#F2F2F7]/85 px-2.5 py-2.5 rounded-[14px] flex flex-col justify-between">
+            <div className="bg-[#F2F2F7]/75 px-2.5 py-2.5 rounded-[16px] flex flex-col justify-between min-h-[64px]">
               <span className="text-[11px] font-medium text-[#6C6C70]">Duration</span>
               <div className="flex items-baseline gap-1 mt-1 tabular-nums">
-                <span className="text-[18px] font-bold text-[#1C1C1E] tracking-[-0.02em] leading-none">
+                <span className="text-[20px] font-bold text-[#1C1C1E] tracking-[-0.02em] leading-none">
                   {currentRecentData.activeMinutes}
                 </span>
-                <span className="text-[10.5px] font-medium text-[#6C6C70]">min</span>
+                <span className="text-[10.5px] font-medium text-[#8E8E93]">min</span>
               </div>
             </div>
           </div>
@@ -1924,7 +1925,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
       <section
         id="plan-module-direction"
         onClick={() => setSelectedModule('direction')}
-        className="group bg-white hover:bg-[#FAFAFC] active:scale-[0.99] transition-all duration-200 rounded-[22px] p-4.5 border border-black/[0.03] shadow-[0_2px_10px_rgba(0,0,0,0.03)] cursor-pointer flex flex-col gap-2.5 relative"
+        className="group bg-white hover:bg-[#FAFAFC] active:scale-[0.99] transition-all duration-200 rounded-[24px] p-4 sm:p-4.5 border border-black/[0.04] shadow-[0_4px_16px_-4px_rgba(28,28,45,0.05),0_1px_3px_rgba(0,0,0,0.02)] cursor-pointer flex flex-col gap-2.5 relative"
         role="button"
         tabIndex={0}
         aria-label="View Your direction details"
@@ -1943,15 +1944,15 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
         </div>
 
         <div className="flex flex-col gap-1">
-          <h4 className="text-[15px] font-bold text-[#1C1C1E] tracking-[-0.015em] leading-snug">
+          <h4 className="text-[16px] font-bold text-[#1C1C1E] tracking-[-0.015em] leading-snug">
             {direction.goalTitle}
           </h4>
-          <p className="text-[13px] text-[#6C6C70] truncate">
+          <p className="text-[13px] text-[#6C6C70] truncate leading-normal">
             {direction.executionApproach}
           </p>
         </div>
 
-        <div className="pt-1.5 border-t border-black/[0.05] flex items-center justify-between text-[11.5px] text-[#6C6C70]">
+        <div className="pt-2 border-t border-black/[0.05] flex items-center justify-between text-[11.5px] text-[#6C6C70]">
           <span className="flex items-center gap-1.5">
             <CalendarIcon className="w-3.5 h-3.5 stroke-[2] shrink-0 text-[#5E5BAE]" />
             <span>
@@ -1967,7 +1968,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
       <section
         id="plan-module-memory"
         aria-label="What Nova knows"
-        className="bg-white rounded-[22px] p-4.5 border border-black/[0.03] shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-col gap-2.5 relative"
+        className="bg-white rounded-[24px] p-4 sm:p-4.5 border border-black/[0.04] shadow-[0_4px_16px_-4px_rgba(28,28,45,0.05),0_1px_3px_rgba(0,0,0,0.02)] flex flex-col gap-2.5 relative"
       >
         <button
           type="button"
@@ -1986,7 +1987,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
         {representativeConfirmedMemories.length === 0 ? (
           <div
             onClick={() => setSelectedModule('memory')}
-            className="bg-[#F2F2F7]/85 rounded-[15px] p-3.5 text-[12.5px] text-[#6C6C70] cursor-pointer"
+            className="bg-[#F2F2F7]/75 rounded-[16px] p-3.5 text-[12.5px] text-[#6C6C70] cursor-pointer"
           >
             No confirmed preferences saved yet. Talk to Nova to share what works for you.
           </div>
@@ -1997,7 +1998,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                 key={item.id}
                 type="button"
                 onClick={() => setSelectedMemory(item)}
-                className="w-full bg-[#F2F2F7]/85 hover:bg-[#E5E5EA]/75 active:scale-[0.99] transition-all px-3.5 py-2.5 rounded-[15px] flex items-center justify-between gap-2.5 text-left cursor-pointer group"
+                className="w-full bg-[#F2F2F7]/75 hover:bg-[#E5E5EA]/80 active:scale-[0.99] transition-all px-3.5 py-2.5 rounded-[16px] flex items-center justify-between gap-2.5 text-left cursor-pointer group"
               >
                 <div className="flex items-center gap-2.5 min-w-0 flex-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#5E5BAE] shrink-0" />
@@ -2016,7 +2017,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
           <button
             type="button"
             onClick={() => setSelectedModule('memory')}
-            className="w-full px-3.5 py-2 rounded-[14px] bg-[#F5F3FF] hover:bg-[#EDE9FE] border border-[#5E5BAE]/15 flex items-center justify-between text-left transition-all cursor-pointer group"
+            className="w-full px-3.5 py-2.5 rounded-[16px] bg-[#F5F3FF] hover:bg-[#EDE9FE] border border-[#5E5BAE]/15 flex items-center justify-between text-left transition-all cursor-pointer group"
           >
             <div className="flex items-center gap-1.5 min-w-0">
               <Sparkles className="w-3.5 h-3.5 text-[#5E5BAE] shrink-0 stroke-[2.2]" />
@@ -2029,12 +2030,12 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
         )}
 
         {/* Conversational Entry: Modify, Supplement, or Correct via Nova */}
-        <div className="pt-0.5 flex items-center justify-between">
+        <div className="pt-1 flex items-center justify-between">
           <button
             type="button"
             id="plan-memory-talk-btn"
             onClick={() => handleStartTalkToNovaMemory(null)}
-            className="w-full py-2.5 px-3.5 rounded-[15px] bg-[#5E5BAE]/[0.09] hover:bg-[#5E5BAE]/[0.15] active:scale-[0.99] text-[#5E5BAE] text-[13px] font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+            className="w-full py-2.5 px-3.5 rounded-[16px] bg-[#5E5BAE]/[0.08] hover:bg-[#5E5BAE]/[0.14] active:scale-[0.99] text-[#5E5BAE] text-[13px] font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
           >
             <MessageSquare className="w-3.5 h-3.5 stroke-[2.2]" />
             <span>Talk to Nova to update or add</span>
@@ -2048,7 +2049,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
       <section
         id="plan-module-health"
         onClick={() => setSelectedModule('health')}
-        className="group bg-white hover:bg-[#FAFAFC] active:scale-[0.99] transition-all duration-200 rounded-[22px] p-4.5 border border-black/[0.03] shadow-[0_2px_10px_rgba(0,0,0,0.03)] cursor-pointer flex flex-col gap-3 relative"
+        className="group bg-white hover:bg-[#FAFAFC] active:scale-[0.99] transition-all duration-200 rounded-[24px] p-4 sm:p-4.5 border border-black/[0.04] shadow-[0_4px_16px_-4px_rgba(28,28,45,0.05),0_1px_3px_rgba(0,0,0,0.02)] cursor-pointer flex flex-col gap-3 relative"
         role="button"
         tabIndex={0}
         aria-label="View Health data details"
@@ -2084,7 +2085,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
             return (
               <div
                 key={metric.id}
-                className="bg-[#F2F2F7]/85 px-3.5 py-3 rounded-[15px] flex flex-col justify-between gap-1.5"
+                className="bg-[#F2F2F7]/75 px-3.5 py-3 rounded-[18px] flex flex-col justify-between gap-1.5 min-h-[72px]"
               >
                 <span className="text-[11.5px] font-medium text-[#6C6C70] leading-snug">
                   {metric.name}
@@ -2093,13 +2094,13 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                 <div className="flex items-baseline gap-1 flex-wrap tabular-nums">
                   <span
                     className={`font-bold text-[#1C1C1E] tracking-[-0.02em] leading-none ${
-                      isAppleHealthConnected ? 'text-[20px]' : 'text-[13px] text-[#8E8E93]'
+                      isAppleHealthConnected ? 'text-[22px]' : 'text-[13px] text-[#8E8E93]'
                     }`}
                   >
                     {displayValue}
                   </span>
                   {displayUnit && (
-                    <span className="text-[11px] text-[#6C6C70] font-medium">{displayUnit}</span>
+                    <span className="text-[11px] text-[#8E8E93] font-medium">{displayUnit}</span>
                   )}
                 </div>
               </div>
@@ -2133,7 +2134,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                   animate={{ y: 0 }}
                   exit={{ y: '100%' }}
                   transition={{ type: 'spring', damping: 28, stiffness: 280 }}
-                  className="relative w-full max-h-[88%] bg-[#F2F2F7]/96 backdrop-blur-2xl rounded-t-[32px] p-6 shadow-2xl border-t border-white/90 overflow-y-auto z-10 flex flex-col gap-4 text-[#1C1C1E]"
+                  className="relative w-full max-h-[88%] bg-white/95 backdrop-blur-2xl rounded-t-[32px] p-5 sm:p-6 shadow-2xl border-t border-white/90 overflow-y-auto z-10 flex flex-col gap-4 text-[#1C1C1E]"
                   id="my-plan-secondary-sheet"
                 >
                   {/* Sheet Header */}
@@ -2160,7 +2161,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                         <button
                           type="button"
                           onClick={() => setIsMemoryInfoModalOpen(true)}
-                          className="w-8 h-8 rounded-full bg-black/5 hover:bg-black/10 flex items-center justify-center text-[#5E5BAE] transition-colors cursor-pointer"
+                          className="w-8 h-8 rounded-full bg-[#F2F2F7] hover:bg-[#E5E5EA] flex items-center justify-center text-[#5E5BAE] transition-colors cursor-pointer"
                           aria-label="How memory works"
                         >
                           <HelpCircle className="w-4 h-4 stroke-[2.2]" />
@@ -2172,7 +2173,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                           setSelectedModule(null);
                           setIsEditingDirection(false);
                         }}
-                        className="w-8 h-8 rounded-full bg-black/5 hover:bg-black/10 flex items-center justify-center text-[#26263F] transition-colors cursor-pointer"
+                        className="w-8 h-8 rounded-full bg-[#F2F2F7] hover:bg-[#E5E5EA] flex items-center justify-center text-[#6C6C70] hover:text-[#1C1C1E] transition-colors cursor-pointer"
                         aria-label="Return to Plan"
                       >
                         <X className="w-4 h-4 stroke-[2.2]" />
@@ -2184,9 +2185,9 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                   {/* SECONDARY PAGE 1: YOUR RHYTHM                           */}
                   {/* ======================================================= */}
                   {selectedModule === 'rhythm' && (
-                    <div className="flex flex-col gap-4 text-xs text-[#5D5B78]">
-                      <div className="flex items-center justify-between bg-white/75 p-1 rounded-full border border-white/90 shadow-2xs">
-                        <span className="text-xs font-semibold text-[#26263F] pl-3">
+                    <div className="flex flex-col gap-4 text-xs text-[#3C3C43]">
+                      <div className="flex items-center justify-between bg-[#F2F2F7]/80 p-1 rounded-full border border-black/[0.04]">
+                        <span className="text-xs font-semibold text-[#1C1C1E] pl-3">
                           Time range ({currentRecentData.rangeLabel})
                         </span>
                         <div className="flex items-center gap-1">
@@ -2195,8 +2196,8 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                             onClick={() => setRhythmFilter('7d')}
                             className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
                               rhythmFilter === '7d'
-                                ? 'bg-[#5E5BAE] text-white shadow-2xs'
-                                : 'text-[#7A7895] hover:text-[#26263F]'
+                                ? 'bg-white text-[#1C1C1E] shadow-2xs'
+                                : 'text-[#6C6C70] hover:text-[#1C1C1E]'
                             }`}
                           >
                             7 days
@@ -2206,8 +2207,8 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                             onClick={() => setRhythmFilter('month')}
                             className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
                               rhythmFilter === 'month'
-                                ? 'bg-[#5E5BAE] text-white shadow-2xs'
-                                : 'text-[#7A7895] hover:text-[#26263F]'
+                                ? 'bg-white text-[#1C1C1E] shadow-2xs'
+                                : 'text-[#6C6C70] hover:text-[#1C1C1E]'
                             }`}
                           >
                             Month
@@ -2215,64 +2216,64 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                         </div>
                       </div>
 
-                      <div className="bg-[#5E5BAE]/[0.08] p-3.5 rounded-[20px] border border-[#5E5BAE]/20 flex flex-col gap-1.5">
+                      <div className="bg-[#F4EEFE]/75 p-3.5 rounded-[18px] border border-[#5E5BAE]/15 flex flex-col gap-1.5">
                         <div className="flex items-center gap-1.5 text-xs font-bold text-[#5E5BAE]">
-                          <Sparkles className="w-3.5 h-3.5 text-[#6865B8]" />
+                          <Sparkles className="w-3.5 h-3.5 text-[#5E5BAE]" />
                           <span>Nova noticed</span>
                         </div>
-                        <p className="text-[12.5px] leading-relaxed text-[#26263F]">
+                        <p className="text-[12.5px] leading-relaxed text-[#1C1C1E]">
                           “{currentRecentData.novaObservation}”
                         </p>
                       </div>
 
                       {/* 4 Distinct Metrics: Active Days vs Activities vs Active Time vs Rest Days */}
                       <div className="grid grid-cols-4 gap-2">
-                        <div className="bg-white/75 p-2.5 rounded-[16px] border border-white/85 flex flex-col justify-between">
-                          <span className="text-[10px] font-medium text-[#7A7895]">Active days</span>
+                        <div className="bg-[#F2F2F7]/75 p-2.5 rounded-[16px] border border-black/[0.03] flex flex-col justify-between min-h-[64px]">
+                          <span className="text-[10px] font-medium text-[#6C6C70]">Active days</span>
                           <div className="mt-1">
-                            <span className="text-[17px] font-bold text-[#26263F] leading-none">
+                            <span className="text-[17px] font-bold text-[#1C1C1E] leading-none">
                               {currentRecentData.activeDaysCount}
                             </span>
-                            <span className="text-[9.5px] text-[#7A7895] block mt-0.5">days</span>
+                            <span className="text-[9.5px] text-[#8E8E93] block mt-0.5">days</span>
                           </div>
                         </div>
 
-                        <div className="bg-white/75 p-2.5 rounded-[16px] border border-white/85 flex flex-col justify-between">
-                          <span className="text-[10px] font-medium text-[#7A7895]">Activities</span>
+                        <div className="bg-[#F2F2F7]/75 p-2.5 rounded-[16px] border border-black/[0.03] flex flex-col justify-between min-h-[64px]">
+                          <span className="text-[10px] font-medium text-[#6C6C70]">Activities</span>
                           <div className="mt-1">
                             <span className="text-[17px] font-bold text-[#5E5BAE] leading-none">
                               {currentRecentData.completedCount}
                             </span>
-                            <span className="text-[9.5px] text-[#7A7895] block mt-0.5">sessions</span>
+                            <span className="text-[9.5px] text-[#8E8E93] block mt-0.5">sessions</span>
                           </div>
                         </div>
 
-                        <div className="bg-white/75 p-2.5 rounded-[16px] border border-white/85 flex flex-col justify-between">
-                          <span className="text-[10px] font-medium text-[#7A7895]">Duration</span>
+                        <div className="bg-[#F2F2F7]/75 p-2.5 rounded-[16px] border border-black/[0.03] flex flex-col justify-between min-h-[64px]">
+                          <span className="text-[10px] font-medium text-[#6C6C70]">Duration</span>
                           <div className="mt-1">
-                            <span className="text-[17px] font-bold text-[#26263F] leading-none">
+                            <span className="text-[17px] font-bold text-[#1C1C1E] leading-none">
                               {currentRecentData.activeMinutes}
                             </span>
-                            <span className="text-[9.5px] text-[#7A7895] block mt-0.5">minutes</span>
+                            <span className="text-[9.5px] text-[#8E8E93] block mt-0.5">minutes</span>
                           </div>
                         </div>
 
-                        <div className="bg-white/75 p-2.5 rounded-[16px] border border-white/85 flex flex-col justify-between">
-                          <span className="text-[10px] font-medium text-[#7A7895]">Rest days</span>
+                        <div className="bg-[#F2F2F7]/75 p-2.5 rounded-[16px] border border-black/[0.03] flex flex-col justify-between min-h-[64px]">
+                          <span className="text-[10px] font-medium text-[#6C6C70]">Rest days</span>
                           <div className="mt-1">
                             <span className="text-[17px] font-bold text-[#E59980] leading-none">
                               {currentRecentData.restDaysCount}
                             </span>
-                            <span className="text-[9.5px] text-[#7A7895] block mt-0.5">rests</span>
+                            <span className="text-[9.5px] text-[#8E8E93] block mt-0.5">rests</span>
                           </div>
                         </div>
                       </div>
 
-                      <div className="bg-white/75 p-4 rounded-[22px] border border-white/85 flex flex-col gap-2">
+                      <div className="bg-white p-4 rounded-[22px] border border-black/[0.04] shadow-2xs flex flex-col gap-2">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-1.5">
                             <BarChart2 className="w-3.5 h-3.5 text-[#5E5BAE]" />
-                            <span className="font-bold text-[#26263F] text-[12.5px]">
+                            <span className="font-bold text-[#1C1C1E] text-[12.5px]">
                               Active minutes ({rhythmFilter === '7d' ? 'by day' : 'by week'})
                             </span>
                           </div>
@@ -2286,21 +2287,21 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                           timeframe={rhythmFilter}
                         />
 
-                        <div className="pt-2 border-t border-black/[0.04] flex items-center justify-between text-[10.5px] text-[#7A7895]">
+                        <div className="pt-2 border-t border-black/[0.04] flex items-center justify-between text-[10.5px] text-[#6C6C70]">
                           <span>Purple bars: Active sessions</span>
                           <span className="text-[#E59980]">Peach bars: Rest days</span>
                         </div>
                       </div>
 
-                      <div className="bg-white/75 p-4 rounded-[22px] border border-white/85 flex flex-col gap-2">
+                      <div className="bg-white p-4 rounded-[22px] border border-black/[0.04] shadow-2xs flex flex-col gap-2">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-1.5">
                             <TrendingUp className="w-3.5 h-3.5 text-[#5E5BAE]" />
-                            <span className="font-bold text-[#26263F] text-[12.5px]">
+                            <span className="font-bold text-[#1C1C1E] text-[12.5px]">
                               Monthly active days (6-month trend)
                             </span>
                           </div>
-                          <span className="text-[11px] text-[#7A7895]">
+                          <span className="text-[11px] text-[#6C6C70]">
                             {monthlyTrendSeries[0]?.month} – {monthlyTrendSeries[monthlyTrendSeries.length - 1]?.month} {viewYear}
                           </span>
                         </div>
@@ -2311,7 +2312,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                       <button
                         type="button"
                         onClick={() => setIsMethodologyOpen(true)}
-                        className="w-full py-2.5 px-3 rounded-[16px] bg-white/60 hover:bg-white/85 border border-white/80 text-[11.5px] font-medium text-[#7A7895] hover:text-[#26263F] flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-[0.99]"
+                        className="w-full py-2.5 px-3 rounded-[16px] bg-[#F2F2F7] hover:bg-[#E5E5EA] border border-black/[0.04] text-[11.5px] font-medium text-[#6C6C70] hover:text-[#1C1C1E] flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-[0.99]"
                       >
                         <HelpCircle className="w-3.5 h-3.5 stroke-[2]" />
                         <span>Data source & calculation methodology</span>
@@ -2323,12 +2324,12 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                   {/* SECONDARY PAGE 2: YOUR DIRECTION                        */}
                   {/* ======================================================= */}
                   {selectedModule === 'direction' && (
-                    <div className="flex flex-col gap-4 text-xs text-[#5D5B78]">
+                    <div className="flex flex-col gap-4 text-xs text-[#6C6C70]">
                       {!isEditingDirection && (
                         <>
-                          <div className="flex items-center justify-between p-3.5 rounded-[20px] bg-white/75 border border-white/85">
+                          <div className="flex items-center justify-between p-4 rounded-[22px] bg-white border border-black/[0.04] shadow-[0_4px_16px_-4px_rgba(28,28,45,0.05)]">
                             <div>
-                              <span className="text-[10.5px] uppercase font-bold text-[#7A7895] tracking-wider block">
+                              <span className="text-[10.5px] uppercase font-bold text-[#8E8E93] tracking-wider block">
                                 Plan Status
                               </span>
                               <div className="flex items-center gap-2 mt-0.5">
@@ -2337,7 +2338,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                                     direction.status === 'active' ? 'bg-[#5E5BAE]' : 'bg-[#C27838]'
                                   }`}
                                 />
-                                <span className="text-[14px] font-bold text-[#26263F]">
+                                <span className="text-[14px] font-bold text-[#1C1C1E]">
                                   {direction.status === 'active' ? 'Active & Paced' : 'Paused for Recovery'}
                                 </span>
                               </div>
@@ -2348,7 +2349,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                               onClick={handleTogglePausePlan}
                               className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1 ${
                                 direction.status === 'active'
-                                  ? 'bg-[#FAF8FD] text-[#5E5BAE] border-[#5E5BAE]/25 hover:bg-[#F3EEFE]'
+                                  ? 'bg-[#F4EEFE] text-[#5E5BAE] border-[#5E5BAE]/20 hover:bg-[#EDE5FB]'
                                   : 'bg-[#5E5BAE] text-white border-transparent'
                               }`}
                             >
@@ -2366,44 +2367,44 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                             </button>
                           </div>
 
-                          <div className="p-4 rounded-[22px] bg-white/75 border border-white/85 flex flex-col gap-2">
+                          <div className="p-4 rounded-[22px] bg-white border border-black/[0.04] shadow-[0_4px_16px_-4px_rgba(28,28,45,0.05)] flex flex-col gap-2">
                             <div className="flex items-center gap-1.5 text-xs font-bold text-[#5E5BAE]">
                               <Compass className="w-3.5 h-3.5 stroke-[2.2]" />
                               <span>Current Goal</span>
                             </div>
-                            <h4 className="text-[16px] font-bold text-[#26263F] leading-tight">
+                            <h4 className="text-[16px] font-bold text-[#1C1C1E] leading-tight">
                               {direction.goalTitle}
                             </h4>
-                            <p className="text-[12.5px] leading-relaxed text-[#5D5B78]">
+                            <p className="text-[12.5px] leading-relaxed text-[#6C6C70]">
                               {direction.description}
                             </p>
                           </div>
 
-                          <div className="p-4 rounded-[22px] bg-white/75 border border-white/85 flex flex-col gap-2">
+                          <div className="p-4 rounded-[22px] bg-white border border-black/[0.04] shadow-[0_4px_16px_-4px_rgba(28,28,45,0.05)] flex flex-col gap-2">
                             <div className="flex items-center gap-1.5 text-xs font-bold text-[#5E5BAE]">
                               <Clock className="w-3.5 h-3.5 stroke-[2.2]" />
                               <span>Current Execution Approach</span>
                             </div>
-                            <p className="text-[13px] font-medium text-[#26263F] leading-relaxed">
+                            <p className="text-[13px] font-medium text-[#1C1C1E] leading-relaxed">
                               {direction.executionApproach}
                             </p>
                           </div>
 
-                          <div className="p-4 rounded-[22px] bg-white/75 border border-white/85 flex flex-col gap-2">
+                          <div className="p-4 rounded-[22px] bg-[#F4EEFE]/75 border border-[#5E5BAE]/15 flex flex-col gap-2">
                             <div className="flex items-center gap-1.5 text-xs font-bold text-[#5E5BAE]">
-                              <Sparkles className="w-3.5 h-3.5 text-[#6865B8]" />
+                              <Sparkles className="w-3.5 h-3.5 text-[#5E5BAE]" />
                               <span>Informed by what Nova knows</span>
                             </div>
-                            <p className="text-[12.5px] leading-relaxed text-[#26263F]">
+                            <p className="text-[12.5px] leading-relaxed text-[#1C1C1E]">
                               {direction.tailoredReason}
                             </p>
                           </div>
 
-                          <div className="p-3.5 rounded-[18px] bg-white/55 border border-white/75 flex items-center justify-between text-xs text-[#7A7895]">
+                          <div className="p-3.5 rounded-[18px] bg-[#F2F2F7]/75 border border-black/[0.04] flex items-center justify-between text-xs text-[#8E8E93]">
                             <div className="flex items-center gap-1.5">
                               <CalendarIcon className="w-3.5 h-3.5 stroke-[2]" />
                               <span>
-                                Next review: <strong className="text-[#26263F]">{direction.nextReviewDate}</strong>
+                                Next review: <strong className="text-[#1C1C1E]">{direction.nextReviewDate}</strong>
                               </span>
                             </div>
                             <span>{direction.reviewDaysLeft} days remaining</span>
@@ -2422,7 +2423,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                             <button
                               type="button"
                               onClick={handleStartEditDirection}
-                              className="w-full py-2.5 rounded-[16px] bg-white/80 hover:bg-white text-[#5E5BAE] border border-[#5E5BAE]/20 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                              className="w-full py-2.5 rounded-[16px] bg-white hover:bg-[#FAFAFC] text-[#5E5BAE] border border-[#5E5BAE]/20 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs"
                             >
                               <Sliders className="w-3.5 h-3.5 stroke-[2]" />
                               <span>Select preset or edit manually</span>
@@ -2433,13 +2434,13 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
 
                       {isEditingDirection && (
                         <div className="flex flex-col gap-4">
-                          <div className="bg-[#5E5BAE]/[0.08] p-3 rounded-[18px] border border-[#5E5BAE]/20 text-xs text-[#5E5BAE] flex items-center gap-2">
+                          <div className="bg-[#F4EEFE] p-3 rounded-[18px] border border-[#5E5BAE]/20 text-xs text-[#5E5BAE] flex items-center gap-2">
                             <Sliders className="w-4 h-4 stroke-[2] shrink-0" />
                             <span>Adjusting direction. Changes apply only after you confirm below.</span>
                           </div>
 
                           <div className="flex flex-col gap-2">
-                            <span className="font-bold text-[#26263F] text-xs">
+                            <span className="font-bold text-[#1C1C1E] text-xs">
                               Select Health Focus Goal:
                             </span>
                             <div className="space-y-2">
@@ -2458,23 +2459,23 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                                         tailoredReason: preset.tailoredReason
                                       }));
                                     }}
-                                    className={`p-3 rounded-[16px] border transition-all cursor-pointer ${
+                                    className={`p-3.5 rounded-[18px] border transition-all cursor-pointer ${
                                       isSelected
                                         ? 'bg-white border-[#5E5BAE] shadow-2xs ring-1 ring-[#5E5BAE]/20'
-                                        : 'bg-white/60 border-white/75 hover:bg-white/80'
+                                        : 'bg-white border-black/[0.04] hover:bg-[#FAFAFC]'
                                     }`}
                                   >
                                     <div className="flex items-center justify-between">
                                       <span
                                         className={`text-[13px] font-bold ${
-                                          isSelected ? 'text-[#5E5BAE]' : 'text-[#26263F]'
+                                          isSelected ? 'text-[#5E5BAE]' : 'text-[#1C1C1E]'
                                         }`}
                                       >
                                         {preset.title}
                                       </span>
                                       {isSelected && <Check className="w-4 h-4 text-[#5E5BAE] stroke-[2.5]" />}
                                     </div>
-                                    <p className="text-[11.5px] text-[#7A7895] mt-1 leading-relaxed">
+                                    <p className="text-[11.5px] text-[#6C6C70] mt-1 leading-relaxed">
                                       {preset.description}
                                     </p>
                                   </div>
@@ -2484,7 +2485,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                           </div>
 
                           <div className="flex flex-col gap-1.5">
-                            <span className="font-bold text-[#26263F] text-xs">
+                            <span className="font-bold text-[#1C1C1E] text-xs">
                               Execution Approach:
                             </span>
                             <textarea
@@ -2493,23 +2494,23 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                               onChange={(e) =>
                                 setDirectionDraft((prev) => ({ ...prev, executionApproach: e.target.value }))
                               }
-                              className="w-full bg-white p-3 rounded-[16px] border border-[#26263F]/10 text-xs text-[#26263F] outline-none focus:border-[#5E5BAE] transition-all resize-none shadow-2xs"
+                              className="w-full bg-[#F2F2F7] p-3 rounded-[16px] border border-black/[0.06] text-xs text-[#1C1C1E] outline-none focus:border-[#5E5BAE] focus:bg-white transition-all resize-none shadow-2xs"
                               placeholder="Describe your execution pace and time window..."
                             />
                           </div>
 
-                          <div className="flex items-center justify-between p-3 rounded-[16px] bg-white/70 border border-white/85">
-                            <span className="font-bold text-[#26263F] text-xs">
+                          <div className="flex items-center justify-between p-3.5 rounded-[18px] bg-white border border-black/[0.04] shadow-2xs">
+                            <span className="font-bold text-[#1C1C1E] text-xs">
                               Plan Status:
                             </span>
-                            <div className="bg-[#26263F]/[0.06] p-0.5 rounded-full inline-flex">
+                            <div className="bg-[#F2F2F7] p-0.5 rounded-full inline-flex border border-black/[0.04]">
                               <button
                                 type="button"
                                 onClick={() => setDirectionDraft((prev) => ({ ...prev, status: 'active' }))}
                                 className={`px-3 py-1 text-xs rounded-full transition-all cursor-pointer ${
                                   directionDraft.status === 'active'
                                     ? 'bg-[#5E5BAE] text-white font-bold shadow-2xs'
-                                    : 'text-[#7A7895] font-medium'
+                                    : 'text-[#8E8E93] font-medium'
                                 }`}
                               >
                                 Active
@@ -2520,7 +2521,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                                 className={`px-3 py-1 text-xs rounded-full transition-all cursor-pointer ${
                                   directionDraft.status === 'paused'
                                     ? 'bg-[#C27838] text-white font-bold shadow-2xs'
-                                    : 'text-[#7A7895] font-medium'
+                                    : 'text-[#8E8E93] font-medium'
                                 }`}
                               >
                                 Paused
@@ -2532,7 +2533,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                             <button
                               type="button"
                               onClick={handleCancelDirectionChanges}
-                              className="flex-1 py-3 rounded-[16px] bg-white/80 hover:bg-white text-[#7A7895] text-xs font-semibold border border-white/90 active:scale-[0.98] transition-all cursor-pointer"
+                              className="flex-1 py-3 rounded-[16px] bg-[#F2F2F7] hover:bg-[#E5E5EA] text-[#1C1C1E] text-xs font-semibold border border-black/[0.04] active:scale-[0.98] transition-all cursor-pointer"
                             >
                               Cancel
                             </button>
@@ -2554,7 +2555,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                   {/* SECONDARY PAGE 3: WHAT NOVA KNOWS (All Memories Sheet)  */}
                   {/* ======================================================= */}
                   {selectedModule === 'memory' && (
-                    <div className="flex flex-col gap-4 text-xs text-[#5D5B78]">
+                    <div className="flex flex-col gap-4 text-xs text-[#6C6C70]">
                       <button
                         type="button"
                         onClick={() => handleStartTalkToNovaMemory(null)}
@@ -2568,10 +2569,10 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                       <div className="flex flex-col gap-2">
                         <div className="flex items-center gap-1.5 px-1">
                           <Compass className="w-3.5 h-3.5 text-[#5E5BAE] stroke-[2.2]" />
-                          <span className="text-[13px] font-bold text-[#26263F]">What matters to you</span>
+                          <span className="text-[13px] font-bold text-[#1C1C1E]">What matters to you</span>
                         </div>
                         {mattersMemories.length === 0 ? (
-                          <div className="bg-white/60 rounded-[18px] p-3.5 border border-white/80 text-xs text-[#7A7895]">
+                          <div className="bg-[#F2F2F7]/75 rounded-[18px] p-3.5 border border-black/[0.04] text-xs text-[#8E8E93]">
                             No long-term focus items saved right now.
                           </div>
                         ) : (
@@ -2582,15 +2583,15 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                               role="button"
                               tabIndex={0}
                               onKeyDown={(e) => e.key === 'Enter' && setSelectedMemory(item)}
-                              className="group bg-white/80 hover:bg-white rounded-[20px] p-3.5 border border-white/90 shadow-2xs flex flex-col gap-1.5 cursor-pointer transition-all"
+                              className="group bg-white hover:bg-[#FAFAFC] rounded-[20px] p-3.5 border border-black/[0.04] shadow-[0_4px_16px_-4px_rgba(28,28,45,0.05)] flex flex-col gap-1.5 cursor-pointer transition-all"
                             >
                               <div className="flex items-start justify-between gap-2">
-                                <h4 className="text-[13.5px] font-bold text-[#26263F] leading-snug">
+                                <h4 className="text-[13.5px] font-bold text-[#1C1C1E] leading-snug">
                                   {item.title}
                                 </h4>
                                 <ChevronRight className="w-4 h-4 text-[#5E5BAE] shrink-0 mt-0.5 stroke-[2.2]" />
                               </div>
-                              <p className="text-[12px] text-[#5D5B78] leading-relaxed line-clamp-2">
+                              <p className="text-[12px] text-[#6C6C70] leading-relaxed line-clamp-2">
                                 {item.summary}
                               </p>
                             </div>
@@ -2602,10 +2603,10 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                       <div className="flex flex-col gap-2">
                         <div className="flex items-center gap-1.5 px-1">
                           <Heart className="w-3.5 h-3.5 text-[#5E5BAE] stroke-[2.2]" />
-                          <span className="text-[13px] font-bold text-[#26263F]">What feels right</span>
+                          <span className="text-[13px] font-bold text-[#1C1C1E]">What feels right</span>
                         </div>
                         {feelsRightMemories.length === 0 ? (
-                          <div className="bg-white/60 rounded-[18px] p-3.5 border border-white/80 text-xs text-[#7A7895]">
+                          <div className="bg-[#F2F2F7]/75 rounded-[18px] p-3.5 border border-black/[0.04] text-xs text-[#8E8E93]">
                             No rhythm preferences saved right now.
                           </div>
                         ) : (
@@ -2616,15 +2617,15 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                               role="button"
                               tabIndex={0}
                               onKeyDown={(e) => e.key === 'Enter' && setSelectedMemory(item)}
-                              className="group bg-white/80 hover:bg-white rounded-[20px] p-3.5 border border-white/90 shadow-2xs flex flex-col gap-1.5 cursor-pointer transition-all"
+                              className="group bg-white hover:bg-[#FAFAFC] rounded-[20px] p-3.5 border border-black/[0.04] shadow-[0_4px_16px_-4px_rgba(28,28,45,0.05)] flex flex-col gap-1.5 cursor-pointer transition-all"
                             >
                               <div className="flex items-start justify-between gap-2">
-                                <h4 className="text-[13.5px] font-bold text-[#26263F] leading-snug">
+                                <h4 className="text-[13.5px] font-bold text-[#1C1C1E] leading-snug">
                                   {item.title}
                                 </h4>
                                 <ChevronRight className="w-4 h-4 text-[#5E5BAE] shrink-0 mt-0.5 stroke-[2.2]" />
                               </div>
-                              <p className="text-[12px] text-[#5D5B78] leading-relaxed line-clamp-2">
+                              <p className="text-[12px] text-[#6C6C70] leading-relaxed line-clamp-2">
                                 {item.summary}
                               </p>
                             </div>
@@ -2636,17 +2637,17 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                       <div className="flex flex-col gap-2">
                         <div className="flex items-center justify-between px-1">
                           <div className="flex items-center gap-1.5">
-                            <Sparkles className="w-3.5 h-3.5 text-[#6865B8] stroke-[2.2]" />
-                            <span className="text-[13px] font-bold text-[#26263F]">Can I check something?</span>
+                            <Sparkles className="w-3.5 h-3.5 text-[#5E5BAE] stroke-[2.2]" />
+                            <span className="text-[13px] font-bold text-[#1C1C1E]">Can I check something?</span>
                           </div>
                           {checkMemories.length > 0 && (
-                            <span className="text-[10px] font-bold text-[#5E5BAE] bg-[#5E5BAE]/10 px-2 py-0.5 rounded-full">
+                            <span className="text-[10px] font-bold text-[#5E5BAE] bg-[#F4EEFE] px-2 py-0.5 rounded-full border border-[#5E5BAE]/20">
                               {checkMemories.length} new
                             </span>
                           )}
                         </div>
                         {checkMemories.length === 0 ? (
-                          <div className="bg-white/60 rounded-[18px] p-3.5 border border-white/80 text-xs text-[#7A7895] flex items-center gap-2">
+                          <div className="bg-[#F2F2F7]/75 rounded-[18px] p-3.5 border border-black/[0.04] text-xs text-[#8E8E93] flex items-center gap-2">
                             <Check className="w-4 h-4 text-[#5E5BAE] shrink-0" />
                             <span>All caught up — no pending observations to check.</span>
                           </div>
@@ -2658,15 +2659,15 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                               role="button"
                               tabIndex={0}
                               onKeyDown={(e) => e.key === 'Enter' && setSelectedMemory(item)}
-                              className="bg-[#FAF8FD] hover:bg-white rounded-[20px] p-3.5 border border-[#5E5BAE]/25 shadow-2xs flex flex-col gap-2.5 cursor-pointer transition-all"
+                              className="bg-[#F4EEFE]/75 hover:bg-[#F4EEFE] rounded-[20px] p-3.5 border border-[#5E5BAE]/20 shadow-[0_4px_16px_-4px_rgba(28,28,45,0.05)] flex flex-col gap-2.5 cursor-pointer transition-all"
                             >
                               <div className="flex items-start justify-between gap-2">
-                                <h4 className="text-[13.5px] font-bold text-[#26263F] leading-snug">
+                                <h4 className="text-[13.5px] font-bold text-[#1C1C1E] leading-snug">
                                   {item.title}
                                 </h4>
                                 <ChevronRight className="w-4 h-4 text-[#5E5BAE] shrink-0 mt-0.5 stroke-[2.2]" />
                               </div>
-                              <p className="text-[12px] text-[#5D5B78] leading-relaxed">
+                              <p className="text-[12px] text-[#6C6C70] leading-relaxed">
                                 {item.summary}
                               </p>
                               <div className="pt-1 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
@@ -2681,7 +2682,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                                 <button
                                   type="button"
                                   onClick={(e) => handleStartTalkToNovaMemory(item, e)}
-                                  className="py-2 px-3 rounded-[12px] bg-white hover:bg-[#F3EEFE] text-[#5E5BAE] border border-[#5E5BAE]/20 text-xs font-semibold flex items-center justify-center gap-1 cursor-pointer"
+                                  className="py-2 px-3 rounded-[12px] bg-white hover:bg-[#FAFAFC] text-[#5E5BAE] border border-[#5E5BAE]/20 text-xs font-semibold flex items-center justify-center gap-1 cursor-pointer shadow-2xs"
                                 >
                                   <MessageSquare className="w-3.5 h-3.5 stroke-[2]" />
                                   <span>Talk</span>
@@ -2689,7 +2690,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                                 <button
                                   type="button"
                                   onClick={(e) => handleDismissPendingMemory(item.id, e)}
-                                  className="py-2 px-2.5 rounded-[12px] bg-black/[0.04] hover:bg-black/[0.08] text-[#7A7895] text-xs font-medium cursor-pointer"
+                                  className="py-2 px-2.5 rounded-[12px] bg-black/[0.04] hover:bg-black/[0.08] text-[#8E8E93] text-xs font-medium cursor-pointer"
                                 >
                                   No
                                 </button>
@@ -2706,7 +2707,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                             setMemories(INITIAL_MEMORIES);
                             showMemoryFeedback('Sample memories restored');
                           }}
-                          className="self-center text-[11px] font-semibold text-[#7A7895] hover:text-[#5E5BAE] flex items-center gap-1 py-1 px-3 rounded-full bg-white/50 border border-white/70 transition-colors cursor-pointer"
+                          className="self-center text-[11px] font-semibold text-[#8E8E93] hover:text-[#5E5BAE] flex items-center gap-1 py-1 px-3 rounded-full bg-white border border-black/[0.06] shadow-2xs transition-colors cursor-pointer"
                         >
                           <RotateCcw className="w-3 h-3" />
                           <span>Restore sample memories</span>
@@ -2719,18 +2720,18 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                   {/* SECONDARY PAGE 4: HEALTH DATA (Apple Health Details)    */}
                   {/* ======================================================= */}
                   {selectedModule === 'health' && (
-                    <div className="flex flex-col gap-4 text-xs text-[#5D5B78]">
-                      <div className="p-4 rounded-[22px] bg-white/75 border border-white/85 flex flex-col gap-3">
+                    <div className="flex flex-col gap-4 text-xs text-[#6C6C70]">
+                      <div className="p-4 rounded-[22px] bg-white border border-black/[0.04] shadow-[0_4px_16px_-4px_rgba(28,28,45,0.05)] flex flex-col gap-3">
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <div className="w-7 h-7 rounded-full bg-[#FFE4E6] text-[#E11D48] flex items-center justify-center">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-full bg-[#FFE4E6] text-[#E11D48] flex items-center justify-center shrink-0">
                               <Heart className="w-4 h-4 fill-current" />
                             </div>
                             <div>
-                              <h4 className="text-[14px] font-bold text-[#26263F]">
+                              <h4 className="text-[14px] font-bold text-[#1C1C1E]">
                                 Apple Health Connection
                               </h4>
-                              <span className="text-[11px] text-[#7A7895]">
+                              <span className="text-[11px] text-[#8E8E93]">
                                 {isAppleHealthConnected ? 'Sample sync active (Demo)' : 'Not connected'}
                               </span>
                             </div>
@@ -2741,15 +2742,15 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                             onClick={() => setIsAppleHealthConnected(!isAppleHealthConnected)}
                             className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer border ${
                               isAppleHealthConnected
-                                ? 'bg-white text-[#E11D48] border-[#E11D48]/30 hover:bg-[#FFE4E6]/20'
-                                : 'bg-[#5E5BAE] text-white border-transparent'
+                                ? 'bg-[#FFE4E6]/40 text-[#E11D48] border-[#E11D48]/30 hover:bg-[#FFE4E6]/60'
+                                : 'bg-[#5E5BAE] text-white border-transparent shadow-2xs'
                             }`}
                           >
                             {isAppleHealthConnected ? 'Disconnect' : 'Connect Demo'}
                           </button>
                         </div>
 
-                        <div className="p-3 rounded-[16px] bg-[#FAF8FD] border border-black/[0.04] text-[11.5px] leading-relaxed text-[#7A7895]">
+                        <div className="p-3 rounded-[16px] bg-[#F2F2F7]/75 border border-black/[0.04] text-[11.5px] leading-relaxed text-[#6C6C70]">
                           {isAppleHealthConnected ? (
                             <span className="flex items-start gap-1.5">
                               <Info className="w-3.5 h-3.5 text-[#5E5BAE] shrink-0 mt-0.5" />
@@ -2757,7 +2758,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                             </span>
                           ) : (
                             <span className="flex items-start gap-1.5">
-                              <AlertCircle className="w-3.5 h-3.5 text-[#7A7895] shrink-0 mt-0.5" />
+                              <AlertCircle className="w-3.5 h-3.5 text-[#8E8E93] shrink-0 mt-0.5" />
                               <span>Apple Health is not connected. All indicators display “Not connected / No data” rather than false zero counts.</span>
                             </span>
                           )}
@@ -2765,7 +2766,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                       </div>
 
                       <div className="flex flex-col gap-2.5">
-                        <span className="font-bold text-[#26263F] text-xs">
+                        <span className="font-bold text-[#1C1C1E] text-xs">
                           Biometric Baseline Indicators
                         </span>
 
@@ -2785,7 +2786,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                             return (
                               <div
                                 key={metric.id}
-                                className="p-3.5 rounded-[20px] bg-white/75 border border-white/85 flex flex-col gap-2 shadow-2xs"
+                                className="p-3.5 rounded-[20px] bg-white border border-black/[0.04] shadow-[0_4px_16px_-4px_rgba(28,28,45,0.05)] flex flex-col gap-2"
                               >
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center gap-2">
@@ -2794,28 +2795,28 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                                     >
                                       <IconComponent className="w-3.5 h-3.5 stroke-[2.2]" />
                                     </div>
-                                    <span className="text-[13px] font-bold text-[#26263F]">
+                                    <span className="text-[13px] font-bold text-[#1C1C1E]">
                                       {metric.name}
                                     </span>
                                   </div>
 
                                   <div className="flex items-baseline gap-1">
                                     <span
-                                      className={`font-bold text-[#26263F] ${
-                                        isConnected ? 'text-[17px]' : 'text-[12px] text-[#8E8EA8]'
+                                      className={`font-bold text-[#1C1C1E] ${
+                                        isConnected ? 'text-[17px]' : 'text-[12px] text-[#8E8E93]'
                                       }`}
                                     >
                                       {valueText}
                                     </span>
                                     {unitText && (
-                                      <span className="text-[11px] text-[#7A7895]">{unitText}</span>
+                                      <span className="text-[11px] text-[#8E8E93]">{unitText}</span>
                                     )}
                                   </div>
                                 </div>
 
-                                <div className="pt-1.5 border-t border-black/[0.04] flex items-center justify-between text-[10.5px] text-[#7A7895]">
+                                <div className="pt-1.5 border-t border-black/[0.04] flex items-center justify-between text-[10.5px] text-[#8E8E93]">
                                   <span>
-                                    Source: <strong className="text-[#26263F] font-medium">{sourceText}</strong>
+                                    Source: <strong className="text-[#1C1C1E] font-medium">{sourceText}</strong>
                                   </span>
                                   <span>Updated: {lastUpdatedText}</span>
                                 </div>
@@ -2825,22 +2826,22 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                         </div>
                       </div>
 
-                      <div className="p-4 rounded-[22px] bg-white/75 border border-white/85 flex flex-col gap-2">
+                      <div className="p-4 rounded-[22px] bg-white border border-black/[0.04] shadow-[0_4px_16px_-4px_rgba(28,28,45,0.05)] flex flex-col gap-2">
                         <div className="flex items-center gap-1.5 text-xs font-bold text-[#5E5BAE]">
                           <ShieldCheck className="w-4 h-4 stroke-[2.2]" />
                           <span>How Plan B uses health data</span>
                         </div>
-                        <p className="text-[12px] leading-relaxed text-[#5D5B78]">
+                        <p className="text-[12px] leading-relaxed text-[#6C6C70]">
                           Plan B reads resting heart rate and sleep consistency solely to detect physiological fatigue and automatically soften daily recommendations into gentle 5-minute living room stretches.
                         </p>
                       </div>
 
-                      <div className="p-4 rounded-[22px] bg-[#5E5BAE]/[0.08] border border-[#5E5BAE]/20 flex flex-col gap-1.5">
+                      <div className="p-4 rounded-[22px] bg-[#F4EEFE]/75 border border-[#5E5BAE]/15 flex flex-col gap-1.5">
                         <div className="flex items-center gap-1.5 text-xs font-bold text-[#5E5BAE]">
-                          <Sparkles className="w-3.5 h-3.5 text-[#6865B8]" />
+                          <Sparkles className="w-3.5 h-3.5 text-[#5E5BAE]" />
                           <span>No Apple Health? No problem.</span>
                         </div>
-                        <p className="text-[12px] leading-relaxed text-[#26263F]">
+                        <p className="text-[12px] leading-relaxed text-[#1C1C1E]">
                           Plan B is completely functional without Apple Health or wearable sensors. Daily check-ins with Nova and manual progress tracking give you the complete experience.
                         </p>
                       </div>
@@ -2851,18 +2852,18 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                   {/* SECONDARY PAGE 5: ACTIVITY HISTORY                      */}
                   {/* ======================================================= */}
                   {selectedModule === 'activity' && (
-                    <div className="flex flex-col gap-4 text-xs text-[#5D5B78]">
-                      <div className="p-4 rounded-[22px] bg-white/75 border border-white/85 flex flex-col gap-3">
+                    <div className="flex flex-col gap-4 text-xs text-[#6C6C70]">
+                      <div className="p-4 rounded-[22px] bg-white border border-black/[0.04] shadow-[0_4px_16px_-4px_rgba(28,28,45,0.05)] flex flex-col gap-3">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <div className="w-7 h-7 rounded-full bg-[#5E5BAE]/10 text-[#5E5BAE] flex items-center justify-center font-bold">
                               <CalendarIcon className="w-4 h-4" />
                             </div>
                             <div>
-                              <h4 className="text-[14px] font-bold text-[#26263F]">
+                              <h4 className="text-[14px] font-bold text-[#1C1C1E]">
                                 {MONTH_NAMES[viewMonth]} {viewYear}
                               </h4>
-                              <span className="text-[11px] text-[#7A7895]">
+                              <span className="text-[11px] text-[#8E8E93]">
                                 Monthly pacing & log overview
                               </span>
                             </div>
@@ -2874,7 +2875,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                               setPickerYear(viewYear);
                               setIsMonthPickerOpen(true);
                             }}
-                            className="px-3 py-1.5 rounded-full text-xs font-semibold bg-[#5E5BAE]/10 hover:bg-[#5E5BAE]/20 text-[#5E5BAE] transition-all cursor-pointer"
+                            className="px-3 py-1.5 rounded-full text-xs font-semibold bg-[#F4EEFE] hover:bg-[#EDE5FB] text-[#5E5BAE] border border-[#5E5BAE]/15 transition-all cursor-pointer"
                           >
                             Switch month
                           </button>
@@ -2882,29 +2883,29 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
 
                         {/* Explicitly distinguishes Active days vs Activities vs Rests vs Duration */}
                         <div className="grid grid-cols-4 gap-2 pt-1 border-t border-black/[0.04] text-center">
-                          <div className="bg-[#FAF8FD] p-2 rounded-[14px]">
+                          <div className="bg-[#F2F2F7]/80 p-2 rounded-[14px]">
                             <span className="text-[15px] font-bold text-[#5E5BAE] block leading-none">
                               {activeDaysCount}
                             </span>
-                            <span className="text-[9.5px] text-[#7A7895] mt-0.5 block">active days</span>
+                            <span className="text-[9.5px] text-[#8E8E93] mt-0.5 block">active days</span>
                           </div>
-                          <div className="bg-[#FAF8FD] p-2 rounded-[14px]">
-                            <span className="text-[15px] font-bold text-[#26263F] block leading-none">
+                          <div className="bg-[#F2F2F7]/80 p-2 rounded-[14px]">
+                            <span className="text-[15px] font-bold text-[#1C1C1E] block leading-none">
                               {completedSessionsInMonth}
                             </span>
-                            <span className="text-[9.5px] text-[#7A7895] mt-0.5 block">activities</span>
+                            <span className="text-[9.5px] text-[#8E8E93] mt-0.5 block">activities</span>
                           </div>
-                          <div className="bg-[#FAF8FD] p-2 rounded-[14px]">
+                          <div className="bg-[#F2F2F7]/80 p-2 rounded-[14px]">
                             <span className="text-[15px] font-bold text-[#E59980] block leading-none">
                               {restDaysCount}
                             </span>
-                            <span className="text-[9.5px] text-[#7A7895] mt-0.5 block">rest days</span>
+                            <span className="text-[9.5px] text-[#8E8E93] mt-0.5 block">rest days</span>
                           </div>
-                          <div className="bg-[#FAF8FD] p-2 rounded-[14px]">
-                            <span className="text-[15px] font-bold text-[#26263F] block leading-none">
+                          <div className="bg-[#F2F2F7]/80 p-2 rounded-[14px]">
+                            <span className="text-[15px] font-bold text-[#1C1C1E] block leading-none">
                               {totalMinutes}m
                             </span>
-                            <span className="text-[9.5px] text-[#7A7895] mt-0.5 block">duration</span>
+                            <span className="text-[9.5px] text-[#8E8E93] mt-0.5 block">duration</span>
                           </div>
                         </div>
                       </div>
@@ -2912,16 +2913,16 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                       {/* Logged Records List */}
                       <div className="flex flex-col gap-2.5">
                         <div className="flex items-center justify-between">
-                          <span className="font-bold text-[#26263F] text-xs">
+                          <span className="font-bold text-[#1C1C1E] text-xs">
                             Recorded Days ({currentMonthRecords.length})
                           </span>
-                          <span className="text-[10.5px] text-[#7A7895]">
+                          <span className="text-[10.5px] text-[#8E8E93]">
                             Tap edit to modify or clear
                           </span>
                         </div>
 
                         {currentMonthRecords.length === 0 ? (
-                          <div className="p-6 text-center rounded-[20px] bg-white/60 border border-black/[0.04] text-[#7A7895]">
+                          <div className="p-6 text-center rounded-[20px] bg-white border border-black/[0.04] text-[#8E8E93] shadow-2xs">
                             No activity or rest recorded yet for this month. Tap any day on the calendar grid to log an action.
                           </div>
                         ) : (
@@ -2941,7 +2942,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                                 return (
                                   <div
                                     key={rec.date}
-                                    className="p-3.5 rounded-[18px] bg-white/80 border border-white/90 flex items-center justify-between shadow-2xs gap-3"
+                                    className="p-3.5 rounded-[18px] bg-white border border-black/[0.04] shadow-[0_4px_16px_-4px_rgba(28,28,45,0.05)] flex items-center justify-between gap-3"
                                   >
                                     <div className="flex items-start gap-2.5 min-w-0">
                                       <div
@@ -2951,7 +2952,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                                       />
                                       <div className="min-w-0">
                                         <div className="flex items-center gap-1.5 flex-wrap">
-                                          <span className="font-bold text-[#26263F] text-[13px]">
+                                          <span className="font-bold text-[#1C1C1E] text-[13px]">
                                             {dateLabel}
                                           </span>
                                           {isToday && (
@@ -2960,12 +2961,12 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                                             </span>
                                           )}
                                           {rec.isSample && (
-                                            <span className="text-[9.5px] text-[#7A7895] bg-black/[0.04] px-1.5 py-0.2 rounded-full">
+                                            <span className="text-[9.5px] text-[#8E8E93] bg-[#F2F2F7] px-1.5 py-0.2 rounded-full">
                                               Sample
                                             </span>
                                           )}
                                         </div>
-                                        <div className="text-[12px] text-[#5D5B78] mt-0.5 truncate">
+                                        <div className="text-[12px] text-[#6C6C70] mt-0.5 truncate">
                                           {rec.type === 'active' ? (
                                             <span>
                                               {rec.title} • {sessCount}{' '}
@@ -2977,7 +2978,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                                           )}
                                         </div>
                                         {rec.note && (
-                                          <div className="text-[11px] text-[#8E8EA8] mt-0.5 italic truncate">
+                                          <div className="text-[11px] text-[#8E8E93] mt-0.5 italic truncate">
                                             “{rec.note}”
                                           </div>
                                         )}
@@ -2987,7 +2988,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                                     <button
                                       type="button"
                                       onClick={() => handleOpenDayDetail(rec.date)}
-                                      className="px-2.5 py-1 rounded-[10px] bg-black/[0.04] hover:bg-black/[0.08] text-[11px] font-semibold text-[#5E5BAE] shrink-0 transition-colors cursor-pointer"
+                                      className="px-2.5 py-1 rounded-[10px] bg-[#F2F2F7] hover:bg-[#E5E5EA] text-[11px] font-semibold text-[#5E5BAE] shrink-0 transition-colors cursor-pointer"
                                     >
                                       Edit
                                     </button>
@@ -3032,17 +3033,17 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                   animate={{ y: 0 }}
                   exit={{ y: '100%' }}
                   transition={{ type: 'spring', damping: 28, stiffness: 290 }}
-                  className="relative w-full max-h-[86%] bg-[#FAF7F2] rounded-t-[32px] p-6 shadow-2xl border-t border-white/95 overflow-y-auto z-10 flex flex-col gap-4 text-[#26263F]"
+                  className="relative w-full max-h-[86%] bg-white/95 backdrop-blur-2xl rounded-t-[32px] p-6 shadow-2xl border-t border-black/[0.04] overflow-y-auto z-10 flex flex-col gap-4 text-[#1C1C1E]"
                   id="memory-detail-sheet"
                 >
-                  <div className="flex items-start justify-between gap-3 pb-2 border-b border-[#26263F]/[0.06]">
+                  <div className="flex items-start justify-between gap-3 pb-2 border-b border-black/[0.05]">
                     <div>
-                      <span className="text-[10.5px] font-bold uppercase tracking-wider text-[#5E5BAE] bg-[#5E5BAE]/10 px-2.5 py-0.5 rounded-full inline-block mb-1.5">
+                      <span className="text-[10.5px] font-bold uppercase tracking-wider text-[#5E5BAE] bg-[#F4EEFE] border border-[#5E5BAE]/20 px-2.5 py-0.5 rounded-full inline-block mb-1.5">
                         {selectedMemory.category === 'matters' && 'What matters to you'}
                         {selectedMemory.category === 'feels_right' && 'What feels right'}
                         {selectedMemory.category === 'check' && 'Can I check something?'}
                       </span>
-                      <h3 className="text-[17px] font-bold text-[#26263F] leading-snug">
+                      <h3 className="text-[17px] font-bold text-[#1C1C1E] leading-snug">
                         {selectedMemory.title}
                       </h3>
                     </div>
@@ -3050,62 +3051,62 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                     <button
                       type="button"
                       onClick={() => setSelectedMemory(null)}
-                      className="w-8 h-8 rounded-full bg-black/5 hover:bg-black/10 flex items-center justify-center text-[#26263F] shrink-0 cursor-pointer"
+                      className="w-8 h-8 rounded-full bg-[#F2F2F7] hover:bg-[#E5E5EA] flex items-center justify-center text-[#1C1C1E] shrink-0 cursor-pointer transition-colors"
                       aria-label="Close memory detail"
                     >
                       <X className="w-4 h-4 stroke-[2.2]" />
                     </button>
                   </div>
 
-                  <div className="p-4 rounded-[20px] bg-white/80 border border-white/90 flex flex-col gap-1.5">
-                    <span className="text-[11px] font-bold text-[#7A7895] uppercase tracking-wider">
+                  <div className="p-4 rounded-[20px] bg-[#F2F2F7]/75 border border-black/[0.04] flex flex-col gap-1.5">
+                    <span className="text-[11px] font-bold text-[#8E8E93] uppercase tracking-wider">
                       Memory Summary
                     </span>
-                    <p className="text-[13px] text-[#26263F] leading-relaxed">
+                    <p className="text-[13px] text-[#1C1C1E] leading-relaxed">
                       {selectedMemory.summary}
                     </p>
                   </div>
 
-                  <div className="p-4 rounded-[20px] bg-white/80 border border-white/90 flex flex-col gap-1.5">
+                  <div className="p-4 rounded-[20px] bg-[#F2F2F7]/75 border border-black/[0.04] flex flex-col gap-1.5">
                     <div className="flex items-center gap-1.5 text-xs font-bold text-[#5E5BAE]">
                       <Clock className="w-3.5 h-3.5 stroke-[2.2]" />
                       <span>How Nova learned this</span>
                     </div>
-                    <p className="text-[12.5px] text-[#5D5B78] leading-relaxed">
+                    <p className="text-[12.5px] text-[#6C6C70] leading-relaxed">
                       {selectedMemory.learnedFrom}
                     </p>
-                    <span className="text-[10.5px] text-[#8E8EA8] mt-0.5">
+                    <span className="text-[10.5px] text-[#8E8E93] mt-0.5">
                       {selectedMemory.updatedAt}
                     </span>
                   </div>
 
-                  <div className="p-4 rounded-[20px] bg-[#5E5BAE]/[0.07] border border-[#5E5BAE]/20 flex flex-col gap-1.5">
+                  <div className="p-4 rounded-[20px] bg-[#F4EEFE]/75 border border-[#5E5BAE]/15 flex flex-col gap-1.5">
                     <div className="flex items-center gap-1.5 text-xs font-bold text-[#5E5BAE]">
-                      <Sparkles className="w-3.5 h-3.5 text-[#6865B8]" />
+                      <Sparkles className="w-3.5 h-3.5 text-[#5E5BAE]" />
                       <span>How this helps your plan</span>
                     </div>
-                    <p className="text-[12.5px] text-[#26263F] leading-relaxed">
+                    <p className="text-[12.5px] text-[#1C1C1E] leading-relaxed">
                       {selectedMemory.howItHelps}
                     </p>
                   </div>
 
                   {!selectedMemory.isConfirmed && (
-                    <div className="p-3.5 rounded-[18px] bg-white border border-[#5E5BAE]/30 flex items-center justify-between gap-2">
-                      <span className="text-xs font-semibold text-[#26263F]">
+                    <div className="p-3.5 rounded-[18px] bg-white border border-[#5E5BAE]/25 shadow-2xs flex items-center justify-between gap-2">
+                      <span className="text-xs font-semibold text-[#1C1C1E]">
                         Does this feel accurate?
                       </span>
                       <div className="flex items-center gap-1.5">
                         <button
                           type="button"
                           onClick={() => handleConfirmPendingMemory(selectedMemory.id)}
-                          className="px-3 py-1.5 rounded-[12px] bg-[#5E5BAE] text-white text-xs font-semibold cursor-pointer"
+                          className="px-3 py-1.5 rounded-[12px] bg-[#5E5BAE] text-white text-xs font-semibold cursor-pointer shadow-2xs hover:bg-[#524FA0]"
                         >
                           Yes, save
                         </button>
                         <button
                           type="button"
                           onClick={() => handleDismissPendingMemory(selectedMemory.id)}
-                          className="px-2.5 py-1.5 rounded-[12px] bg-black/5 text-[#7A7895] text-xs font-medium cursor-pointer"
+                          className="px-2.5 py-1.5 rounded-[12px] bg-[#F2F2F7] hover:bg-[#E5E5EA] text-[#8E8E93] text-xs font-medium cursor-pointer"
                         >
                           Discard
                         </button>
@@ -3126,7 +3127,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                     <button
                       type="button"
                       onClick={() => setMemoryToDelete(selectedMemory)}
-                      className="w-full py-2.5 rounded-[16px] bg-white/80 hover:bg-[#FFE4E6]/50 text-[#E11D48] border border-[#E11D48]/20 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                      className="w-full py-2.5 rounded-[16px] bg-white hover:bg-[#FFE4E6]/40 text-[#E11D48] border border-[#E11D48]/20 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs"
                     >
                       <Trash2 className="w-3.5 h-3.5 stroke-[2]" />
                       <span>Remove from memory</span>
@@ -3180,10 +3181,10 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                   animate={{ y: 0 }}
                   exit={{ y: '100%' }}
                   transition={{ type: 'spring', damping: 28, stiffness: 290 }}
-                  className="relative w-full h-[82%] bg-[#FAF7F2] rounded-t-[32px] shadow-2xl border-t border-white/95 z-10 flex flex-col overflow-hidden text-[#26263F]"
+                  className="relative w-full h-[82%] bg-white/95 backdrop-blur-2xl rounded-t-[32px] shadow-2xl border-t border-black/[0.04] z-10 flex flex-col overflow-hidden text-[#1C1C1E]"
                   id="memory-talk-sheet"
                 >
-                  <div className="px-6 pt-5 pb-3 border-b border-[#26263F]/[0.06] flex items-center justify-between shrink-0">
+                  <div className="px-6 pt-5 pb-3 border-b border-black/[0.05] flex items-center justify-between shrink-0">
                     <div className="flex items-center gap-2.5">
                       <div className="w-9 h-9 rounded-full bg-gradient-to-b from-[#E5DDFB] to-[#F3EEFE] border border-white shadow-xs overflow-hidden shrink-0">
                         <img
@@ -3194,10 +3195,10 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                         />
                       </div>
                       <div>
-                        <h4 className="text-[15px] font-bold text-[#26263F] leading-tight">
+                        <h4 className="text-[15px] font-bold text-[#1C1C1E] leading-tight">
                           Talk to Nova
                         </h4>
-                        <span className="text-[11px] text-[#7A7895] block">
+                        <span className="text-[11px] text-[#8E8E93] block">
                           {editingMemory
                             ? 'Refine memory • Confirms before saving'
                             : 'Add or update what Nova knows'}
@@ -3211,7 +3212,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                         setIsMemoryChatOpen(false);
                         setEditingMemory(null);
                       }}
-                      className="w-8 h-8 rounded-full bg-black/5 hover:bg-black/10 flex items-center justify-center text-[#26263F] cursor-pointer"
+                      className="w-8 h-8 rounded-full bg-[#F2F2F7] hover:bg-[#E5E5EA] flex items-center justify-center text-[#1C1C1E] cursor-pointer transition-colors"
                       aria-label="Close conversation"
                     >
                       <X className="w-4 h-4 stroke-[2.2]" />
@@ -3219,7 +3220,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                   </div>
 
                   {editingMemory && (
-                    <div className="mx-6 mt-3 px-3.5 py-2 rounded-[14px] bg-white/75 border border-white/90 flex items-center gap-2 text-[11.5px] text-[#5D5B78] shrink-0">
+                    <div className="mx-6 mt-3 px-3.5 py-2 rounded-[14px] bg-[#F2F2F7]/75 border border-black/[0.04] flex items-center gap-2 text-[11.5px] text-[#6C6C70] shrink-0">
                       <CornerDownRight className="w-3.5 h-3.5 text-[#5E5BAE] shrink-0" />
                       <span className="truncate font-medium">{editingMemory.title}</span>
                     </div>
@@ -3237,34 +3238,34 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                           className={`max-w-[88%] rounded-[20px] px-4 py-3 text-[13px] leading-relaxed ${
                             msg.sender === 'user'
                               ? 'bg-[#5E5BAE] text-white rounded-br-[6px]'
-                              : 'bg-white/90 text-[#26263F] border border-white rounded-bl-[6px] shadow-2xs'
+                              : 'bg-[#F2F2F7]/90 text-[#1C1C1E] border border-black/[0.04] rounded-bl-[6px] shadow-2xs'
                           }`}
                         >
                           {msg.text}
                         </div>
 
                         {msg.proposal && (
-                          <div className="mt-2.5 w-full max-w-[92%] bg-white rounded-[20px] p-4 border border-[#5E5BAE]/30 shadow-sm flex flex-col gap-2.5">
+                          <div className="mt-2.5 w-full max-w-[92%] bg-white rounded-[20px] p-4 border border-[#5E5BAE]/25 shadow-[0_4px_16px_-4px_rgba(28,28,45,0.05)] flex flex-col gap-2.5">
                             <div className="flex items-center justify-between">
                               <span className="text-[10.5px] font-bold uppercase tracking-wider text-[#5E5BAE]">
                                 {msg.proposal.mode === 'update'
                                   ? 'Proposed Memory Update'
                                   : 'Proposed New Memory'}
                               </span>
-                              <span className="text-[10px] text-[#7A7895] bg-[#FAF8FD] px-2 py-0.5 rounded-full border border-black/5">
+                              <span className="text-[10px] text-[#8E8E93] bg-[#F2F2F7] px-2 py-0.5 rounded-full border border-black/5">
                                 Needs confirmation
                               </span>
                             </div>
 
-                            <h5 className="text-[13.5px] font-bold text-[#26263F] leading-snug">
+                            <h5 className="text-[13.5px] font-bold text-[#1C1C1E] leading-snug">
                               {msg.proposal.newTitle}
                             </h5>
-                            <p className="text-[12px] text-[#5D5B78] leading-relaxed">
+                            <p className="text-[12px] text-[#6C6C70] leading-relaxed">
                               {msg.proposal.newSummary}
                             </p>
 
                             {msg.proposalAccepted ? (
-                              <div className="py-2 px-3 rounded-[12px] bg-[#5E5BAE]/10 text-[#5E5BAE] text-xs font-bold flex items-center justify-center gap-1.5">
+                              <div className="py-2 px-3 rounded-[12px] bg-[#F4EEFE] text-[#5E5BAE] text-xs font-bold flex items-center justify-center gap-1.5 border border-[#5E5BAE]/20">
                                 <Check className="w-4 h-4 stroke-[2.5]" />
                                 <span>Confirmed & Saved</span>
                               </div>
@@ -3284,7 +3285,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                                     setIsMemoryChatOpen(false);
                                     setEditingMemory(null);
                                   }}
-                                  className="py-2.5 px-3 rounded-[14px] bg-black/5 hover:bg-black/10 text-[#7A7895] text-xs font-semibold cursor-pointer"
+                                  className="py-2.5 px-3 rounded-[14px] bg-[#F2F2F7] hover:bg-[#E5E5EA] text-[#8E8E93] text-xs font-semibold cursor-pointer"
                                 >
                                   Keep as is
                                 </button>
@@ -3297,7 +3298,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
 
                     {memoryChatMessages.length === 1 && (
                       <div className="pt-1 flex flex-col items-start gap-1.5">
-                        <span className="text-[11px] text-[#7A7895] pl-1">
+                        <span className="text-[11px] text-[#8E8E93] pl-1">
                           Quick ways to {editingMemory ? 'adjust' : 'share'}:
                         </span>
                         {quickMemoryChips.map((chip) => (
@@ -3305,7 +3306,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                             key={chip}
                             type="button"
                             onClick={() => handleSendMemoryChat(chip)}
-                            className="text-left text-xs font-semibold text-[#5E5BAE] bg-white/85 hover:bg-white px-3.5 py-2 rounded-[16px] border border-[#5E5BAE]/20 shadow-2xs transition-all active:scale-98 cursor-pointer"
+                            className="text-left text-xs font-semibold text-[#5E5BAE] bg-white hover:bg-[#FAFAFC] px-3.5 py-2 rounded-[16px] border border-[#5E5BAE]/20 shadow-2xs transition-all active:scale-98 cursor-pointer"
                           >
                             “{chip}”
                           </button>
@@ -3315,14 +3316,14 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                     <div ref={memoryChatEndRef} />
                   </div>
 
-                  <div className="p-4 bg-white/80 backdrop-blur-md border-t border-[#26263F]/[0.06] flex items-center gap-2 shrink-0">
+                  <div className="p-4 bg-white/90 backdrop-blur-md border-t border-black/[0.06] flex items-center gap-2 shrink-0">
                     <input
                       type="text"
                       value={memoryChatInput}
                       onChange={(e) => setMemoryChatInput(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleSendMemoryChat()}
                       placeholder="Tell Nova what feels right for you..."
-                      className="flex-1 bg-white px-4 py-2.5 rounded-full text-xs text-[#26263F] placeholder-[#8E8EA8] border border-black/10 focus:outline-none focus:border-[#5E5BAE]"
+                      className="flex-1 bg-[#F2F2F7] px-4 py-2.5 rounded-full text-xs text-[#1C1C1E] placeholder-[#8E8E93] border border-black/[0.06] focus:outline-none focus:border-[#5E5BAE] focus:bg-white transition-colors"
                     />
                     <button
                       type="button"
@@ -3377,10 +3378,10 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                   animate={{ y: 0 }}
                   exit={{ y: '100%' }}
                   transition={{ type: 'spring', damping: 28, stiffness: 290 }}
-                  className="relative w-full h-[80%] bg-[#FAF7F2] rounded-t-[32px] shadow-2xl border-t border-white/95 z-10 flex flex-col overflow-hidden text-[#26263F]"
+                  className="relative w-full h-[80%] bg-white/95 backdrop-blur-2xl rounded-t-[32px] shadow-2xl border-t border-black/[0.04] z-10 flex flex-col overflow-hidden text-[#1C1C1E]"
                   id="direction-talk-sheet"
                 >
-                  <div className="px-6 pt-5 pb-3 border-b border-[#26263F]/[0.06] flex items-center justify-between shrink-0">
+                  <div className="px-6 pt-5 pb-3 border-b border-black/[0.05] flex items-center justify-between shrink-0">
                     <div className="flex items-center gap-2.5">
                       <div className="w-9 h-9 rounded-full bg-gradient-to-b from-[#E5DDFB] to-[#F3EEFE] border border-white shadow-xs overflow-hidden shrink-0">
                         <img
@@ -3391,10 +3392,10 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                         />
                       </div>
                       <div>
-                        <h4 className="text-[15px] font-bold text-[#26263F] leading-tight">
+                        <h4 className="text-[15px] font-bold text-[#1C1C1E] leading-tight">
                           Adjust direction with Nova
                         </h4>
-                        <span className="text-[11px] text-[#7A7895] block">
+                        <span className="text-[11px] text-[#8E8E93] block">
                           References your memory • Confirms before updating
                         </span>
                       </div>
@@ -3403,7 +3404,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                     <button
                       type="button"
                       onClick={() => setIsDirectionChatOpen(false)}
-                      className="w-8 h-8 rounded-full bg-black/5 hover:bg-black/10 flex items-center justify-center text-[#26263F] cursor-pointer"
+                      className="w-8 h-8 rounded-full bg-[#F2F2F7] hover:bg-[#E5E5EA] flex items-center justify-center text-[#1C1C1E] cursor-pointer transition-colors"
                       aria-label="Close direction chat"
                     >
                       <X className="w-4 h-4 stroke-[2.2]" />
@@ -3422,26 +3423,26 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                           className={`max-w-[88%] rounded-[20px] px-4 py-3 text-[13px] leading-relaxed ${
                             msg.sender === 'user'
                               ? 'bg-[#5E5BAE] text-white rounded-br-[6px]'
-                              : 'bg-white/90 text-[#26263F] border border-white rounded-bl-[6px] shadow-2xs'
+                              : 'bg-[#F2F2F7]/90 text-[#1C1C1E] border border-black/[0.04] rounded-bl-[6px] shadow-2xs'
                           }`}
                         >
                           {msg.text}
                         </div>
 
                         {msg.proposedDirection && (
-                          <div className="mt-2.5 w-full max-w-[92%] bg-white rounded-[20px] p-4 border border-[#5E5BAE]/30 shadow-sm flex flex-col gap-2">
+                          <div className="mt-2.5 w-full max-w-[92%] bg-white rounded-[20px] p-4 border border-[#5E5BAE]/25 shadow-[0_4px_16px_-4px_rgba(28,28,45,0.05)] flex flex-col gap-2">
                             <span className="text-[10.5px] font-bold uppercase tracking-wider text-[#5E5BAE]">
                               Proposed Direction Update
                             </span>
-                            <h5 className="text-[14px] font-bold text-[#26263F] leading-snug">
+                            <h5 className="text-[14px] font-bold text-[#1C1C1E] leading-snug">
                               {msg.proposedDirection.goalTitle}
                             </h5>
-                            <p className="text-[12px] text-[#5D5B78] leading-relaxed">
+                            <p className="text-[12px] text-[#6C6C70] leading-relaxed">
                               {msg.proposedDirection.executionApproach}
                             </p>
 
                             {msg.accepted ? (
-                              <div className="py-2 px-3 rounded-[12px] bg-[#5E5BAE]/10 text-[#5E5BAE] text-xs font-bold flex items-center justify-center gap-1.5">
+                              <div className="py-2 px-3 rounded-[12px] bg-[#F4EEFE] text-[#5E5BAE] text-xs font-bold flex items-center justify-center gap-1.5 border border-[#5E5BAE]/20">
                                 <Check className="w-4 h-4 stroke-[2.5]" />
                                 <span>Direction Updated</span>
                               </div>
@@ -3458,7 +3459,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                                 <button
                                   type="button"
                                   onClick={() => setIsDirectionChatOpen(false)}
-                                  className="py-2.5 px-3 rounded-[14px] bg-black/5 hover:bg-black/10 text-[#7A7895] text-xs font-semibold cursor-pointer"
+                                  className="py-2.5 px-3 rounded-[14px] bg-[#F2F2F7] hover:bg-[#E5E5EA] text-[#8E8E93] text-xs font-semibold cursor-pointer"
                                 >
                                   Cancel
                                 </button>
@@ -3471,7 +3472,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
 
                     {directionChatMessages.length === 1 && (
                       <div className="pt-1 flex flex-col items-start gap-1.5">
-                        <span className="text-[11px] text-[#7A7895] pl-1">
+                        <span className="text-[11px] text-[#8E8E93] pl-1">
                           Quick ways to adjust your direction:
                         </span>
                         {directionChips.map((chip) => (
@@ -3479,7 +3480,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                             key={chip}
                             type="button"
                             onClick={() => handleSendDirectionChat(chip)}
-                            className="text-left text-xs font-semibold text-[#5E5BAE] bg-white/85 hover:bg-white px-3.5 py-2 rounded-[16px] border border-[#5E5BAE]/20 shadow-2xs transition-all active:scale-98 cursor-pointer"
+                            className="text-left text-xs font-semibold text-[#5E5BAE] bg-white hover:bg-[#FAFAFC] px-3.5 py-2 rounded-[16px] border border-[#5E5BAE]/20 shadow-2xs transition-all active:scale-98 cursor-pointer"
                           >
                             “{chip}”
                           </button>
@@ -3489,14 +3490,14 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                     <div ref={directionChatEndRef} />
                   </div>
 
-                  <div className="p-4 bg-white/80 backdrop-blur-md border-t border-[#26263F]/[0.06] flex items-center gap-2 shrink-0">
+                  <div className="p-4 bg-white/90 backdrop-blur-md border-t border-black/[0.06] flex items-center gap-2 shrink-0">
                     <input
                       type="text"
                       value={directionChatInput}
                       onChange={(e) => setDirectionChatInput(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleSendDirectionChat()}
                       placeholder="Describe how you’d like to pace your plan..."
-                      className="flex-1 bg-white px-4 py-2.5 rounded-full text-xs text-[#26263F] placeholder-[#8E8EA8] border border-black/10 focus:outline-none focus:border-[#5E5BAE]"
+                      className="flex-1 bg-[#F2F2F7] px-4 py-2.5 rounded-full text-xs text-[#1C1C1E] placeholder-[#8E8E93] border border-black/[0.06] focus:outline-none focus:border-[#5E5BAE] focus:bg-white transition-colors"
                     />
                     <button
                       type="button"
@@ -3544,14 +3545,14 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                   initial={{ scale: 0.94, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.94, opacity: 0 }}
-                  className="relative bg-[#FAF7F2] rounded-[26px] p-5 border border-white/95 shadow-2xl z-10 w-full max-w-[310px] flex flex-col gap-3.5 text-[#26263F]"
+                  className="relative bg-white/95 backdrop-blur-2xl rounded-[26px] p-5 border border-black/[0.04] shadow-2xl z-10 w-full max-w-[310px] flex flex-col gap-3.5 text-[#1C1C1E]"
                 >
                   <div className="flex items-center gap-2 text-[#E11D48]">
                     <Trash2 className="w-4 h-4 stroke-[2.2]" />
-                    <h4 className="text-[15px] font-bold text-[#26263F]">Remove this memory?</h4>
+                    <h4 className="text-[15px] font-bold text-[#1C1C1E]">Remove this memory?</h4>
                   </div>
 
-                  <p className="text-xs text-[#5D5B78] leading-relaxed">
+                  <p className="text-xs text-[#6C6C70] leading-relaxed">
                     Nova will stop using <strong>“{memoryToDelete.title}”</strong> when personalizing your suggestions.
                   </p>
 
@@ -3559,14 +3560,14 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                     <button
                       type="button"
                       onClick={() => setMemoryToDelete(null)}
-                      className="flex-1 py-2.5 rounded-[14px] bg-black/5 hover:bg-black/10 text-xs font-semibold text-[#26263F] cursor-pointer"
+                      className="flex-1 py-2.5 rounded-[14px] bg-[#F2F2F7] hover:bg-[#E5E5EA] text-xs font-semibold text-[#1C1C1E] cursor-pointer transition-colors"
                     >
                       Cancel
                     </button>
                     <button
                       type="button"
                       onClick={handleDeleteMemoryConfirmed}
-                      className="flex-1 py-2.5 rounded-[14px] bg-[#E11D48] hover:bg-[#BE123C] text-white text-xs font-bold shadow-xs cursor-pointer"
+                      className="flex-1 py-2.5 rounded-[14px] bg-[#E11D48] hover:bg-[#BE123C] text-white text-xs font-bold shadow-xs cursor-pointer transition-colors"
                     >
                       Remove
                     </button>
@@ -3603,32 +3604,32 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                   initial={{ scale: 0.94, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.94, opacity: 0 }}
-                  className="relative bg-[#FAF8FD] rounded-[24px] p-5 border border-white/95 shadow-2xl z-10 w-full max-w-[320px] flex flex-col gap-3.5 text-[#26263F]"
+                  className="relative bg-white/95 backdrop-blur-2xl rounded-[24px] p-5 border border-black/[0.04] shadow-2xl z-10 w-full max-w-[320px] flex flex-col gap-3.5 text-[#1C1C1E]"
                 >
-                  <div className="flex items-center justify-between pb-2 border-b border-[#26263F]/[0.06]">
+                  <div className="flex items-center justify-between pb-2 border-b border-black/[0.05]">
                     <div className="flex items-center gap-1.5">
                       <ShieldCheck className="w-4 h-4 text-[#5E5BAE]" />
-                      <h4 className="text-[15px] font-bold text-[#26263F]">How Memory works</h4>
+                      <h4 className="text-[15px] font-bold text-[#1C1C1E]">How Memory works</h4>
                     </div>
                     <button
                       type="button"
                       onClick={() => setIsMemoryInfoModalOpen(false)}
-                      className="w-7 h-7 rounded-full bg-black/5 hover:bg-black/10 flex items-center justify-center text-[#26263F] cursor-pointer"
+                      className="w-7 h-7 rounded-full bg-[#F2F2F7] hover:bg-[#E5E5EA] flex items-center justify-center text-[#1C1C1E] cursor-pointer transition-colors"
                       aria-label="Close"
                     >
                       <X className="w-3.5 h-3.5 stroke-[2.2]" />
                     </button>
                   </div>
 
-                  <div className="space-y-2.5 text-xs text-[#5D5B78] leading-relaxed">
+                  <div className="space-y-2.5 text-xs text-[#6C6C70] leading-relaxed">
                     <p>
-                      <strong className="text-[#26263F] font-semibold block mb-0.5">
+                      <strong className="text-[#1C1C1E] font-semibold block mb-0.5">
                         • Transparent & under your control
                       </strong>
                       Nova only remembers practical rhythm preferences and goals that help tailor your daily suggestions.
                     </p>
                     <p>
-                      <strong className="text-[#26263F] font-semibold block mb-0.5">
+                      <strong className="text-[#1C1C1E] font-semibold block mb-0.5">
                         • Nothing changes without your confirmation
                       </strong>
                       New observations wait in “Can I check something?” until you approve them, and conversational edits always show a confirmation preview first.
@@ -3675,40 +3676,40 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.94, opacity: 0 }}
                   transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                  className="relative bg-[#FAF8FD] rounded-[24px] p-5 border border-white/95 shadow-2xl z-10 w-full max-w-[320px] flex flex-col gap-3.5 text-[#26263F]"
+                  className="relative bg-white/95 backdrop-blur-2xl rounded-[24px] p-5 border border-black/[0.04] shadow-2xl z-10 w-full max-w-[320px] flex flex-col gap-3.5 text-[#1C1C1E]"
                 >
-                  <div className="flex items-center justify-between pb-2 border-b border-[#26263F]/[0.06]">
+                  <div className="flex items-center justify-between pb-2 border-b border-black/[0.05]">
                     <div className="flex items-center gap-1.5">
                       <HelpCircle className="w-4 h-4 text-[#5E5BAE]" />
-                      <h4 className="text-[15px] font-bold text-[#26263F]">How it’s measured</h4>
+                      <h4 className="text-[15px] font-bold text-[#1C1C1E]">How it’s measured</h4>
                     </div>
                     <button
                       type="button"
                       onClick={() => setIsMethodologyOpen(false)}
-                      className="w-7 h-7 rounded-full bg-black/5 hover:bg-black/10 flex items-center justify-center text-[#26263F] cursor-pointer"
+                      className="w-7 h-7 rounded-full bg-[#F2F2F7] hover:bg-[#E5E5EA] flex items-center justify-center text-[#1C1C1E] cursor-pointer transition-colors"
                       aria-label="Close"
                     >
                       <X className="w-3.5 h-3.5 stroke-[2.2]" />
                     </button>
                   </div>
 
-                  <div className="space-y-2.5 text-xs text-[#5D5B78] leading-relaxed">
+                  <div className="space-y-2.5 text-xs text-[#6C6C70] leading-relaxed">
                     <div>
-                      <strong className="text-[#26263F] font-semibold block mb-0.5">
+                      <strong className="text-[#1C1C1E] font-semibold block mb-0.5">
                         • Active days (days)
                       </strong>
                       Count of unique calendar days with at least 1 logged activity.
                     </div>
 
                     <div>
-                      <strong className="text-[#26263F] font-semibold block mb-0.5">
+                      <strong className="text-[#1C1C1E] font-semibold block mb-0.5">
                         • Activities (sessions)
                       </strong>
                       Total number of completed activity sessions across those active days.
                     </div>
 
                     <div>
-                      <strong className="text-[#26263F] font-semibold block mb-0.5">
+                      <strong className="text-[#1C1C1E] font-semibold block mb-0.5">
                         • Duration (minutes) & Rest days
                       </strong>
                       Cumulative minutes of completed sessions, plus logged restorative rest days.
@@ -3755,24 +3756,24 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.94, opacity: 0 }}
                   transition={{ type: 'spring', damping: 26, stiffness: 300 }}
-                  className="relative bg-[#FAF8FD] rounded-[26px] p-5 border border-white/95 shadow-2xl z-10 w-full max-w-[325px] flex flex-col gap-3 text-[#26263F]"
+                  className="relative bg-white/95 backdrop-blur-2xl rounded-[26px] p-5 border border-black/[0.04] shadow-2xl z-10 w-full max-w-[325px] flex flex-col gap-3 text-[#1C1C1E]"
                 >
-                  <div className="flex items-center justify-between pb-2 border-b border-[#26263F]/[0.06]">
+                  <div className="flex items-center justify-between pb-2 border-b border-black/[0.05]">
                     <div className="flex items-center gap-1.5">
                       <CalendarIcon className="w-4 h-4 text-[#5E5BAE]" />
-                      <h4 className="text-[15px] font-bold text-[#26263F]">Select Month</h4>
+                      <h4 className="text-[15px] font-bold text-[#1C1C1E]">Select Month</h4>
                     </div>
                     <button
                       type="button"
                       onClick={() => setIsMonthPickerOpen(false)}
-                      className="w-7 h-7 rounded-full bg-black/5 hover:bg-black/10 flex items-center justify-center text-[#26263F] cursor-pointer"
+                      className="w-7 h-7 rounded-full bg-[#F2F2F7] hover:bg-[#E5E5EA] flex items-center justify-center text-[#1C1C1E] cursor-pointer transition-colors"
                       aria-label="Close"
                     >
                       <X className="w-3.5 h-3.5 stroke-[2.2]" />
                     </button>
                   </div>
 
-                  <div className="flex items-center justify-between px-2.5 py-1.5 bg-black/[0.03] rounded-[14px]">
+                  <div className="flex items-center justify-between px-2.5 py-1.5 bg-[#F2F2F7]/80 rounded-[14px]">
                     <button
                       type="button"
                       onClick={() => setPickerYear((y) => y - 1)}
@@ -3781,7 +3782,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                     >
                       ‹ {pickerYear - 1}
                     </button>
-                    <span className="text-[13px] font-bold text-[#26263F]">
+                    <span className="text-[13px] font-bold text-[#1C1C1E]">
                       {pickerYear}
                     </span>
                     <button
@@ -3813,8 +3814,8 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                           onClick={() => handleSelectMonth(pickerYear, idx)}
                           className={`w-full p-2.5 rounded-[16px] text-left flex items-center justify-between transition-all cursor-pointer ${
                             isSelected
-                              ? 'bg-[#5E5BAE] text-white font-bold shadow-sm'
-                              : 'bg-white/75 hover:bg-white text-[#26263F] border border-black/[0.04]'
+                              ? 'bg-[#5E5BAE] text-white font-bold shadow-2xs'
+                              : 'bg-[#F2F2F7]/75 hover:bg-[#E5E5EA] text-[#1C1C1E] border border-black/[0.04]'
                           }`}
                         >
                           <div className="flex items-center gap-2">
@@ -3824,7 +3825,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                                 className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
                                   isSelected
                                     ? 'bg-white/20 text-white'
-                                    : 'bg-[#5E5BAE]/10 text-[#5E5BAE]'
+                                    : 'bg-[#F4EEFE] text-[#5E5BAE] border border-[#5E5BAE]/20'
                                 }`}
                               >
                                 Current
@@ -3833,7 +3834,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                           </div>
                           <span
                             className={`text-[11px] ${
-                              isSelected ? 'text-white/80' : 'text-[#7A7895]'
+                              isSelected ? 'text-white/80' : 'text-[#8E8E93]'
                             }`}
                           >
                             {mActive} active • {mRest} rest
@@ -3892,12 +3893,12 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.94, opacity: 0 }}
                   transition={{ type: 'spring', damping: 26, stiffness: 300 }}
-                  className="relative bg-[#FAF7F2] rounded-[26px] p-5 border border-white/95 shadow-2xl z-10 w-full max-w-[340px] flex flex-col gap-3.5 text-[#26263F] max-h-[88%] overflow-y-auto"
+                  className="relative bg-white/95 backdrop-blur-2xl rounded-[26px] p-5 border border-black/[0.04] shadow-2xl z-10 w-full max-w-[340px] flex flex-col gap-3.5 text-[#1C1C1E] max-h-[88%] overflow-y-auto"
                 >
-                  <div className="flex items-start justify-between pb-2 border-b border-[#26263F]/[0.06]">
+                  <div className="flex items-start justify-between pb-2 border-b border-black/[0.05]">
                     <div>
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <h4 className="text-[15px] font-bold text-[#26263F]">
+                        <h4 className="text-[15px] font-bold text-[#1C1C1E]">
                           {formattedDateString}
                         </h4>
                         {isSelectedDayToday && (
@@ -3906,7 +3907,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                           </span>
                         )}
                       </div>
-                      <span className="text-[11px] text-[#7A7895] block mt-0.5">
+                      <span className="text-[11px] text-[#8E8E93] block mt-0.5">
                         {currentRecord?.isSample
                           ? 'Sample record • Demo data'
                           : currentRecord
@@ -3918,7 +3919,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                     <button
                       type="button"
                       onClick={() => setActiveDayModalDate(null)}
-                      className="w-7 h-7 rounded-full bg-black/5 hover:bg-black/10 flex items-center justify-center text-[#26263F] cursor-pointer shrink-0"
+                      className="w-7 h-7 rounded-full bg-[#F2F2F7] hover:bg-[#E5E5EA] flex items-center justify-center text-[#1C1C1E] cursor-pointer shrink-0 transition-colors"
                       aria-label="Close"
                     >
                       <X className="w-3.5 h-3.5 stroke-[2.2]" />
@@ -3928,14 +3929,14 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                   <div
                     className={`p-3.5 rounded-[18px] border flex flex-col gap-1 ${
                       currentRecord?.type === 'active'
-                        ? 'bg-[#5E5BAE]/[0.08] border-[#5E5BAE]/20 text-[#26263F]'
+                        ? 'bg-[#F4EEFE]/75 border-[#5E5BAE]/20 text-[#1C1C1E]'
                         : currentRecord?.type === 'rest'
-                        ? 'bg-[#E59980]/15 border-[#E59980]/30 text-[#26263F]'
-                        : 'bg-black/[0.03] border-black/[0.05] text-[#7A7895]'
+                        ? 'bg-[#FFE4E6]/50 border-[#E11D48]/20 text-[#1C1C1E]'
+                        : 'bg-[#F2F2F7]/75 border-black/[0.04] text-[#8E8E93]'
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-[#7A7895]">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-[#8E8E93]">
                         Current Record Status
                       </span>
                       {currentRecord?.type === 'active' && (
@@ -3946,12 +3947,12 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                         </span>
                       )}
                       {currentRecord?.type === 'rest' && (
-                        <span className="text-[11px] font-bold text-[#E59980]">
+                        <span className="text-[11px] font-bold text-[#E11D48]">
                           Mindful rest
                         </span>
                       )}
                     </div>
-                    <div className="text-[13px] font-semibold text-[#26263F] mt-0.5">
+                    <div className="text-[13px] font-semibold text-[#1C1C1E] mt-0.5">
                       {currentRecord?.type === 'active' &&
                         (currentRecord.title || 'Active session')}
                       {currentRecord?.type === 'rest' &&
@@ -3960,18 +3961,18 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                         'No activity or rest recorded for this day'}
                     </div>
                     {currentRecord?.note && (
-                      <p className="text-[11.5px] text-[#5D5B78] italic mt-0.5">
+                      <p className="text-[11.5px] text-[#6C6C70] italic mt-0.5">
                         “{currentRecord.note}”
                       </p>
                     )}
                   </div>
 
                   <div className="flex flex-col gap-2.5">
-                    <span className="text-xs font-bold text-[#26263F]">
+                    <span className="text-xs font-bold text-[#1C1C1E]">
                       Log or Correct Record
                     </span>
 
-                    <div className="grid grid-cols-3 gap-1.5 p-1 bg-black/[0.04] rounded-[16px]">
+                    <div className="grid grid-cols-3 gap-1.5 p-1 bg-[#F2F2F7] rounded-[14px] border border-black/[0.04]">
                       <button
                         type="button"
                         onClick={() => {
@@ -3982,10 +3983,10 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                             setDayDraftSessions(1);
                           }
                         }}
-                        className={`py-1.5 rounded-[12px] text-xs font-semibold transition-all cursor-pointer ${
+                        className={`py-1.5 rounded-[10px] text-xs font-semibold transition-all cursor-pointer ${
                           dayDraftType === 'active'
-                            ? 'bg-[#5E5BAE] text-white shadow-xs'
-                            : 'text-[#7A7895] hover:text-[#26263F]'
+                            ? 'bg-[#5E5BAE] text-white shadow-2xs font-bold'
+                            : 'text-[#8E8E93] hover:text-[#1C1C1E]'
                         }`}
                       >
                         Active
@@ -3999,10 +4000,10 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                           setDayDraftDuration(0);
                           setDayDraftSessions(0);
                         }}
-                        className={`py-1.5 rounded-[12px] text-xs font-semibold transition-all cursor-pointer ${
+                        className={`py-1.5 rounded-[10px] text-xs font-semibold transition-all cursor-pointer ${
                           dayDraftType === 'rest'
-                            ? 'bg-[#E59980] text-white shadow-xs'
-                            : 'text-[#7A7895] hover:text-[#26263F]'
+                            ? 'bg-[#E11D48] text-white shadow-2xs font-bold'
+                            : 'text-[#8E8E93] hover:text-[#1C1C1E]'
                         }`}
                       >
                         Rest
@@ -4011,10 +4012,10 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                       <button
                         type="button"
                         onClick={() => setDayDraftType('none')}
-                        className={`py-1.5 rounded-[12px] text-xs font-semibold transition-all cursor-pointer ${
+                        className={`py-1.5 rounded-[10px] text-xs font-semibold transition-all cursor-pointer ${
                           dayDraftType === 'none'
-                            ? 'bg-white text-[#26263F] shadow-xs'
-                            : 'text-[#7A7895] hover:text-[#26263F]'
+                            ? 'bg-white text-[#1C1C1E] shadow-2xs font-bold'
+                            : 'text-[#8E8E93] hover:text-[#1C1C1E]'
                         }`}
                       >
                         Clear
@@ -4023,7 +4024,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
 
                     {dayDraftType === 'active' && (
                       <div className="flex flex-col gap-2 pt-1">
-                        <span className="text-[11px] font-medium text-[#7A7895]">
+                        <span className="text-[11px] font-medium text-[#8E8E93]">
                           Quick Presets
                         </span>
                         <div className="grid grid-cols-2 gap-1.5">
@@ -4043,12 +4044,12 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                               }}
                               className={`p-2 rounded-[12px] text-left text-[11px] font-semibold border transition-all cursor-pointer ${
                                 dayDraftTitle === preset.title
-                                  ? 'bg-[#5E5BAE]/10 border-[#5E5BAE] text-[#5E5BAE]'
-                                  : 'bg-white/70 border-black/[0.05] text-[#26263F] hover:bg-white'
+                                  ? 'bg-[#F4EEFE] border-[#5E5BAE] text-[#5E5BAE] shadow-2xs'
+                                  : 'bg-white border-black/[0.05] text-[#1C1C1E] hover:bg-[#FAFAFC]'
                               }`}
                             >
                               <div className="truncate">{preset.title}</div>
-                              <span className="text-[10px] text-[#7A7895] block mt-0.5">
+                              <span className="text-[10px] text-[#8E8E93] block mt-0.5">
                                 {preset.sess} {preset.sess === 1 ? 'activity' : 'activities'} • {preset.dur} min
                               </span>
                             </button>
@@ -4057,7 +4058,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
 
                         <div className="grid grid-cols-2 gap-2 mt-1">
                           <div className="flex flex-col gap-1">
-                            <label className="text-[11px] font-medium text-[#7A7895]">
+                            <label className="text-[11px] font-medium text-[#8E8E93]">
                               Activities (Sessions)
                             </label>
                             <div className="flex items-center gap-1">
@@ -4069,7 +4070,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                                   className={`flex-1 py-1 rounded-[10px] text-xs font-semibold border transition-all cursor-pointer ${
                                     dayDraftSessions === sess
                                       ? 'bg-[#5E5BAE] text-white border-[#5E5BAE]'
-                                      : 'bg-white/70 text-[#26263F] border-black/[0.05] hover:bg-white'
+                                      : 'bg-white text-[#1C1C1E] border-black/[0.05] hover:bg-[#FAFAFC]'
                                   }`}
                                 >
                                   {sess}
@@ -4079,7 +4080,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                           </div>
 
                           <div className="flex flex-col gap-1">
-                            <label className="text-[11px] font-medium text-[#7A7895]">
+                            <label className="text-[11px] font-medium text-[#8E8E93]">
                               Duration
                             </label>
                             <div className="flex items-center gap-1">
@@ -4091,7 +4092,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                                   className={`flex-1 py-1 rounded-[10px] text-xs font-semibold border transition-all cursor-pointer ${
                                     dayDraftDuration === dur
                                       ? 'bg-[#5E5BAE] text-white border-[#5E5BAE]'
-                                      : 'bg-white/70 text-[#26263F] border-black/[0.05] hover:bg-white'
+                                      : 'bg-white text-[#1C1C1E] border-black/[0.05] hover:bg-[#FAFAFC]'
                                   }`}
                                 >
                                   {dur}m
@@ -4102,7 +4103,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                         </div>
 
                         <div className="flex flex-col gap-1 mt-1">
-                          <label className="text-[11px] font-medium text-[#7A7895]">
+                          <label className="text-[11px] font-medium text-[#8E8E93]">
                             Activity Title
                           </label>
                           <input
@@ -4110,14 +4111,14 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                             value={dayDraftTitle}
                             onChange={(e) => setDayDraftTitle(e.target.value)}
                             placeholder="Select a preset above or type here..."
-                            className="w-full px-3 py-2 rounded-[12px] bg-white border border-black/[0.08] text-xs text-[#26263F] focus:outline-none focus:ring-1 focus:ring-[#5E5BAE]"
+                            className="w-full px-3 py-2 rounded-[12px] bg-[#F2F2F7] border border-black/[0.06] text-xs text-[#1C1C1E] focus:outline-none focus:border-[#5E5BAE] focus:bg-white transition-colors"
                           />
                         </div>
                       </div>
                     )}
 
                     {dayDraftType === 'rest' && (
-                      <div className="p-3 rounded-[16px] bg-[#E59980]/15 border border-[#E59980]/30 text-[11.5px] leading-relaxed text-[#26263F]">
+                      <div className="p-3 rounded-[16px] bg-[#FFE4E6]/50 border border-[#E11D48]/20 text-[11.5px] leading-relaxed text-[#1C1C1E]">
                         <p>
                           <strong>Rest is an active health choice.</strong> In Plan B, restorative days count toward your consistent wellbeing and prevent cumulative fatigue.
                         </p>
@@ -4126,7 +4127,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
 
                     {dayDraftType !== 'none' && (
                       <div className="flex flex-col gap-1 mt-1">
-                        <label className="text-[11px] font-medium text-[#7A7895]">
+                        <label className="text-[11px] font-medium text-[#8E8E93]">
                           Note (Optional)
                         </label>
                         <input
@@ -4134,7 +4135,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                           value={dayDraftNote}
                           onChange={(e) => setDayDraftNote(e.target.value)}
                           placeholder="e.g. Followed Plan B pacing calmly"
-                          className="w-full px-3 py-2 rounded-[12px] bg-white border border-black/[0.08] text-xs text-[#26263F] focus:outline-none focus:ring-1 focus:ring-[#5E5BAE]"
+                          className="w-full px-3 py-2 rounded-[12px] bg-[#F2F2F7] border border-black/[0.06] text-xs text-[#1C1C1E] focus:outline-none focus:border-[#5E5BAE] focus:bg-white transition-colors"
                         />
                       </div>
                     )}
@@ -4150,7 +4151,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                     <button
                       type="button"
                       onClick={() => setActiveDayModalDate(null)}
-                      className="flex-1 py-2.5 rounded-[14px] bg-black/5 hover:bg-black/10 text-xs font-semibold text-[#26263F] transition-colors cursor-pointer"
+                      className="flex-1 py-2.5 rounded-[14px] bg-[#F2F2F7] hover:bg-[#E5E5EA] text-xs font-semibold text-[#1C1C1E] transition-colors cursor-pointer"
                     >
                       Cancel
                     </button>

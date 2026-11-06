@@ -928,15 +928,18 @@ export default function App() {
       >
         
         {/* Apple Health Style Top Pink-Lavender Gradient transitioning smoothly to #F2F2F7 */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden -z-0">
-          {/* Primary vertical top wash: soft pink-lavender at top fading into #F2F2F7 by ~42% */}
-          <div className="absolute top-0 inset-x-0 h-[360px] bg-gradient-to-b from-[#DDD2FC]/85 via-[#F3D1EE]/55 to-transparent" />
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+          {/* Primary vertical top wash: soft pink-lavender at top fading into #F2F2F7 by ~45% */}
+          <div className="absolute top-0 inset-x-0 h-[380px] bg-gradient-to-b from-[#DDD2FC]/85 via-[#F3D1EE]/55 to-transparent" />
           {/* Left soft periwinkle-lavender bloom */}
           <div className="absolute -top-20 -left-16 w-72 h-72 rounded-full bg-radial from-[#C9BEFC]/75 via-[#DDD5FC]/35 to-transparent blur-2xl" />
           {/* Right soft rose-pink bloom */}
           <div className="absolute -top-16 -right-14 w-72 h-72 rounded-full bg-radial from-[#FAD0E5]/80 via-[#F6DCEB]/40 to-transparent blur-2xl" />
           {/* Subtle central aura behind companion */}
-          <div className="absolute top-[36%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full bg-radial from-white/75 via-white/25 to-transparent blur-2xl" />
+          <div className="absolute top-[36%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full bg-radial from-[#E6DEFC]/65 via-[#F7DFEE]/40 to-transparent blur-2xl" />
+          {/* Gentle lower ambient blooms so floating bottom glass controls subtly refract soft lavender-pink color */}
+          <div className="absolute -bottom-8 -left-8 w-64 h-44 rounded-full bg-radial from-[#DDD2FC]/55 via-[#E8DDFC]/25 to-transparent blur-2xl" />
+          <div className="absolute -bottom-8 -right-8 w-64 h-44 rounded-full bg-radial from-[#FAD0E5]/55 via-[#F6DFED]/25 to-transparent blur-2xl" />
         </div>
 
         {/* Unified Animated Transition Nova (Active during opening, open, or closing) */}
@@ -975,11 +978,11 @@ export default function App() {
               }
             }}
           >
-            {/* Soft lilac & warm cream halo behind character (fades out as Nova descends to drawer) */}
+            {/* Soft lilac & warm blush halo behind character (fades out as Nova descends to drawer) */}
             <motion.div 
               animate={{ opacity: isChatOpen ? 0 : 0.85, scale: isChatOpen ? 0.6 : 1 }}
               transition={{ duration: isChatOpen ? 0.25 : 0.32 }}
-              className="absolute inset-1 rounded-full bg-radial from-[#F3EEFE]/80 via-[#FDF3ED]/35 to-transparent blur-2xl pointer-events-none -z-10" 
+              className="absolute inset-1 rounded-full bg-radial from-[#F4EEFE]/90 via-[#FDF1F5]/45 to-transparent blur-2xl pointer-events-none -z-10" 
             />
 
             {/* Home Nova image (smoothly crossfades out as it approaches drawer rim) */}
@@ -992,7 +995,7 @@ export default function App() {
                 duration: shouldReduceMotion ? 0.05 : (isChatOpen ? 0.20 : 0.24),
                 delay: shouldReduceMotion ? 0 : (isChatOpen ? 0.12 : 0)
               }}
-              className="w-full h-full object-contain pointer-events-none drop-shadow-xs [mask-image:linear-gradient(to_bottom,black_86%,transparent_100%)] absolute inset-0"
+              className="w-full h-full object-contain pointer-events-none drop-shadow-xs [mask-image:linear-gradient(to_bottom,black_60%,black_75%,rgba(0,0,0,0.65)_88%,rgba(0,0,0,0.2)_96%,transparent_100%)] absolute inset-0"
             />
 
             {/* Listening Nova image (smoothly crossfades in as it arrives at drawer rim) */}
@@ -1147,7 +1150,7 @@ export default function App() {
               type="button"
               id="top-saved-btn"
               onClick={() => setIsSavedSheetOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/85 hover:bg-white backdrop-blur-md border border-white/90 shadow-[0_2px_8px_rgba(0,0,0,0.04)] text-xs font-semibold text-[#5E5BAE] transition-all cursor-pointer active:scale-95 min-h-[34px]"
+              className="liquid-glass-bubble flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold text-[#5E5BAE] transition-all cursor-pointer active:scale-95 min-h-[34px]"
               aria-label="View saved items"
             >
               <Bookmark className="w-3.5 h-3.5 fill-current" />
@@ -1158,7 +1161,7 @@ export default function App() {
 
         {/* 3. Main Body Content: Today View */}
         <div 
-          className={`flex-1 relative overflow-hidden px-6 pt-1 pb-2 flex-col items-center justify-start z-10 ${
+          className={`flex-1 relative overflow-hidden px-6 pt-1 pb-[132px] flex-col items-center justify-start ${
             activeTab === 'Today' ? 'flex' : 'hidden'
           }`}
         >
@@ -1231,9 +1234,9 @@ export default function App() {
           {/* B. Visual Center Nova + Suggestion Bubble + Overlay Plan Card Stage */}
           <div className="w-full flex-1 relative flex flex-col items-center justify-start min-h-0">
             
-            {/* Enlarged Companion Stage: Centered lower in ambient state, glides up gently when card opens so Nova's face & smile stay 100% visible */}
+            {/* Enlarged Companion Stage: Centered in ambient state, glides up gently when card opens so Nova's face & smile stay 100% visible */}
             <motion.div 
-              animate={{ y: isPlanCardOpen ? -14 : 22 }}
+              animate={{ y: isPlanCardOpen ? -18 : 20 }}
               transition={
                 shouldReduceMotion
                   ? { duration: 0.05 }
@@ -1252,76 +1255,18 @@ export default function App() {
                     transitionPhase === 'idle' && !isChatOpen ? 'opacity-100' : 'opacity-0'
                   }`}
                 >
-                  {/* Soft lilac & warm cream halo behind character */}
-                  <div className="absolute inset-0 rounded-full bg-radial from-[#F3EEFE]/95 via-[#FDF3ED]/50 to-transparent blur-2xl pointer-events-none -z-10" />
+                  {/* Soft lilac & warm blush halo behind character */}
+                  <div className="absolute inset-0 rounded-full bg-radial from-[#F4EEFE]/90 via-[#FDF1F5]/45 to-transparent blur-2xl pointer-events-none -z-10" />
 
                   {/* Home Nova image */}
                   <img
                     src={IP_IMAGE_URL}
                     alt="Plan B Companion Nova"
                     referrerPolicy="no-referrer"
-                    className="w-full h-full object-contain pointer-events-none drop-shadow-xs [mask-image:linear-gradient(to_bottom,black_88%,transparent_100%)] absolute inset-0"
+                    className="w-full h-full object-contain pointer-events-none drop-shadow-xs [mask-image:linear-gradient(to_bottom,black_60%,black_75%,rgba(0,0,0,0.65)_88%,rgba(0,0,0,0.2)_96%,transparent_100%)] absolute inset-0"
                   />
                 </div>
               </div>
-
-              {/* Clickable Suggestion Bubble beside Nova (Positioned below chin/face level so Nova's face is 100% unobstructed) */}
-              <AnimatePresence>
-                {!isPlanCardOpen && (
-                  <motion.button
-                    key="nova-suggestion-bubble"
-                    id="nova-suggestion-bubble"
-                    type="button"
-                    onClick={() => setIsPlanCardOpen(true)}
-                    initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.86, y: 6 }}
-                    animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, scale: 1, y: 0 }}
-                    exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.88, y: 4 }}
-                    transition={
-                      shouldReduceMotion
-                        ? { duration: 0.05 }
-                        : { duration: 0.28, ease: [0.32, 0.72, 0, 1] }
-                    }
-                    style={{ transformOrigin: '25% 0%' }}
-                    className="absolute top-[166px] sm:top-[180px] right-0 z-20 max-w-[238px] sm:max-w-[248px] rounded-[20px] rounded-tl-[6px] bg-white hover:bg-[#FAFAFC] active:scale-[0.98] border border-black/[0.04] shadow-[0_8px_24px_-4px_rgba(28,28,30,0.10),0_1px_2px_rgba(0,0,0,0.04)] px-3.5 py-2.5 text-left flex items-center gap-2.5 cursor-pointer group transition-all min-h-[50px]"
-                    aria-label={`Open today's suggestion: ${currentPlan.title}`}
-                  >
-                    {/* Speech bubble tail pointing up-left toward Nova */}
-                    <span
-                      aria-hidden="true"
-                      className="absolute -top-1.5 left-3.5 w-3 h-3 rotate-45 bg-white border-l border-t border-black/[0.04] rounded-tl-[2px] pointer-events-none"
-                    />
-
-                    <div className="flex-1 min-w-0 relative z-10">
-                      {/* State-dependent status line: hidden in 'suggested' state */}
-                      {planState === 'accepted' && (
-                        <div className="flex items-center gap-1 text-[10.5px] leading-none mb-1">
-                          <span className="font-bold uppercase tracking-wider text-[#5E5BAE]">
-                            Ready
-                          </span>
-                        </div>
-                      )}
-                      {planState === 'completed' && (
-                        <div className="flex items-center gap-1 text-[10.5px] leading-none mb-1">
-                          <Check className="w-3 h-3 text-[#5E5BAE] stroke-[2.8] shrink-0" />
-                          <span className="font-bold uppercase tracking-wider text-[#5E5BAE]">
-                            Completed
-                          </span>
-                        </div>
-                      )}
-
-                      {/* Suggestion / Task Title */}
-                      <div className="text-[14px] font-semibold text-[#1C1C1E] tracking-[-0.01em] leading-snug line-clamp-2">
-                        {currentPlan.title}
-                      </div>
-                    </div>
-
-                    {/* Subtle Tap Affordance Icon */}
-                    <div className="w-6 h-6 rounded-full bg-[#F2F2F7] group-hover:bg-[#E5E5EA] text-[#5E5BAE] flex items-center justify-center shrink-0 transition-colors">
-                      <ChevronRight className="w-3.5 h-3.5 stroke-[2.4]" />
-                    </div>
-                  </motion.button>
-                )}
-              </AnimatePresence>
 
               {/* 1. Centered Nickname "Nova" & 2. Short Greeting (Visible in normal state, fades smoothly when card covers lower half) */}
               <div
@@ -1340,6 +1285,58 @@ export default function App() {
                 </div>
               </div>
             </motion.div>
+
+            {/* Clickable Suggestion Bubble beside Nova (Outside transformed parent so backdrop-filter blurs both background gradient and Nova) */}
+            <AnimatePresence>
+              {!isPlanCardOpen && (
+                <motion.button
+                  key="nova-suggestion-bubble"
+                  id="nova-suggestion-bubble"
+                  type="button"
+                  onClick={() => setIsPlanCardOpen(true)}
+                  initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.86, y: 6 }}
+                  animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, scale: 1, y: 0 }}
+                  exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.88, y: 4 }}
+                  transition={
+                    shouldReduceMotion
+                      ? { duration: 0.05 }
+                      : { duration: 0.28, ease: [0.32, 0.72, 0, 1] }
+                  }
+                  style={{ transformOrigin: '25% 0%' }}
+                  className="liquid-glass-bubble absolute top-[186px] sm:top-[200px] right-0 z-20 max-w-[240px] sm:max-w-[252px] rounded-[22px] rounded-tl-[6px] active:scale-[0.98] px-4 py-2.5 text-left flex items-center gap-2.5 cursor-pointer group transition-all min-h-[50px]"
+                  aria-label={`Open today's suggestion: ${currentPlan.title}`}
+                >
+                  <div className="flex-1 min-w-0 relative z-10">
+                    {/* State-dependent status line: hidden in 'suggested' state */}
+                    {planState === 'accepted' && (
+                      <div className="flex items-center gap-1 text-[10.5px] leading-none mb-1">
+                        <span className="font-bold uppercase tracking-wider text-[#5E5BAE]">
+                          Ready
+                        </span>
+                      </div>
+                    )}
+                    {planState === 'completed' && (
+                      <div className="flex items-center gap-1 text-[10.5px] leading-none mb-1">
+                        <Check className="w-3 h-3 text-[#5E5BAE] stroke-[2.8] shrink-0" />
+                        <span className="font-bold uppercase tracking-wider text-[#5E5BAE]">
+                          Completed
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Suggestion / Task Title */}
+                    <div className="text-[14px] font-semibold text-[#1C1C1E] tracking-[-0.01em] leading-snug line-clamp-2">
+                      {currentPlan.title}
+                    </div>
+                  </div>
+
+                  {/* Subtle Tap Affordance Icon */}
+                  <div className="w-6 h-6 rounded-full liquid-glass-icon-well group-hover:bg-[#5E5BAE]/16 text-[#5E5BAE] flex items-center justify-center shrink-0 transition-colors">
+                    <ChevronRight className="w-3.5 h-3.5 stroke-[2.4]" />
+                  </div>
+                </motion.button>
+              )}
+            </AnimatePresence>
 
             {/* 3. Expanded Plan Card: Covers Nova's lower half while keeping Nova's face & expression visible */}
             <AnimatePresence>
@@ -1367,7 +1364,7 @@ export default function App() {
                       : { duration: 0.34, ease: [0.32, 0.72, 0, 1] }
                   }
                   style={{ transformOrigin: '78% 0%' }}
-                  className="absolute top-[136px] sm:top-[158px] -inset-x-4 px-4 z-30 max-h-[calc(100%-132px)] sm:max-h-[calc(100%-154px)] overflow-y-auto scrollbar-none pb-4"
+                  className="absolute top-[140px] sm:top-[160px] -inset-x-4 px-4 z-30 max-h-[calc(100%-136px)] sm:max-h-[calc(100%-156px)] overflow-y-auto scrollbar-none pb-4"
                 >
                   <motion.div 
                     ref={planCardRef}
@@ -1379,10 +1376,10 @@ export default function App() {
                         ? { duration: 0.05 }
                         : { duration: 0.36, ease: [0.32, 0.72, 0, 1] }
                     }
-                    className="w-full rounded-[24px] shrink-0 relative overflow-hidden bg-white border border-black/[0.04] shadow-[0_14px_36px_-8px_rgba(28,28,30,0.12),0_2px_6px_rgba(0,0,0,0.04)] transition-shadow duration-300"
+                    className="w-full rounded-[28px] shrink-0 relative overflow-hidden today-suggestion-card transition-shadow duration-300"
                   >
                     {/* Inner Measurable Content Container */}
-                    <div ref={cardContentRef} className="p-5 sm:p-5.5 w-full flex flex-col">
+                    <div ref={cardContentRef} className="p-5 sm:p-6 w-full flex flex-col gap-3.5 sm:gap-4">
                       
                       {/* 1. Header Area: Crossfading Label + Close Button + Continuous Title + Thumbnail */}
                       <div className="w-full">
@@ -1493,15 +1490,15 @@ export default function App() {
                               {currentPlan.subtitle}
                             </p>
 
-                            <div className="grid grid-cols-2 gap-3 pt-1.5 pb-0.5">
-                              <button
-                                type="button"
-                                onClick={handleSoundsGood}
-                                className="h-11 sm:h-12 px-4 rounded-[16px] bg-[#5E5BAE] hover:bg-[#524FA0] active:bg-[#484591] active:scale-[0.98] text-white text-[14px] font-semibold shadow-[0_4px_14px_rgba(94,91,174,0.22)] transition-all flex items-center justify-center text-center min-h-[44px] cursor-pointer"
-                              >
-                                Sounds good
-                              </button>
-                              <div className="flex flex-col">
+                            <div className="flex flex-col gap-2 pt-1.5 pb-0.5">
+                              <div className="grid grid-cols-2 gap-3">
+                                <button
+                                  type="button"
+                                  onClick={handleSoundsGood}
+                                  className="h-11 sm:h-12 px-4 rounded-[16px] bg-[#5E5BAE] hover:bg-[#524FA0] active:bg-[#484591] active:scale-[0.98] text-white text-[14px] font-semibold shadow-[0_4px_14px_rgba(94,91,174,0.22)] transition-all flex items-center justify-center text-center min-h-[44px] cursor-pointer"
+                                >
+                                  Sounds good
+                                </button>
                                 <button
                                   type="button"
                                   onClick={handleInitialPlanB}
@@ -1509,12 +1506,12 @@ export default function App() {
                                 >
                                   Plan B
                                 </button>
-                                {showPlanBHint && (
-                                  <span className="text-[11px] text-[#6C6C70] text-center mt-1 select-none animate-in fade-in font-normal tracking-tight">
-                                    Find another way
-                                  </span>
-                                )}
                               </div>
+                              {showPlanBHint && (
+                                <span className="text-[11px] text-[#8E8E93] text-center select-none animate-in fade-in font-normal tracking-tight">
+                                  Find another way
+                                </span>
+                              )}
                             </div>
                           </motion.div>
                         )}
@@ -1601,7 +1598,7 @@ export default function App() {
                             </div>
 
                             {/* Bottom Section: Side-by-Side "Plan B" and "Not today" (or Undo completion) */}
-                            <div className="flex items-center justify-center gap-7 pt-2 border-t border-[#26263F]/[0.06]">
+                            <div className="flex items-center justify-center gap-7 pt-2.5 border-t border-black/[0.06]">
                               {planState === 'completed' ? (
                                 <button
                                   type="button"
@@ -1611,7 +1608,7 @@ export default function App() {
                                     setPlanState('accepted');
                                     setHoldProgress(0);
                                   }}
-                                  className="text-xs font-semibold text-[#46437B] hover:text-[#26263F] py-1.5 px-3 transition-colors whitespace-nowrap underline underline-offset-3 cursor-pointer min-h-[40px] flex items-center"
+                                  className="text-xs font-semibold text-[#5E5BAE] hover:text-[#494692] py-1.5 px-3 transition-colors whitespace-nowrap underline underline-offset-3 cursor-pointer min-h-[40px] flex items-center"
                                 >
                                   Undo completion
                                 </button>
@@ -1620,14 +1617,14 @@ export default function App() {
                                   <button
                                     type="button"
                                     onClick={handleAcceptedPlanB}
-                                    className="text-xs font-semibold text-[#46437B] hover:text-[#26263F] py-1.5 px-3 rounded-full hover:bg-white/50 transition-colors whitespace-nowrap cursor-pointer active:scale-95 min-h-[40px] flex items-center"
+                                    className="text-xs font-semibold text-[#5E5BAE] hover:text-[#494692] py-1.5 px-3 rounded-full hover:bg-[#5E5BAE]/8 transition-colors whitespace-nowrap cursor-pointer active:scale-95 min-h-[40px] flex items-center"
                                   >
                                     Plan B
                                   </button>
                                   <button
                                     type="button"
                                     onClick={handleNotToday}
-                                    className="text-xs font-semibold text-[#46437B] hover:text-[#26263F] py-1.5 px-3 rounded-full hover:bg-white/50 transition-colors whitespace-nowrap cursor-pointer active:scale-95 min-h-[40px] flex items-center"
+                                    className="text-xs font-semibold text-[#6C6C70] hover:text-[#1C1C1E] py-1.5 px-3 rounded-full hover:bg-black/[0.04] transition-colors whitespace-nowrap cursor-pointer active:scale-95 min-h-[40px] flex items-center"
                                   >
                                     Not today
                                   </button>
@@ -1664,8 +1661,8 @@ export default function App() {
           />
         </div>
 
-        {/* 4. Bottom Floating Section: Translucent Glass Input (Hidden on Plan) & Apple Health Style Floating Glass Tab Capsule */}
-        <div className="px-5 pt-1.5 pb-1 flex flex-col gap-2 shrink-0 z-20 bg-gradient-to-t from-[#F2F2F7] via-[#F2F2F7]/90 to-transparent">
+        {/* 4. Bottom Floating Section: Liquid Glass Input (Hidden on Plan) & Apple Health Style Liquid Glass Tab Capsule */}
+        <div className="absolute bottom-0 inset-x-0 px-5 pt-2 pb-1 flex flex-col gap-2 pointer-events-none">
           {/* Conversational Input Entry (Hidden on Plan tab to increase viewport space) */}
           {activeTab !== 'Plan' && (
             <button 
@@ -1683,22 +1680,22 @@ export default function App() {
                   ]);
                 });
               }}
-              className="w-full bg-white/82 hover:bg-white/92 active:scale-[0.99] backdrop-blur-2xl backdrop-saturate-180 rounded-full px-4.5 py-2.5 flex items-center gap-3 border border-white/90 shadow-[0_4px_18px_rgba(28,28,30,0.06),0_1px_2px_rgba(0,0,0,0.03)] cursor-pointer min-h-[46px] transition-all text-left"
+              className="liquid-glass-pill liquid-glass-pill-interactive relative z-30 pointer-events-auto w-full active:scale-[0.99] rounded-full px-4.5 py-2.5 flex items-center gap-3 cursor-pointer min-h-[46px] transition-all text-left"
               aria-label="Talk to Nova"
             >
-              <span className="flex-1 text-[14px] text-[#6C6C70] font-normal select-none tracking-[-0.01em]">
+              <span className="flex-1 text-[14px] text-[#3C3C43] font-medium select-none tracking-[-0.01em]">
                 Talk to Nova…
               </span>
-              <div className="w-7 h-7 rounded-full bg-[#5E5BAE]/10 text-[#5E5BAE] flex items-center justify-center shrink-0">
+              <div className="w-7 h-7 rounded-full liquid-glass-icon-well text-[#5E5BAE] flex items-center justify-center shrink-0">
                 <Mic className="w-4 h-4 stroke-[2.2]" />
               </div>
             </button>
           )}
 
-          {/* 3 Bottom Navigation Tabs in Floating Translucent Glass Capsule (Apple Health Reference Style) */}
+          {/* 3 Bottom Navigation Tabs in Floating Liquid Glass Capsule (Apple Health Reference Style) */}
           <nav
             aria-label="Primary navigation"
-            className="p-1 rounded-full bg-white/78 backdrop-blur-2xl backdrop-saturate-180 border border-white/90 shadow-[0_8px_26px_rgba(28,28,30,0.08),0_1px_3px_rgba(0,0,0,0.04)] grid grid-cols-3 gap-1"
+            className="liquid-glass-pill relative z-30 pointer-events-auto p-1 rounded-full grid grid-cols-3 gap-1"
           >
             {[
               { id: 'Today', icon: Calendar },
@@ -1710,16 +1707,17 @@ export default function App() {
               return (
                 <button
                   key={tab.id}
+                  id={`nav-tab-${tab.id.toLowerCase()}`}
                   type="button"
                   onClick={() => setActiveTab(tab.id as 'Today' | 'Plan' | 'Discover')}
                   aria-current={isActive ? 'page' : undefined}
                   className={`flex flex-col items-center gap-0.5 py-1.5 px-3 rounded-full transition-all min-h-[46px] justify-center cursor-pointer active:scale-[0.97] ${
                     isActive
-                      ? 'bg-[#E5E5EA]/90 text-[#5E5BAE] font-semibold shadow-[0_1px_2px_rgba(0,0,0,0.04)]'
-                      : 'text-[#3C3C43] hover:text-[#1C1C1E] font-medium'
+                      ? 'liquid-glass-active-tab text-[#5E5BAE] font-semibold'
+                      : 'text-[#2C2C2E] hover:text-[#1C1C1E] font-medium'
                   }`}
                 >
-                  <Icon className={`w-[19px] h-[19px] ${isActive ? 'stroke-[2.4]' : 'stroke-[1.9]'}`} />
+                  <Icon className={`w-[19px] h-[19px] ${isActive ? 'stroke-[2.4]' : 'stroke-[2]'}`} />
                   <span className="text-[11px] tracking-[-0.01em] leading-none mt-0.5">{tab.id}</span>
                 </button>
               );
@@ -1727,7 +1725,7 @@ export default function App() {
           </nav>
 
           {/* 5. iOS Home Gesture Indicator Bar */}
-          <div className="pt-0.5 pb-1 flex items-center justify-center select-none shrink-0">
+          <div className="relative z-30 pt-0.5 pb-1 flex items-center justify-center select-none shrink-0">
             <div className="w-32 h-1 bg-[#1C1C1E]/20 rounded-full" />
           </div>
         </div>
@@ -1760,23 +1758,23 @@ export default function App() {
                         ease: [0.32, 0.72, 0, 1],
                       }
                 }
-                className="relative bg-[#FAF8FD]/94 backdrop-blur-2xl rounded-t-[34px] border-t border-white/80 shadow-[0_-16px_48px_rgba(90,80,140,0.12)] flex flex-col h-[75%] max-h-[580px] z-10"
+                className="relative bg-white/95 backdrop-blur-2xl rounded-t-[32px] border-t border-white/90 shadow-[0_-16px_48px_rgba(28,28,45,0.12)] flex flex-col h-[75%] max-h-[580px] z-10 text-[#1C1C1E]"
               >
                 {/* Sheet Header */}
                 <div 
                   ref={detailHeaderRef}
-                  className="px-6 pt-5 pb-3.5 border-b border-[#26263F]/[0.06] flex items-center justify-between shrink-0"
+                  className="px-5 sm:px-6 pt-5 pb-3.5 border-b border-black/[0.06] flex items-center justify-between shrink-0"
                 >
                   <div>
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#6865B8]">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#5E5BAE]">
                       Plan Details
                     </span>
-                    <h3 className="text-base font-bold text-[#26263F] mt-0.5">{currentPlan.detailTitle}</h3>
+                    <h3 className="text-base font-bold text-[#1C1C1E] mt-0.5">{currentPlan.detailTitle}</h3>
                   </div>
                   <button
                     type="button"
                     onClick={closeDetailWithTransition}
-                    className="w-9 h-9 rounded-full flex items-center justify-center text-[#706E8A] bg-white/60 hover:bg-white/90 border border-white/70 shadow-2xs active:scale-95 transition-all cursor-pointer"
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-[#6C6C70] hover:text-[#1C1C1E] bg-[#F2F2F7] hover:bg-[#E5E5EA] active:scale-95 transition-all cursor-pointer"
                     aria-label="Close"
                   >
                     <X className="w-4 h-4 stroke-[2.2]" />
@@ -1784,11 +1782,11 @@ export default function App() {
                 </div>
 
                 {/* Sheet Content: Media & Action Guide */}
-                <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+                <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-4 space-y-4">
                   {/* Media Hero Banner: In-place slot */}
                   <div
                     ref={detailMediaHeroRef}
-                    className="relative w-full h-36 rounded-[22px] overflow-hidden border border-white/80 shadow-xs shrink-0"
+                    className="relative w-full h-36 rounded-[20px] overflow-hidden border border-black/[0.04] shadow-xs shrink-0"
                   >
                     <div
                       className={`w-full h-full relative transition-opacity duration-150 ${
@@ -1810,7 +1808,7 @@ export default function App() {
                           <button
                             type="button"
                             onClick={() => setIsPlayingAudio(!isPlayingAudio)}
-                            className="w-9 h-9 rounded-full bg-[#5E5BAE] hover:bg-[#524FA0] text-white flex items-center justify-center shadow-xs active:scale-95 transition-transform cursor-pointer"
+                            className="w-8 h-8 rounded-full bg-[#5E5BAE] hover:bg-[#524FA0] text-white flex items-center justify-center shadow-xs active:scale-95 transition-transform cursor-pointer"
                             aria-label={isPlayingAudio ? "Pause audio guide" : "Play audio guide"}
                           >
                             {isPlayingAudio ? (
@@ -1839,10 +1837,10 @@ export default function App() {
                     }
                     className="space-y-2.5"
                   >
-                    <h4 className="text-xs font-bold text-[#26263F]">Gentle Guidelines</h4>
-                    <div className="p-3.5 rounded-[20px] bg-white/75 backdrop-blur-md border border-white/80 text-xs text-[#5D5B78] space-y-2.5 shadow-2xs">
+                    <h4 className="text-xs font-bold text-[#1C1C1E]">Gentle Guidelines</h4>
+                    <div className="p-3.5 rounded-[18px] bg-[#F2F2F7]/75 border border-black/[0.03] text-xs text-[#3C3C43] space-y-2.5">
                       <div className="flex items-start gap-2.5">
-                        <Clock className="w-4 h-4 text-[#6865B8] mt-0.5 shrink-0 stroke-[2]" />
+                        <Clock className="w-4 h-4 text-[#5E5BAE] mt-0.5 shrink-0 stroke-[2]" />
                         <span>{currentPlan.tip1}</span>
                       </div>
                       <div className="flex items-start gap-2.5">
@@ -1854,15 +1852,15 @@ export default function App() {
                 </div>
 
                 {/* Sheet Bottom Safe Area & Action */}
-                <div className="p-5 pb-6 border-t border-[#26263F]/[0.06] bg-[#FAF8FD]/90 backdrop-blur-md flex flex-col gap-2 shrink-0">
+                <div className="p-5 pb-6 border-t border-black/[0.06] bg-white/95 backdrop-blur-md flex flex-col gap-2 shrink-0">
                   <button
                     type="button"
                     onClick={closeDetailWithTransition}
-                    className="w-full py-3 rounded-[18px] bg-white/75 hover:bg-white/90 border border-white/90 text-[#46437B] text-xs font-semibold text-center active:scale-98 transition-all min-h-[44px] shadow-2xs backdrop-blur-md cursor-pointer"
+                    className="w-full py-3 rounded-[18px] bg-[#F2F2F7] hover:bg-[#E5E5EA] text-[#5E5BAE] text-xs font-semibold text-center active:scale-98 transition-all min-h-[44px] cursor-pointer"
                   >
                     Back to Today
                   </button>
-                  <div className="w-32 h-1 bg-[#26263F]/20 rounded-full mx-auto" />
+                  <div className="w-32 h-1 bg-[#1C1C1E]/20 rounded-full mx-auto" />
                 </div>
 
               </motion.div>
@@ -1898,21 +1896,21 @@ export default function App() {
                         ease: [0.32, 0.72, 0, 1],
                       }
                 }
-                className="relative bg-[#FAF8FD]/94 backdrop-blur-2xl rounded-t-[36px] border-t border-white/85 shadow-[0_-16px_48px_rgba(90,80,140,0.14)] flex flex-col h-[74%] max-h-[580px] z-10"
+                className="relative bg-white/95 backdrop-blur-2xl rounded-t-[32px] border-t border-white/90 shadow-[0_-16px_48px_rgba(28,28,45,0.14)] flex flex-col h-[74%] max-h-[580px] z-10 text-[#1C1C1E]"
               >
                 {/* Close Button Top-Right (Independent of Nova) */}
                 <button
                   type="button"
                   onClick={closeChatWithTransition}
-                  className="absolute top-3.5 right-4 z-40 w-9 h-9 rounded-full flex items-center justify-center text-[#706E8A] bg-white/60 hover:bg-white/90 border border-white/70 shadow-2xs active:scale-95 transition-all"
+                  className="absolute top-3.5 right-4 z-40 w-8 h-8 rounded-full flex items-center justify-center text-[#6C6C70] hover:text-[#1C1C1E] bg-[#F2F2F7] hover:bg-[#E5E5EA] active:scale-95 transition-all cursor-pointer"
                   aria-label="Close"
                 >
                   <X className="w-4 h-4 stroke-[2.2]" />
                 </button>
 
                 {/* Header with Centered Nickname "Nova" */}
-                <div className="pt-14 pb-2 px-5 border-b border-[#26263F]/[0.05] flex items-center justify-center shrink-0">
-                  <h3 className="text-[16px] font-bold text-[#26263F] tracking-tight text-center">
+                <div className="pt-14 pb-2 px-5 border-b border-black/[0.06] flex items-center justify-center shrink-0">
+                  <h3 className="text-[17px] font-bold text-[#1C1C1E] tracking-tight text-center">
                     Nova
                   </h3>
                 </div>
@@ -1947,9 +1945,9 @@ export default function App() {
                             key={msg.id}
                             className="flex flex-col items-start transition-opacity duration-200"
                           >
-                            <div className="max-w-[85%] bg-white/85 backdrop-blur-md rounded-[22px] rounded-bl-xs border border-white/90 p-4 shadow-[0_2px_12px_rgba(90,80,140,0.04)] space-y-2.5">
+                            <div className="max-w-[85%] bg-[#F2F2F7]/90 rounded-[22px] rounded-bl-xs border border-black/[0.04] p-4 shadow-2xs space-y-2.5">
                               {/* Suggestion Text */}
-                              <p className="text-[13.5px] leading-relaxed text-[#26263F]">
+                              <p className="text-[13.5px] leading-relaxed text-[#1C1C1E]">
                                 {msg.text}
                               </p>
 
@@ -1961,7 +1959,7 @@ export default function App() {
                                       key={optIdx}
                                       type="button"
                                       onClick={() => handleOptionClick(opt, msg.id)}
-                                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[18px] border border-white/90 bg-[#F4F1FD]/85 hover:bg-[#ECE7FB] active:scale-[0.98] text-[#46437B] text-xs font-semibold text-left transition-all select-none min-h-[38px] shadow-2xs cursor-pointer"
+                                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[16px] border border-[#5E5BAE]/20 bg-[#F4EEFE] hover:bg-[#EDE7FB] active:scale-[0.98] text-[#5E5BAE] text-xs font-semibold text-left transition-all select-none min-h-[38px] shadow-2xs cursor-pointer"
                                     >
                                       <span>{opt.label}</span>
                                     </button>
@@ -1973,7 +1971,7 @@ export default function App() {
                                   Only the chosen option (if any) is shown as a subtle, non-clickable status chip. */}
                               {msg.disabled && msg.selectedOptionLabel && (
                                 <div className="pt-0.5">
-                                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[14px] border border-[#5E5BAE]/20 bg-[#EBE7FA]/80 text-[11.5px] font-medium text-[#46437B] select-none cursor-default">
+                                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[14px] border border-[#5E5BAE]/20 bg-[#EBE7FA]/80 text-[11.5px] font-medium text-[#5E5BAE] select-none cursor-default">
                                     <Check className="w-3 h-3 stroke-[2.5] text-[#5E5BAE]" />
                                     <span>{msg.selectedOptionLabel}</span>
                                   </span>
@@ -1994,7 +1992,7 @@ export default function App() {
                             className={`max-w-[85%] px-4 py-2.5 rounded-[20px] ${
                               msg.sender === 'user'
                                 ? 'bg-[#5E5BAE] text-white rounded-br-xs shadow-[0_3px_12px_rgba(94,91,174,0.2)] font-medium'
-                                : 'bg-white/85 backdrop-blur-md text-[#26263F] border border-white/90 rounded-bl-xs shadow-2xs'
+                                : 'bg-[#F2F2F7]/90 text-[#1C1C1E] border border-black/[0.04] rounded-bl-xs shadow-2xs'
                             }`}
                           >
                             {msg.text}
@@ -2008,9 +2006,9 @@ export default function App() {
                   {/* Chat Input Bar inside sheet with Home Indicator safe area */}
                   <form
                     onSubmit={handleSendChatMessage}
-                    className="p-4 pb-6 border-t border-[#26263F]/[0.05] bg-[#FAF8FD]/95 backdrop-blur-md shrink-0 flex flex-col gap-2"
+                    className="p-4 pb-6 border-t border-black/[0.06] bg-white/95 backdrop-blur-md shrink-0 flex flex-col gap-2"
                   >
-                    <div className="bg-white/80 backdrop-blur-sm rounded-full px-4 py-2.5 flex items-center gap-2 border border-white/85 shadow-2xs focus-within:border-[#5E5BAE]/60 focus-within:ring-2 focus-within:ring-[#5E5BAE]/15 transition-all">
+                    <div className="bg-[#F2F2F7] rounded-full px-4 py-2.5 flex items-center gap-2 border border-black/[0.04] shadow-2xs focus-within:border-[#5E5BAE]/60 focus-within:ring-2 focus-within:ring-[#5E5BAE]/15 transition-all">
                       <input
                         ref={chatInputRef}
                         type="text"
@@ -2023,7 +2021,7 @@ export default function App() {
                           }, 150);
                         }}
                         placeholder={inputPlaceholder}
-                        className="flex-1 bg-transparent text-xs text-[#26263F] placeholder-[#8E8EA8] outline-none"
+                        className="flex-1 bg-transparent text-xs text-[#1C1C1E] placeholder-[#8E8E93] outline-none"
                       />
                       <button
                         type="submit"
@@ -2032,13 +2030,13 @@ export default function App() {
                         className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
                           sheetInput.trim()
                             ? 'bg-[#5E5BAE] hover:bg-[#524FA0] text-white active:scale-95 shadow-2xs'
-                            : 'bg-[#EDEAF4] text-[#A2A0B8]'
+                            : 'bg-[#E5E5EA] text-[#8E8E93]'
                         }`}
                       >
                         <ArrowUp className="w-4 h-4 stroke-[2.5]" />
                       </button>
                     </div>
-                    <div className="w-32 h-1 bg-[#26263F]/20 rounded-full mx-auto" />
+                    <div className="w-32 h-1 bg-[#1C1C1E]/20 rounded-full mx-auto" />
                   </form>
                 </motion.div>
 
@@ -2055,13 +2053,13 @@ export default function App() {
             aria-modal="true"
             aria-labelledby="accessible-dialog-title"
           >
-            <div className="bg-[#FAF8FD]/95 backdrop-blur-2xl border border-white/90 rounded-[24px] p-6 w-full max-w-[310px] shadow-[0_16px_48px_rgba(90,80,140,0.18)] animate-in zoom-in-95 duration-150 flex flex-col gap-3.5">
+            <div className="bg-white/95 backdrop-blur-2xl border border-white/90 rounded-[24px] p-6 w-full max-w-[310px] shadow-[0_16px_48px_rgba(28,28,45,0.18)] animate-in zoom-in-95 duration-150 flex flex-col gap-3.5 text-[#1C1C1E]">
               <div>
-                <h3 id="accessible-dialog-title" className="text-base font-bold text-[#26263F]">
+                <h3 id="accessible-dialog-title" className="text-base font-bold text-[#1C1C1E]">
                   Mark plan as complete?
                 </h3>
-                <p className="text-xs text-[#5D5B78] mt-1.5 leading-relaxed">
-                  Confirm that you’ve completed <span className="font-semibold text-[#26263F]">“{currentPlan.title}”</span> for today.
+                <p className="text-xs text-[#6C6C70] mt-1.5 leading-relaxed">
+                  Confirm that you’ve completed <span className="font-semibold text-[#1C1C1E]">“{currentPlan.title}”</span> for today.
                 </p>
               </div>
 
@@ -2069,7 +2067,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => setIsAccessibleConfirmOpen(false)}
-                  className="px-3.5 py-2 rounded-[16px] bg-white/70 hover:bg-white/90 border border-white/85 text-xs font-semibold text-[#46437B] active:scale-95 transition-all min-h-[44px]"
+                  className="px-3.5 py-2 rounded-[16px] bg-[#F2F2F7] hover:bg-[#E5E5EA] border border-black/[0.04] text-xs font-semibold text-[#6C6C70] hover:text-[#1C1C1E] active:scale-95 transition-all min-h-[44px]"
                 >
                   Cancel
                 </button>
