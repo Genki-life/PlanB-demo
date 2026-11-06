@@ -151,7 +151,7 @@ export function DiscoverView({
   };
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 sm:px-5 pt-2 pb-[96px] flex flex-col gap-3.5 scrollbar-none overscroll-contain z-10 text-[#1C1C1E]">
+    <div className="flex-1 overflow-y-auto px-4 sm:px-5 pt-2 pb-[148px] flex flex-col gap-3.5 scrollbar-none overscroll-contain z-10 text-[#1C1C1E]">
       
       {/* Explicit Unimplemented Toast Notification */}
       <AnimatePresence>

@@ -23,6 +23,7 @@ import {
 
 import { MyPlanView } from './components/MyPlanView';
 import { DiscoverView } from './components/DiscoverView';
+import { NovaAvatar3D } from './components/Avatar3D/NovaAvatar3D';
 
 import thumbImageUrl from './assets/images/mindful_walk_thumb_1793264566501.jpg';
 
@@ -118,6 +119,9 @@ export default function App() {
   const [isPlanCardOpen, setIsPlanCardOpen] = useState<boolean>(false);
   const [showSampleDataNote, setShowSampleDataNote] = useState<boolean>(false);
   
+  // Avatar mode: '3d' procedural fur character (default for test) or '2d' legacy image
+  const [avatarMode, setAvatarMode] = useState<'3d' | '2d'>('3d');
+
   // "Find another way" light hint for first-time users (disappears once Plan B is tapped)
   const [showPlanBHint, setShowPlanBHint] = useState<boolean>(true);
 
@@ -1161,7 +1165,7 @@ export default function App() {
 
         {/* 3. Main Body Content: Today View */}
         <div 
-          className={`flex-1 relative overflow-hidden px-6 pt-1 pb-[132px] flex-col items-center justify-start ${
+          className={`flex-1 relative overflow-hidden px-4 sm:px-6 pt-1 pb-[128px] flex-col items-center justify-start ${
             activeTab === 'Today' ? 'flex' : 'hidden'
           }`}
         >
@@ -1232,111 +1236,136 @@ export default function App() {
           </div>
 
           {/* B. Visual Center Nova + Suggestion Bubble + Overlay Plan Card Stage */}
-          <div className="w-full flex-1 relative flex flex-col items-center justify-start min-h-0">
+          <div className="w-full flex-1 relative flex flex-col items-center justify-start min-h-0 pt-0.5 sm:pt-1">
             
             {/* Enlarged Companion Stage: Centered in ambient state, glides up gently when card opens so Nova's face & smile stay 100% visible */}
             <motion.div 
-              animate={{ y: isPlanCardOpen ? -18 : 20 }}
+              animate={{ y: isPlanCardOpen ? -24 : 0 }}
               transition={
                 shouldReduceMotion
                   ? { duration: 0.05 }
                   : { duration: 0.34, ease: [0.32, 0.72, 0, 1] }
               }
-              className="w-full relative flex flex-col items-center justify-center shrink-0 -mt-2 sm:mt-0"
+              className="w-full relative flex flex-col items-center justify-center shrink-0"
             >
-              {/* Enlarged Centered IP Character Bust */}
+              {/* Centered IP Character Bust */}
               <div 
                 ref={homeAvatarRef}
-                className="relative w-[256px] h-[256px] sm:w-[276px] sm:h-[276px] flex items-center justify-center pointer-events-none shrink-0"
+                className="relative w-[236px] h-[236px] sm:w-[264px] sm:h-[264px] flex items-center justify-center shrink-0"
               >
                 {/* In-place Home Nova: Visible when idle on home, hidden during active chat transition */}
                 <div 
                   className={`w-full h-full relative transition-opacity duration-200 ${
-                    transitionPhase === 'idle' && !isChatOpen ? 'opacity-100' : 'opacity-0'
+                    transitionPhase === 'idle' && !isChatOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
                   }`}
                 >
-                  {/* Soft lilac & warm blush halo behind character */}
-                  <div className="absolute inset-0 rounded-full bg-radial from-[#F4EEFE]/90 via-[#FDF1F5]/45 to-transparent blur-2xl pointer-events-none -z-10" />
+                  {avatarMode === '3d' ? (
+                    <NovaAvatar3D
+                      isActiveTab={activeTab === 'Today' && !isChatOpen}
+                      fallbackImage={IP_IMAGE_URL}
+                      className="w-full h-full"
+                      mode="3d"
+                    />
+                  ) : (
+                    <>
+                      {/* Soft lilac & warm blush halo behind character */}
+                      <div className="absolute inset-0 rounded-full bg-radial from-[#F4EEFE]/90 via-[#FDF1F5]/45 to-transparent blur-2xl pointer-events-none -z-10" />
 
-                  {/* Home Nova image */}
-                  <img
-                    src={IP_IMAGE_URL}
-                    alt="Plan B Companion Nova"
-                    referrerPolicy="no-referrer"
-                    className="w-full h-full object-contain pointer-events-none drop-shadow-xs [mask-image:linear-gradient(to_bottom,black_60%,black_75%,rgba(0,0,0,0.65)_88%,rgba(0,0,0,0.2)_96%,transparent_100%)] absolute inset-0"
-                  />
+                      {/* Home Nova image */}
+                      <img
+                        src={IP_IMAGE_URL}
+                        alt="Plan B Companion Nova"
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-contain pointer-events-none drop-shadow-xs [mask-image:linear-gradient(to_bottom,black_60%,black_75%,rgba(0,0,0,0.65)_88%,rgba(0,0,0,0.2)_96%,transparent_100%)] absolute inset-0"
+                      />
+                    </>
+                  )}
                 </div>
               </div>
 
-              {/* 1. Centered Nickname "Nova" & 2. Short Greeting (Visible in normal state, fades smoothly when card covers lower half) */}
+              {/* 1. Centered Nickname "Nova" & 3D/2D Mode Toggle & 2. Short Greeting */}
               <div
-                className={`flex flex-col items-center transition-opacity duration-200 ${
+                className={`flex flex-col items-center transition-opacity duration-200 mt-1 sm:mt-1.5 ${
                   isPlanCardOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
                 }`}
               >
-                <h2 className="text-[21px] font-bold text-[#1C1C1E] tracking-[-0.02em] text-center mt-2 select-none leading-none">
-                  Nova
-                </h2>
+                <div className="flex items-center justify-center gap-2">
+                  <h2 className="text-[20px] font-bold text-[#1C1C1E] tracking-[-0.02em] select-none leading-none">
+                    Nova
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={() => setAvatarMode(prev => prev === '3d' ? '2d' : '3d')}
+                    className="liquid-glass-bubble px-2 py-0.5 rounded-full text-[10px] font-semibold text-[#5E5BAE] active:scale-95 transition-all cursor-pointer select-none"
+                    title={avatarMode === '3d' ? "Switch to 2D Nova image" : "Switch to 3D Fur Avatar"}
+                    aria-label="Toggle 3D Avatar or 2D image"
+                  >
+                    {avatarMode === '3d' ? '3D' : '2D'}
+                  </button>
+                </div>
 
-                <div className="mt-2.5 sm:mt-3 text-center px-4">
-                  <p className="text-[15px] font-normal text-[#6C6C70] leading-snug tracking-[-0.01em]">
+                <div className="mt-1.5 text-center px-4 max-w-[320px]">
+                  <p className="text-[14px] font-normal text-[#6C6C70] leading-snug tracking-[-0.01em]">
                     Hope your morning is going a little easier.
                   </p>
                 </div>
               </div>
+
+              {/* Today's Suggestion Bubble: Positioned comfortably below Nova & Greeting */}
+              <AnimatePresence>
+                {!isPlanCardOpen && (
+                  <motion.div
+                    key="nova-suggestion-bubble-wrapper"
+                    initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.94, y: 6 }}
+                    animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, scale: 1, y: 0 }}
+                    exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.92, y: 4 }}
+                    transition={
+                      shouldReduceMotion
+                        ? { duration: 0.05 }
+                        : { duration: 0.28, ease: [0.32, 0.72, 0, 1] }
+                    }
+                    className="w-full flex justify-center mt-3 sm:mt-3.5 px-3 z-20 pointer-events-auto"
+                  >
+                    <button
+                      id="nova-suggestion-bubble"
+                      type="button"
+                      onClick={() => setIsPlanCardOpen(true)}
+                      className="liquid-glass-bubble w-full max-w-[320px] rounded-[22px] active:scale-[0.98] px-4 py-2.5 text-left flex items-center gap-2.5 cursor-pointer group transition-all min-h-[48px]"
+                      aria-label={`Open today's suggestion: ${currentPlan.title}`}
+                    >
+                      <div className="flex-1 min-w-0 relative z-10">
+                        {/* State-dependent status line: hidden in 'suggested' state */}
+                        {planState === 'accepted' && (
+                          <div className="flex items-center gap-1 text-[10.5px] leading-none mb-1">
+                            <span className="font-bold uppercase tracking-wider text-[#5E5BAE]">
+                              Ready
+                            </span>
+                          </div>
+                        )}
+                        {planState === 'completed' && (
+                          <div className="flex items-center gap-1 text-[10.5px] leading-none mb-1">
+                            <Check className="w-3 h-3 text-[#5E5BAE] stroke-[2.8] shrink-0" />
+                            <span className="font-bold uppercase tracking-wider text-[#5E5BAE]">
+                              Completed
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Suggestion / Task Title */}
+                        <div className="text-[14px] font-semibold text-[#1C1C1E] tracking-[-0.01em] leading-snug line-clamp-1">
+                          {currentPlan.title}
+                        </div>
+                      </div>
+
+                      {/* Subtle Tap Affordance Icon */}
+                      <div className="w-6 h-6 rounded-full liquid-glass-icon-well group-hover:bg-[#5E5BAE]/16 text-[#5E5BAE] flex items-center justify-center shrink-0 transition-colors">
+                        <ChevronRight className="w-3.5 h-3.5 stroke-[2.4]" />
+                      </div>
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
-
-            {/* Clickable Suggestion Bubble beside Nova (Outside transformed parent so backdrop-filter blurs both background gradient and Nova) */}
-            <AnimatePresence>
-              {!isPlanCardOpen && (
-                <motion.button
-                  key="nova-suggestion-bubble"
-                  id="nova-suggestion-bubble"
-                  type="button"
-                  onClick={() => setIsPlanCardOpen(true)}
-                  initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.86, y: 6 }}
-                  animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, scale: 1, y: 0 }}
-                  exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.88, y: 4 }}
-                  transition={
-                    shouldReduceMotion
-                      ? { duration: 0.05 }
-                      : { duration: 0.28, ease: [0.32, 0.72, 0, 1] }
-                  }
-                  style={{ transformOrigin: '25% 0%' }}
-                  className="liquid-glass-bubble absolute top-[186px] sm:top-[200px] right-0 z-20 max-w-[240px] sm:max-w-[252px] rounded-[22px] rounded-tl-[6px] active:scale-[0.98] px-4 py-2.5 text-left flex items-center gap-2.5 cursor-pointer group transition-all min-h-[50px]"
-                  aria-label={`Open today's suggestion: ${currentPlan.title}`}
-                >
-                  <div className="flex-1 min-w-0 relative z-10">
-                    {/* State-dependent status line: hidden in 'suggested' state */}
-                    {planState === 'accepted' && (
-                      <div className="flex items-center gap-1 text-[10.5px] leading-none mb-1">
-                        <span className="font-bold uppercase tracking-wider text-[#5E5BAE]">
-                          Ready
-                        </span>
-                      </div>
-                    )}
-                    {planState === 'completed' && (
-                      <div className="flex items-center gap-1 text-[10.5px] leading-none mb-1">
-                        <Check className="w-3 h-3 text-[#5E5BAE] stroke-[2.8] shrink-0" />
-                        <span className="font-bold uppercase tracking-wider text-[#5E5BAE]">
-                          Completed
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Suggestion / Task Title */}
-                    <div className="text-[14px] font-semibold text-[#1C1C1E] tracking-[-0.01em] leading-snug line-clamp-2">
-                      {currentPlan.title}
-                    </div>
-                  </div>
-
-                  {/* Subtle Tap Affordance Icon */}
-                  <div className="w-6 h-6 rounded-full liquid-glass-icon-well group-hover:bg-[#5E5BAE]/16 text-[#5E5BAE] flex items-center justify-center shrink-0 transition-colors">
-                    <ChevronRight className="w-3.5 h-3.5 stroke-[2.4]" />
-                  </div>
-                </motion.button>
-              )}
-            </AnimatePresence>
 
             {/* 3. Expanded Plan Card: Covers Nova's lower half while keeping Nova's face & expression visible */}
             <AnimatePresence>

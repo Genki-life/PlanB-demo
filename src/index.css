@@ -36,6 +36,8 @@
   .liquid-glass-pill {
     position: relative;
     overflow: hidden;
+    isolation: isolate;
+    -webkit-mask-image: -webkit-radial-gradient(white, black);
     /* Readable fallback when backdrop-filter is unsupported */
     background-color: rgba(255, 255, 255, 0.90);
     border: 1px solid rgba(255, 255, 255, 0.92);
@@ -53,32 +55,24 @@
     .liquid-glass-pill {
       background: linear-gradient(
         180deg,
-        rgba(255, 255, 255, 0.42) 0%,
-        rgba(255, 255, 255, 0.26) 100%
+        rgba(255, 255, 255, 0.60) 0%,
+        rgba(255, 255, 255, 0.38) 100%
       );
-      border: 1px solid rgba(255, 255, 255, 0.64);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      backdrop-filter: blur(24px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.72);
       box-shadow:
-        inset 0 1px 0.5px rgba(255, 255, 255, 0.86),
+        inset 0 1px 0.5px rgba(255, 255, 255, 0.90),
         inset 0 -0.5px 0.5px rgba(255, 255, 255, 0.38),
-        0 8px 22px -6px rgba(38, 35, 65, 0.07),
+        0 8px 24px -6px rgba(38, 35, 65, 0.08),
         0 1px 2px rgba(0, 0, 0, 0.03);
-    }
-
-    .liquid-glass-pill::before {
-      content: "";
-      position: absolute;
-      inset: -12px -12px -42px -12px;
-      -webkit-backdrop-filter: blur(9px) saturate(175%);
-      backdrop-filter: blur(9px) saturate(175%);
-      pointer-events: none;
-      z-index: 0;
     }
 
     .liquid-glass-pill-interactive:hover {
       background: linear-gradient(
         180deg,
-        rgba(255, 255, 255, 0.52) 0%,
-        rgba(255, 255, 255, 0.34) 100%
+        rgba(255, 255, 255, 0.72) 0%,
+        rgba(255, 255, 255, 0.48) 100%
       );
     }
   }
@@ -93,20 +87,22 @@
     .liquid-glass-active-tab {
       background: linear-gradient(
         180deg,
-        rgba(255, 255, 255, 0.56) 0%,
-        rgba(235, 232, 248, 0.36) 100%
+        rgba(255, 255, 255, 0.72) 0%,
+        rgba(238, 235, 250, 0.48) 100%
       );
       box-shadow:
-        inset 0 1px 0.5px rgba(255, 255, 255, 0.86),
-        inset 0 0 0 0.5px rgba(255, 255, 255, 0.50),
+        inset 0 1px 0.5px rgba(255, 255, 255, 0.92),
+        inset 0 0 0 0.5px rgba(255, 255, 255, 0.55),
         0 1px 4px rgba(28, 28, 30, 0.03);
     }
   }
 
-  /* 3. Today Suggestion Bubble & Floating Glass Pills */
+  /* 3. Today Suggestion Bubble & Floating Glass Pills (e.g. Saved Items) */
   .liquid-glass-bubble {
     position: relative;
     overflow: hidden;
+    isolation: isolate;
+    -webkit-mask-image: -webkit-radial-gradient(white, black);
     /* Readable fallback when backdrop-filter is unsupported */
     background-color: rgba(255, 255, 255, 0.94);
     border: 1px solid rgba(255, 255, 255, 0.96);
@@ -124,10 +120,12 @@
     .liquid-glass-bubble {
       background: linear-gradient(
         170deg,
-        rgba(255, 255, 255, 0.88) 0%,
-        rgba(255, 255, 255, 0.78) 100%
+        rgba(255, 255, 255, 0.82) 0%,
+        rgba(255, 255, 255, 0.68) 100%
       );
-      border: 1px solid rgba(255, 255, 255, 0.90);
+      -webkit-backdrop-filter: blur(20px) saturate(170%);
+      backdrop-filter: blur(20px) saturate(170%);
+      border: 1px solid rgba(255, 255, 255, 0.88);
       box-shadow:
         inset 0 1px 0.5px rgba(255, 255, 255, 0.95),
         inset 0 -0.5px 0.5px rgba(255, 255, 255, 0.45),
@@ -135,21 +133,11 @@
         0 1px 2px rgba(0, 0, 0, 0.02);
     }
 
-    .liquid-glass-bubble::before {
-      content: "";
-      position: absolute;
-      inset: -12px -12px -42px -12px;
-      -webkit-backdrop-filter: blur(16px) saturate(160%);
-      backdrop-filter: blur(16px) saturate(160%);
-      pointer-events: none;
-      z-index: 0;
-    }
-
     .liquid-glass-bubble:hover {
       background: linear-gradient(
         170deg,
-        rgba(255, 255, 255, 0.92) 0%,
-        rgba(255, 255, 255, 0.84) 100%
+        rgba(255, 255, 255, 0.90) 0%,
+        rgba(255, 255, 255, 0.78) 100%
       );
     }
   }

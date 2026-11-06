@@ -1,0 +1,422 @@
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import * as THREE from 'three';
+import { createBlobCreature, type BlobCreature } from './blobCreature.ts';
+import { createGPUFurPhysics, type GPUFurPhysics } from './gpuPhysics.ts';
+import { createGPUFurSystem, type FurSystem } from './furSystem.ts';
+
+export interface NovaAvatar3DProps {
+  /** Whether the current page/tab is active (pauses render loop when false) */
+  isActiveTab?: boolean;
+  /** Fallback image URL if WebGL fails or user switches to 2D */
+  fallbackImage?: string;
+  /** Custom class name for the wrapper element */
+  className?: string;
+  /** Callback when user clicks or boops the character */
+  onBoop?: () => void;
+  /** Mode: '3d' for procedural fur creature, '2d' for legacy image */
+  mode?: '3d' | '2d';
+  /** Toggle switch handler if displayed */
+  onToggleMode?: () => void;
+}
+
+export function NovaAvatar3D({
+  isActiveTab = true,
+  fallbackImage = '/kila-home.png',
+  className = '',
+  onBoop,
+  mode = '3d',
+  onToggleMode
+}: NovaAvatar3DProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [hasError, setHasError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // References to keep across renders
+  const creatureRef = useRef<BlobCreature | null>(null);
+  const furSystemRef = useRef<FurSystem | null>(null);
+  const gpuPhysicsRef = useRef<GPUFurPhysics | null>(null);
+  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+  const animationFrameIdRef = useRef<number | null>(null);
+  const isRunningRef = useRef(false);
+
+  // Interaction tracking state
+  const isPointerDownRef = useRef(false);
+  const pointerStartPosRef = useRef({ x: 0, y: 0 });
+  const isPointerOverCreatureRef = useRef(false);
+  const pointerNDCRef = useRef(new THREE.Vector2(0, 0));
+  const pointerLocalPosRef = useRef(new THREE.Vector3(0, 0, 2));
+  const prevPointerLocalPosRef = useRef(new THREE.Vector3(0, 0, 2));
+  const pointerVelocityRef = useRef(new THREE.Vector3(0, 0, 0));
+  const boopShockwaveRef = useRef(0.0);
+
+  // Clean initialization effect
+  useEffect(() => {
+    if (mode === '2d') {
+      return;
+    }
+
+    const container = containerRef.current;
+    if (!container) return;
+
+    // 1. WebGL Support Test
+    const canvas = document.createElement('canvas');
+    const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
+    if (!gl) {
+      console.warn('WebGL not supported in current environment. Falling back to 2D Nova.');
+      setHasError(true);
+      setErrorMessage('WebGL context not available');
+      return;
+    }
+
+    let isDisposed = false;
+
+    try {
+      const width = container.clientWidth || 280;
+      const height = container.clientHeight || 280;
+
+      // 2. WebGL Renderer with Alpha: true for seamless gradient integration
+      const renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        alpha: true,
+        powerPreference: 'high-performance'
+      });
+      rendererRef.current = renderer;
+
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      renderer.setPixelRatio(dpr);
+      renderer.setSize(width, height);
+      renderer.setClearColor(0x000000, 0); // 100% transparent
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.08;
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+      // Ensure canvas respects container shape and does not block touch scrolling
+      const domElement = renderer.domElement;
+      domElement.style.width = '100%';
+      domElement.style.height = '100%';
+      domElement.style.display = 'block';
+      domElement.style.touchAction = 'pan-y'; // Allow vertical page scrolling
+      container.innerHTML = '';
+      container.appendChild(domElement);
+
+      // 3. Three.js Scene & Perspective Camera
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 40);
+
+      // Frame Mochi-Puff with ample margins for perky ears, plush side fur, and jump bounces
+      const updateFraming = (w: number, h: number) => {
+        const aspect = Math.max(0.5, w / Math.max(1, h));
+        camera.aspect = aspect;
+
+        // Bounding requirements: half-width ~1.95, half-height ~1.65 (center Y at 0.16)
+        const vFovRad = (camera.fov * Math.PI) / 180;
+        const tanHalfV = Math.tan(vFovRad / 2);
+        const tanHalfH = tanHalfV * aspect;
+
+        const distV = 1.65 / tanHalfV;
+        const distH = 1.95 / tanHalfH;
+        // Target distance accommodates both axes with safe margin
+        const targetDist = Math.max(distV, distH, 6.2);
+
+        camera.position.set(0.0, 0.28, targetDist);
+        camera.lookAt(0.0, 0.16, 0.0);
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h);
+      };
+
+      updateFraming(width, height);
+
+      // 4. Studio 3-Point Lighting Rig
+      const keyLight = new THREE.DirectionalLight('#fff7ed', 1.8);
+      keyLight.position.set(1.8, 2.1, 2.2);
+      keyLight.castShadow = true;
+      keyLight.shadow.mapSize.set(1024, 1024);
+      keyLight.shadow.bias = -0.0005;
+      keyLight.shadow.radius = 2.0;
+      scene.add(keyLight);
+
+      const rimLight = new THREE.DirectionalLight('#c4b5fd', 1.5);
+      rimLight.position.set(-2.4, 1.8, -3.2);
+      scene.add(rimLight);
+
+      const hemiLight = new THREE.HemisphereLight('#f5d0fe', '#1e1b4b', 0.85);
+      scene.add(hemiLight);
+
+      // 5. Procedural Mochi-Puff Blob Creature (Sculpted organic mesh + eyes + mouth + blush)
+      const creature = createBlobCreature();
+      creatureRef.current = creature;
+      scene.add(creature.root);
+
+      // 6. GPGPU Physics & Fur System (Full Quality: 64 shells + 60,000 strands)
+      const gpuPhysics = createGPUFurPhysics(renderer);
+      gpuPhysicsRef.current = gpuPhysics;
+
+      const furParams = {
+        baseColor: '#5e2bff', // Deep plush lavender-violet
+        tipColor: '#ff9ec7',  // Soft petal pink tips
+        furLength: 0.31,
+        furDensity: 0.75,
+        roughness: 0.77,
+        specular: 0.24,
+        clumping: 0.35,
+        curliness: 0.23,
+        windStrength: 0.95,
+        lightIntensity: 1.35,
+        rimIntensity: 1.35,
+        gpuFurEnabled: gpuPhysics.isGPGPUActive
+      };
+
+      const furSystem = createGPUFurSystem(creature.bodyGeometry, furParams);
+      furSystemRef.current = furSystem;
+
+      // Attach fur shells and hair ribbons to creature root
+      creature.root.add(furSystem.shellMesh);
+      creature.root.add(furSystem.strandMesh);
+
+      // Match skin material to base root color
+      creature.skinMaterial.color.set(furParams.baseColor).multiplyScalar(0.55);
+
+      // 7. Raycaster for Petting & Boop Interactions
+      const raycaster = new THREE.Raycaster();
+
+      const updatePointer = (clientX: number, clientY: number) => {
+        const rect = domElement.getBoundingClientRect();
+        if (rect.width <= 0 || rect.height <= 0) return;
+
+        pointerNDCRef.current.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+        pointerNDCRef.current.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+
+        raycaster.setFromCamera(pointerNDCRef.current, camera);
+        const hits = raycaster.intersectObject(creature.bodyMesh, false);
+
+        if (hits.length > 0) {
+          prevPointerLocalPosRef.current.copy(pointerLocalPosRef.current);
+          pointerLocalPosRef.current.copy(hits[0].point);
+          creature.root.worldToLocal(pointerLocalPosRef.current);
+
+          if (isPointerOverCreatureRef.current) {
+            pointerVelocityRef.current
+              .subVectors(pointerLocalPosRef.current, prevPointerLocalPosRef.current)
+              .multiplyScalar(32.0);
+          }
+          isPointerOverCreatureRef.current = true;
+          domElement.style.cursor = 'pointer';
+        } else {
+          isPointerOverCreatureRef.current = false;
+          pointerVelocityRef.current.multiplyScalar(0.5);
+          domElement.style.cursor = 'grab';
+        }
+      };
+
+      const handlePointerDown = (e: PointerEvent) => {
+        isPointerDownRef.current = true;
+        pointerStartPosRef.current = { x: e.clientX, y: e.clientY };
+        updatePointer(e.clientX, e.clientY);
+      };
+
+      const handlePointerMove = (e: PointerEvent) => {
+        updatePointer(e.clientX, e.clientY);
+      };
+
+      const handlePointerUp = (e: PointerEvent) => {
+        const dist = Math.hypot(
+          e.clientX - pointerStartPosRef.current.x,
+          e.clientY - pointerStartPosRef.current.y
+        );
+
+        // If tap/click with minimal drag and pointer is on character, trigger boop!
+        if (dist < 12 && isPointerOverCreatureRef.current) {
+          creature.triggerBoop();
+          boopShockwaveRef.current = 1.0;
+          if (onBoop) onBoop();
+        }
+
+        isPointerDownRef.current = false;
+        isPointerOverCreatureRef.current = false;
+        pointerVelocityRef.current.set(0, 0, 0);
+      };
+
+      const handlePointerLeave = () => {
+        isPointerDownRef.current = false;
+        isPointerOverCreatureRef.current = false;
+        pointerVelocityRef.current.set(0, 0, 0);
+        pointerNDCRef.current.set(0, 0);
+      };
+
+      domElement.addEventListener('pointerdown', handlePointerDown);
+      window.addEventListener('pointermove', handlePointerMove);
+      window.addEventListener('pointerup', handlePointerUp);
+      domElement.addEventListener('pointerleave', handlePointerLeave);
+
+      // 8. Dynamic Resize Observer
+      const resizeObserver = new ResizeObserver((entries) => {
+        if (!entries || entries.length === 0 || isDisposed) return;
+        const entry = entries[0];
+        const newWidth = Math.max(160, Math.floor(entry.contentRect.width));
+        const newHeight = Math.max(160, Math.floor(entry.contentRect.height));
+        updateFraming(newWidth, newHeight);
+      });
+      resizeObserver.observe(container);
+
+      // 9. Main Animation Loop
+      const clock = new THREE.Clock();
+      isRunningRef.current = true;
+
+      const animate = () => {
+        if (isDisposed) return;
+
+        if (!isRunningRef.current) {
+          animationFrameIdRef.current = null;
+          return;
+        }
+
+        animationFrameIdRef.current = requestAnimationFrame(animate);
+
+        const dt = Math.min(clock.getDelta(), 0.05);
+        const time = clock.getElapsedTime();
+
+        // Creature idle breathing, swaying, blinking & gaze tracking
+        creature.update(dt, pointerNDCRef.current, camera.position, false);
+
+        // Boop shockwave decay
+        if (boopShockwaveRef.current > 0.001) {
+          boopShockwaveRef.current = Math.max(0, boopShockwaveRef.current - dt * 3.2);
+        }
+
+        // GPGPU Verlet spring simulation step
+        const physicsTex = gpuPhysics.step({
+          time,
+          dt,
+          windStrength: furParams.windStrength,
+          creatureVelocity: creature.animState.velocity,
+          creatureAngularVel: creature.animState.angularVelocity,
+          pointerLocalPos: pointerLocalPosRef.current,
+          pointerVelocity: pointerVelocityRef.current,
+          pointerActive: isPointerOverCreatureRef.current,
+          boopShockwave: boopShockwaveRef.current
+        });
+
+        // Feed physics texture and dynamic uniforms to fur shaders
+        furSystem.sharedUniforms.uPhysicsTex.value = physicsTex;
+        furSystem.sharedUniforms.uTime.value = time;
+        furSystem.sharedUniforms.uPointerLocalPos.value.copy(pointerLocalPosRef.current);
+        furSystem.sharedUniforms.uPointerActive.value = isPointerOverCreatureRef.current ? 1.0 : 0.0;
+        furSystem.sharedUniforms.uBoopShockwave.value = boopShockwaveRef.current;
+
+        // Analytical fallback inertia
+        furSystem.sharedUniforms.uWebGLInertia.value.set(
+          -creature.animState.velocity.x * 0.12,
+          -creature.animState.velocity.y * 0.12,
+          -creature.animState.velocity.z * 0.12
+        );
+
+        renderer.render(scene, camera);
+      };
+
+      animate();
+
+      // Cleanup on unmount
+      return () => {
+        isDisposed = true;
+        isRunningRef.current = false;
+
+        if (animationFrameIdRef.current !== null) {
+          cancelAnimationFrame(animationFrameIdRef.current);
+          animationFrameIdRef.current = null;
+        }
+
+        resizeObserver.disconnect();
+        domElement.removeEventListener('pointerdown', handlePointerDown);
+        window.removeEventListener('pointermove', handlePointerMove);
+        window.removeEventListener('pointerup', handlePointerUp);
+        domElement.removeEventListener('pointerleave', handlePointerLeave);
+
+        creature.dispose();
+        furSystem.dispose();
+        gpuPhysics.dispose();
+        renderer.dispose();
+
+        if (container.contains(domElement)) {
+          container.removeChild(domElement);
+        }
+      };
+    } catch (err: any) {
+      console.error('Failed to initialize 3D Avatar:', err);
+      setHasError(true);
+      setErrorMessage(err?.message || '3D initialization error');
+    }
+  }, [mode, onBoop]);
+
+  // Handle Tab Activation / Background Page Visibility Pause
+  useEffect(() => {
+    if (mode === '2d' || hasError) return;
+
+    const handleVisibilityChange = () => {
+      const isVisible = document.visibilityState === 'visible';
+      if (isVisible && isActiveTab) {
+        if (!isRunningRef.current) {
+          isRunningRef.current = true;
+        }
+      } else {
+        isRunningRef.current = false;
+        if (animationFrameIdRef.current !== null) {
+          cancelAnimationFrame(animationFrameIdRef.current);
+          animationFrameIdRef.current = null;
+        }
+      }
+    };
+
+    if (isActiveTab && document.visibilityState === 'visible') {
+      isRunningRef.current = true;
+    } else {
+      isRunningRef.current = false;
+      if (animationFrameIdRef.current !== null) {
+        cancelAnimationFrame(animationFrameIdRef.current);
+        animationFrameIdRef.current = null;
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isActiveTab, mode, hasError]);
+
+  // Fallback 2D Image View if in 2D mode or upon WebGL failure
+  if (mode === '2d' || hasError) {
+    return (
+      <div className={`relative flex items-center justify-center select-none ${className}`}>
+        {/* Soft radial glow halo */}
+        <div className="absolute inset-0 rounded-full bg-radial from-[#F4EEFE]/90 via-[#FDF1F5]/45 to-transparent blur-2xl pointer-events-none -z-10" />
+
+        <img
+          src={fallbackImage}
+          alt="Nova Companion"
+          referrerPolicy="no-referrer"
+          className="w-full h-full object-contain pointer-events-none drop-shadow-xs [mask-image:linear-gradient(to_bottom,black_60%,black_75%,rgba(0,0,0,0.65)_88%,rgba(0,0,0,0.2)_96%,transparent_100%)]"
+        />
+
+        {hasError && (
+          <div className="absolute bottom-2 inset-x-2 py-1 px-2 rounded-lg bg-black/60 backdrop-blur-xs text-[10px] text-white/90 text-center">
+            {errorMessage || 'WebGL fallback active'}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className={`relative flex items-center justify-center select-none ${className}`}>
+      {/* Subtle soft radial glow behind the 3D character */}
+      <div className="absolute inset-2 rounded-full bg-radial from-[#F4EEFE]/85 via-[#FDF1F5]/40 to-transparent blur-2xl pointer-events-none -z-10" />
+
+      {/* Three.js Canvas Container */}
+      <div
+        ref={containerRef}
+        className="w-full h-full flex items-center justify-center relative touch-pan-y"
+        style={{ touchAction: 'pan-y' }}
+      />
+    </div>
+  );
+}
