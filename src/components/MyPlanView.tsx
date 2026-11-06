@@ -1033,8 +1033,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
     [confirmedMemories]
   );
 
-  // --- Computed Top Nova Observation (Strictly Data-Driven + Sample Indicator) ---
-  // Look at records in the viewed month + recent 7-day window
+  // --- Computed Top Nova Observation (Strictly Data-Driven, <= 2 lines, No Repeated Counts) ---
   const { novaTopObservation, isNovaObservationSample } = useMemo(() => {
     const sevenDaySummary = rhythmSummaries['7d'];
     const totalRecentRecordedDays =
@@ -1057,38 +1056,41 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
 
     const activeRecs = recordsToAnalyze.filter((r) => r.type === 'active');
     const restRecs = recordsToAnalyze.filter((r) => r.type === 'rest');
-    const totalSessions = activeRecs.reduce((s, r) => s + (r.sessionsCount ?? 1), 0);
-    const totalMins = activeRecs.reduce((s, r) => s + (r.durationMinutes || 0), 0);
-    const walkCount = activeRecs.filter((r) =>
-      /\bwalk(s|ing)?\b/i.test(r.title || '')
-    ).length;
-    const stretchCount = activeRecs.filter((r) =>
-      /\bstretch(es|ing)?\b/i.test(r.title || '')
-    ).length;
+    const walkRecs = activeRecs.filter((r) => /\bwalk(s|ing)?\b/i.test(r.title || ''));
+    const stretchRecs = activeRecs.filter((r) => /\bstretch(es|ing)?\b/i.test(r.title || ''));
     const otherActiveCount = activeRecs.filter(
       (r) =>
         !/\bwalk(s|ing)?\b/i.test(r.title || '') &&
         !/\bstretch(es|ing)?\b/i.test(r.title || '')
     ).length;
 
+    const walkCount = walkRecs.length;
+    const stretchCount = stretchRecs.length;
+
+    // Only use "Short walks" when every walk record is a single-session walk with confirmed duration <= 15 min
+    const allWalksConfirmedShort =
+      walkCount > 0 &&
+      walkRecs.every(
+        (r) =>
+          (r.sessionsCount ?? 1) === 1 &&
+          typeof r.durationMinutes === 'number' &&
+          r.durationMinutes > 0 &&
+          r.durationMinutes <= 15
+      );
+    const walkLabel = allWalksConfirmedShort ? 'Short walks' : 'Walks';
+
     const hasSampleRecords = recordsToAnalyze.some((r) => r.isSample);
 
     let text = '';
     if (activeRecs.length > 0 && walkCount > 0 && walkCount >= stretchCount && walkCount >= otherActiveCount) {
-      if (restRecs.length > 0) {
-        text = `You’ve logged ${activeRecs.length} active ${
-          activeRecs.length === 1 ? 'day' : 'days'
-        } (${totalSessions} ${totalSessions === 1 ? 'activity' : 'activities'}) and ${
-          restRecs.length
-        } rest ${restRecs.length === 1 ? 'day' : 'days'} in ${
-          SHORT_MONTH_NAMES[viewMonth]
-        } — short walks are fitting smoothly into your rhythm.`;
+      if (restRecs.length > 0 && stretchCount > 0) {
+        text = `${walkLabel}, stretches, and rest days are shaping your rhythm.`;
+      } else if (restRecs.length > 0) {
+        text = `${walkLabel} and rest days have been anchoring your rhythm.`;
+      } else if (stretchCount > 0) {
+        text = `${walkLabel} and stretches have been anchoring your rhythm.`;
       } else {
-        text = `Short walks have anchored ${activeRecs.length} active ${
-          activeRecs.length === 1 ? 'day' : 'days'
-        } (${totalSessions} ${
-          totalSessions === 1 ? 'activity' : 'activities'
-        }, ${totalMins} min) in ${SHORT_MONTH_NAMES[viewMonth]}.`;
+        text = `${walkLabel} have been a steady part of your rhythm.`;
       }
     } else if (
       activeRecs.length > 0 &&
@@ -1096,38 +1098,26 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
       stretchCount > walkCount &&
       stretchCount >= otherActiveCount
     ) {
-      text = `Brief stretches have anchored ${activeRecs.length} active ${
-        activeRecs.length === 1 ? 'day' : 'days'
-      } (${totalSessions} ${
-        totalSessions === 1 ? 'activity' : 'activities'
-      }, ${totalMins} min) in ${SHORT_MONTH_NAMES[viewMonth]}.`;
+      if (restRecs.length > 0) {
+        text = 'Stretches and rest days have been anchoring your rhythm.';
+      } else {
+        text = 'Stretches have been a steady part of your rhythm.';
+      }
     } else if (activeRecs.length > 0) {
       if (restRecs.length > 0) {
-        text = `You’ve logged ${activeRecs.length} active ${
-          activeRecs.length === 1 ? 'day' : 'days'
-        } (${totalSessions} ${
-          totalSessions === 1 ? 'activity' : 'activities'
-        }, ${totalMins} min) and ${restRecs.length} rest ${
-          restRecs.length === 1 ? 'day' : 'days'
-        } in ${SHORT_MONTH_NAMES[viewMonth]} at a steady, low-pressure pace.`;
+        text = 'Steady activity and rest days are balancing your rhythm.';
       } else {
-        text = `You’ve logged ${activeRecs.length} active ${
-          activeRecs.length === 1 ? 'day' : 'days'
-        } (${totalSessions} ${
-          totalSessions === 1 ? 'activity' : 'activities'
-        }, ${totalMins} min) in ${SHORT_MONTH_NAMES[viewMonth]} at a steady, low-pressure pace.`;
+        text = 'Steady activity has been anchoring your recent rhythm.';
       }
     } else {
-      text = `You’ve logged ${restRecs.length} mindful rest ${
-        restRecs.length === 1 ? 'day' : 'days'
-      } in ${SHORT_MONTH_NAMES[viewMonth]}, giving yourself space to recharge.`;
+      text = 'Mindful rest days are giving you space to recharge.';
     }
 
     return {
       novaTopObservation: text,
       isNovaObservationSample: hasSampleRecords
     };
-  }, [currentMonthRecords, rhythmSummaries, activityLogs, viewMonth]);
+  }, [currentMonthRecords, rhythmSummaries, activityLogs]);
 
   const hasSampleInCurrentMonth = useMemo(
     () => currentMonthRecords.some((r) => r.isSample),
@@ -1660,9 +1650,9 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
       <section
         id="plan-nova-observation"
         aria-label="Nova's observation"
-        className="bg-white/75 backdrop-blur-md rounded-[22px] px-4 py-3 border border-white/85 shadow-[0_4px_18px_rgba(90,80,140,0.04)] flex items-start gap-3"
+        className="bg-white rounded-[22px] px-4 py-3.5 border border-black/[0.03] shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex items-start gap-3"
       >
-        <div className="w-9 h-9 rounded-full bg-gradient-to-b from-[#E5DDFB] to-[#F3EEFE] border border-white shadow-2xs overflow-hidden shrink-0 flex items-center justify-center mt-0.5">
+        <div className="w-9 h-9 rounded-full bg-gradient-to-b from-[#E5DDFB] to-[#F3EEFE] border border-black/[0.04] shadow-2xs overflow-hidden shrink-0 flex items-center justify-center mt-0.5">
           <img
             src={NOVA_LISTENING_URL}
             alt="Nova"
@@ -1671,11 +1661,11 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
           />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[13px] font-medium text-[#26263F] leading-snug">
+          <p className="text-[13.5px] font-medium text-[#1C1C1E] leading-snug tracking-[-0.01em]">
             “{novaTopObservation}”
           </p>
           {isNovaObservationSample && (
-            <span className="inline-block mt-1 text-[10px] font-medium text-[#8C8AA3] bg-[#26263F]/[0.04] px-2 py-0.5 rounded-full">
+            <span className="inline-block mt-1 text-[10.5px] font-medium text-[#6C6C70] bg-[#F2F2F7] px-2 py-0.5 rounded-full">
               Based on sample data
             </span>
           )}
@@ -1687,25 +1677,25 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
       {/* ============================================================ */}
       <section
         id="plan-module-activity"
-        className="bg-white/70 backdrop-blur-md rounded-[24px] p-4.5 border border-white/80 shadow-[0_4px_20px_rgba(90,80,140,0.04)] flex flex-col gap-2.5 relative"
+        className="bg-white rounded-[22px] p-4.5 border border-black/[0.03] shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-col gap-2.5 relative"
         aria-label="Activity Monthly Records"
       >
         <div className="flex items-center justify-between gap-1.5">
           <div className="flex items-center gap-1.5 shrink-0">
-            <span className="text-[16px] font-bold text-[#26263F] tracking-tight shrink-0">Activity</span>
+            <span className="text-[17px] font-bold text-[#1C1C1E] tracking-[-0.02em] shrink-0">Activity</span>
             <button
               type="button"
               onClick={() => {
                 setPickerYear(viewYear);
                 setIsMonthPickerOpen(true);
               }}
-              className="flex items-center gap-1 text-[11.5px] font-semibold text-[#26263F] bg-[#26263F]/[0.05] hover:bg-[#26263F]/[0.09] active:scale-95 px-2 py-1 rounded-full transition-all cursor-pointer whitespace-nowrap shrink-0"
+              className="flex items-center gap-1 text-[12px] font-semibold text-[#1C1C1E] bg-[#F2F2F7] hover:bg-[#E5E5EA] active:scale-95 px-2.5 py-1 rounded-full transition-all cursor-pointer whitespace-nowrap shrink-0"
               aria-label="Select month"
             >
               <span>
                 {isCurrentMonth ? MONTH_NAMES[viewMonth] : SHORT_MONTH_NAMES[viewMonth]} {viewYear}
               </span>
-              <ChevronDown className="w-3 h-3 text-[#5E5BAE] opacity-75 shrink-0" />
+              <ChevronDown className="w-3 h-3 text-[#5E5BAE] opacity-85 shrink-0" />
             </button>
           </div>
 
@@ -1715,7 +1705,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                 type="button"
                 id="activity-this-month-btn"
                 onClick={handleJumpToThisMonth}
-                className="flex items-center gap-1 text-[10.5px] font-semibold text-[#5E5BAE] bg-[#5E5BAE]/10 hover:bg-[#5E5BAE]/18 active:scale-95 px-2 py-1 rounded-full transition-all cursor-pointer whitespace-nowrap shrink-0"
+                className="flex items-center gap-1 text-[11px] font-semibold text-[#5E5BAE] bg-[#5E5BAE]/10 hover:bg-[#5E5BAE]/18 active:scale-95 px-2.5 py-1 rounded-full transition-all cursor-pointer whitespace-nowrap shrink-0"
                 aria-label="Return to this month"
               >
                 <RotateCcw className="w-2.5 h-2.5 stroke-[2.2]" />
@@ -1728,7 +1718,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
               type="button"
               id="activity-history-entry-btn"
               onClick={() => setSelectedModule('activity')}
-              className="flex items-center gap-0.5 text-[11px] font-semibold text-[#5E5BAE] hover:text-[#46437B] bg-white/60 hover:bg-white/90 border border-white/80 px-2 py-1 rounded-full transition-all cursor-pointer active:scale-95 whitespace-nowrap shrink-0"
+              className="flex items-center gap-0.5 text-[11.5px] font-semibold text-[#5E5BAE] hover:text-[#46437B] bg-[#F2F2F7] hover:bg-[#E5E5EA] px-2.5 py-1 rounded-full transition-all cursor-pointer active:scale-95 whitespace-nowrap shrink-0"
               aria-label="Open Activity History"
             >
               <span>History</span>
@@ -1740,7 +1730,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
         {/* Weekday indicators */}
         <div className="grid grid-cols-7 gap-1.5 text-center select-none pt-0.5">
           {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((dayInitial, idx) => (
-            <span key={idx} className="text-[9.5px] font-bold text-[#8C8AA3] uppercase tracking-wider">
+            <span key={idx} className="text-[10px] font-semibold text-[#8E8E93] uppercase tracking-wider">
               {dayInitial}
             </span>
           ))}
@@ -1787,15 +1777,15 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                   onClick={() => handleOpenDayDetail(dStr)}
                   aria-label={`${dStr}: ${record?.type || 'no record'}`}
                   className={`aspect-square w-full max-w-[34px] mx-auto rounded-[8px] flex items-center justify-center transition-all duration-150 relative cursor-pointer active:scale-88 ${
-                    isToday ? 'ring-2 ring-[#5E5BAE] ring-offset-2 ring-offset-white/80' : ''
+                    isToday ? 'ring-2 ring-[#5E5BAE] ring-offset-2 ring-offset-white' : ''
                   } ${
                     record?.type === 'active'
-                      ? 'bg-[#5E5BAE] shadow-[0_2px_8px_rgba(94,91,174,0.32)] hover:brightness-105'
+                      ? 'bg-[#5E5BAE] shadow-[0_2px_6px_rgba(94,91,174,0.28)] hover:brightness-105'
                       : record?.type === 'rest'
-                      ? 'bg-[#E59980] shadow-[0_2px_8px_rgba(229,153,128,0.32)] hover:brightness-105'
+                      ? 'bg-[#E59980] shadow-[0_2px_6px_rgba(229,153,128,0.28)] hover:brightness-105'
                       : isFuture
-                      ? 'bg-[#26263F]/[0.025] border border-dashed border-[#26263F]/15 hover:bg-[#26263F]/[0.08]'
-                      : 'bg-[#26263F]/[0.07] hover:bg-[#26263F]/[0.14]'
+                      ? 'bg-[#F2F2F7]/70 border border-dashed border-[#C7C7CC] hover:bg-[#E5E5EA]'
+                      : 'bg-[#F2F2F7] hover:bg-[#E5E5EA]'
                   }`}
                 >
                   {isToday && (
@@ -1808,23 +1798,23 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
         </div>
 
         {/* Status Legend & Sample Data Label */}
-        <div className="pt-2 border-t border-[#26263F]/[0.06] flex items-center justify-between text-[11px] text-[#7A7895]">
+        <div className="pt-2 border-t border-black/[0.05] flex items-center justify-between text-[11px] text-[#6C6C70]">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-[4px] bg-[#5E5BAE]" />
-              <span className="text-[#26263F] font-medium">Active</span>
+              <span className="text-[#1C1C1E] font-medium">Active</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-[4px] bg-[#E59980]" />
-              <span className="text-[#26263F] font-medium">Rest</span>
+              <span className="text-[#1C1C1E] font-medium">Rest</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-[4px] bg-[#26263F]/15" />
+              <span className="w-2.5 h-2.5 rounded-[4px] bg-[#E5E5EA]" />
               <span>No record</span>
             </div>
           </div>
           {hasSampleInCurrentMonth && (
-            <span className="text-[10px] font-medium text-[#8C8AA3] bg-[#26263F]/[0.04] px-2 py-0.5 rounded-full">
+            <span className="text-[10.5px] font-medium text-[#6C6C70] bg-[#F2F2F7] px-2 py-0.5 rounded-full">
               Sample data
             </span>
           )}
@@ -1841,40 +1831,40 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
         tabIndex={0}
         onKeyDown={(e) => e.key === 'Enter' && setSelectedModule('rhythm')}
         aria-label="View Your rhythm details"
-        className="group bg-white/70 hover:bg-white/85 transition-all duration-200 backdrop-blur-md rounded-[24px] p-4.5 border border-white/80 shadow-[0_4px_20px_rgba(90,80,140,0.04)] flex flex-col gap-3 relative cursor-pointer"
+        className="group bg-white hover:bg-[#FAFAFC] active:scale-[0.99] transition-all duration-200 rounded-[22px] p-4.5 border border-black/[0.03] shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-col gap-3 relative cursor-pointer"
       >
         <div className="flex items-center justify-between">
-          <span className="text-[16px] font-bold text-[#26263F] tracking-tight">Your rhythm</span>
-          <ChevronRight className="w-4 h-4 text-[#5E5BAE] group-hover:translate-x-0.5 transition-transform stroke-[2.2]" />
+          <span className="text-[17px] font-bold text-[#1C1C1E] tracking-[-0.02em]">Your rhythm</span>
+          <ChevronRight className="w-4 h-4 text-[#8E8E93] group-hover:text-[#5E5BAE] group-hover:translate-x-0.5 transition-all stroke-[2.2]" />
         </div>
 
         {/* 6-Month Trend Curve (Active days per month) with explicit "6-month trend" tag */}
-        <div className="bg-white/55 px-3.5 py-2.5 rounded-[18px] border border-white/75 flex flex-col gap-1">
+        <div className="bg-[#F2F2F7]/85 px-3.5 py-2.5 rounded-[16px] flex flex-col gap-1">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-[#5D5B78]">6-month trend</span>
-            <span className="text-[10px] font-medium text-[#8C8AA3]">Active days</span>
+            <span className="text-[11.5px] font-semibold text-[#3C3C43]">6-month trend</span>
+            <span className="text-[10.5px] font-medium text-[#6C6C70]">Active days</span>
           </div>
           <MonthlyTrendCurve series={monthlyTrendSeries} compact={true} />
         </div>
 
         {/* Recent Stats Header + 7 days / Month Toggle (Explicitly scopes toggle to recent stats below) */}
-        <div className="flex flex-col gap-2 pt-0.5 border-t border-[#26263F]/[0.05]">
+        <div className="flex flex-col gap-2 pt-0.5 border-t border-black/[0.05]">
           <div className="flex items-center justify-between gap-2 pt-1">
-            <span className="text-[11.5px] font-semibold text-[#5D5B78] truncate">
+            <span className="text-[12px] font-semibold text-[#3C3C43] truncate">
               {currentRecentData.rangeLabel}
             </span>
 
             <div
               onClick={(e) => e.stopPropagation()}
-              className="bg-[#26263F]/[0.06] p-0.5 rounded-full inline-flex shrink-0"
+              className="bg-[#EFEFF4] p-0.5 rounded-full inline-flex shrink-0"
             >
               <button
                 type="button"
                 onClick={() => setRhythmFilter('7d')}
                 className={`px-2.5 py-1 text-[11px] rounded-full transition-all cursor-pointer ${
                   rhythmFilter === '7d'
-                    ? 'bg-white text-[#5E5BAE] font-bold shadow-2xs'
-                    : 'text-[#7A7895] font-medium hover:text-[#26263F]'
+                    ? 'bg-white text-[#1C1C1E] font-semibold shadow-[0_1px_4px_rgba(0,0,0,0.08)]'
+                    : 'text-[#6C6C70] font-medium hover:text-[#1C1C1E]'
                 }`}
               >
                 7 days
@@ -1884,8 +1874,8 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                 onClick={() => setRhythmFilter('month')}
                 className={`px-2.5 py-1 text-[11px] rounded-full transition-all cursor-pointer ${
                   rhythmFilter === 'month'
-                    ? 'bg-white text-[#5E5BAE] font-bold shadow-2xs'
-                    : 'text-[#7A7895] font-medium hover:text-[#26263F]'
+                    ? 'bg-white text-[#1C1C1E] font-semibold shadow-[0_1px_4px_rgba(0,0,0,0.08)]'
+                    : 'text-[#6C6C70] font-medium hover:text-[#1C1C1E]'
                 }`}
               >
                 Month
@@ -1895,33 +1885,33 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
 
           {/* Recent Stats: Explicitly distinguishes Active days (活动天数) vs Activities (活动次数) + Duration */}
           <div className="grid grid-cols-3 gap-2">
-            <div className="bg-white/60 px-2.5 py-2 rounded-[15px] border border-white/75 flex flex-col justify-between">
-              <span className="text-[10.5px] font-medium text-[#7A7895]">Active days</span>
-              <div className="flex items-baseline gap-1 mt-1">
-                <span className="text-[16px] font-bold text-[#26263F] leading-none">
+            <div className="bg-[#F2F2F7]/85 px-2.5 py-2.5 rounded-[14px] flex flex-col justify-between">
+              <span className="text-[11px] font-medium text-[#6C6C70]">Active days</span>
+              <div className="flex items-baseline gap-1 mt-1 tabular-nums">
+                <span className="text-[18px] font-bold text-[#1C1C1E] tracking-[-0.02em] leading-none">
                   {currentRecentData.activeDaysCount}
                 </span>
-                <span className="text-[10px] text-[#7A7895]">days</span>
+                <span className="text-[10.5px] font-medium text-[#6C6C70]">days</span>
               </div>
             </div>
 
-            <div className="bg-white/60 px-2.5 py-2 rounded-[15px] border border-white/75 flex flex-col justify-between">
-              <span className="text-[10.5px] font-medium text-[#7A7895]">Activities</span>
-              <div className="flex items-baseline gap-1 mt-1">
-                <span className="text-[16px] font-bold text-[#26263F] leading-none">
+            <div className="bg-[#F2F2F7]/85 px-2.5 py-2.5 rounded-[14px] flex flex-col justify-between">
+              <span className="text-[11px] font-medium text-[#6C6C70]">Activities</span>
+              <div className="flex items-baseline gap-1 mt-1 tabular-nums">
+                <span className="text-[18px] font-bold text-[#1C1C1E] tracking-[-0.02em] leading-none">
                   {currentRecentData.completedCount}
                 </span>
-                <span className="text-[10px] text-[#7A7895]">done</span>
+                <span className="text-[10.5px] font-medium text-[#6C6C70]">done</span>
               </div>
             </div>
 
-            <div className="bg-white/60 px-2.5 py-2 rounded-[15px] border border-white/75 flex flex-col justify-between">
-              <span className="text-[10.5px] font-medium text-[#7A7895]">Duration</span>
-              <div className="flex items-baseline gap-1 mt-1">
-                <span className="text-[16px] font-bold text-[#26263F] leading-none">
+            <div className="bg-[#F2F2F7]/85 px-2.5 py-2.5 rounded-[14px] flex flex-col justify-between">
+              <span className="text-[11px] font-medium text-[#6C6C70]">Duration</span>
+              <div className="flex items-baseline gap-1 mt-1 tabular-nums">
+                <span className="text-[18px] font-bold text-[#1C1C1E] tracking-[-0.02em] leading-none">
                   {currentRecentData.activeMinutes}
                 </span>
-                <span className="text-[10px] text-[#7A7895]">min</span>
+                <span className="text-[10.5px] font-medium text-[#6C6C70]">min</span>
               </div>
             </div>
           </div>
@@ -1934,7 +1924,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
       <section
         id="plan-module-direction"
         onClick={() => setSelectedModule('direction')}
-        className="group bg-white/70 hover:bg-white/85 transition-all duration-200 backdrop-blur-md rounded-[24px] p-4.5 border border-white/80 shadow-[0_4px_20px_rgba(90,80,140,0.04)] cursor-pointer flex flex-col gap-2.5 relative"
+        className="group bg-white hover:bg-[#FAFAFC] active:scale-[0.99] transition-all duration-200 rounded-[22px] p-4.5 border border-black/[0.03] shadow-[0_2px_10px_rgba(0,0,0,0.03)] cursor-pointer flex flex-col gap-2.5 relative"
         role="button"
         tabIndex={0}
         aria-label="View Your direction details"
@@ -1942,30 +1932,30 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-[16px] font-bold text-[#26263F] tracking-tight">Your direction</span>
+            <span className="text-[17px] font-bold text-[#1C1C1E] tracking-[-0.02em]">Your direction</span>
             {direction.status === 'paused' && (
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#C27838]/15 text-[#C27838]">
+              <span className="text-[10.5px] font-semibold px-2 py-0.5 rounded-full bg-[#C27838]/15 text-[#C27838]">
                 Paused
               </span>
             )}
           </div>
-          <ChevronRight className="w-4 h-4 text-[#5E5BAE] group-hover:translate-x-0.5 transition-transform stroke-[2.2]" />
+          <ChevronRight className="w-4 h-4 text-[#8E8E93] group-hover:text-[#5E5BAE] group-hover:translate-x-0.5 transition-all stroke-[2.2]" />
         </div>
 
         <div className="flex flex-col gap-1">
-          <h4 className="text-[14.5px] font-bold text-[#26263F] tracking-tight leading-snug">
+          <h4 className="text-[15px] font-bold text-[#1C1C1E] tracking-[-0.015em] leading-snug">
             {direction.goalTitle}
           </h4>
-          <p className="text-[12.5px] text-[#5D5B78] truncate">
+          <p className="text-[13px] text-[#6C6C70] truncate">
             {direction.executionApproach}
           </p>
         </div>
 
-        <div className="pt-1 border-t border-[#26263F]/[0.05] flex items-center justify-between text-[11px] text-[#7A7895]">
+        <div className="pt-1.5 border-t border-black/[0.05] flex items-center justify-between text-[11.5px] text-[#6C6C70]">
           <span className="flex items-center gap-1.5">
             <CalendarIcon className="w-3.5 h-3.5 stroke-[2] shrink-0 text-[#5E5BAE]" />
             <span>
-              Next review: <strong className="text-[#26263F] font-semibold">{direction.nextReviewDate}</strong>
+              Next review: <strong className="text-[#1C1C1E] font-semibold">{direction.nextReviewDate}</strong>
             </span>
           </span>
         </div>
@@ -1977,7 +1967,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
       <section
         id="plan-module-memory"
         aria-label="What Nova knows"
-        className="bg-white/70 backdrop-blur-md rounded-[24px] p-4.5 border border-white/80 shadow-[0_4px_20px_rgba(90,80,140,0.04)] flex flex-col gap-2.5 relative"
+        className="bg-white rounded-[22px] p-4.5 border border-black/[0.03] shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-col gap-2.5 relative"
       >
         <button
           type="button"
@@ -1985,8 +1975,8 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
           className="w-full flex items-center justify-between text-left group cursor-pointer"
           aria-label="View all memories in What Nova knows"
         >
-          <span className="text-[16px] font-bold text-[#26263F] tracking-tight">What Nova knows</span>
-          <div className="flex items-center gap-1 text-[11.5px] font-semibold text-[#5E5BAE]">
+          <span className="text-[17px] font-bold text-[#1C1C1E] tracking-[-0.02em]">What Nova knows</span>
+          <div className="flex items-center gap-1 text-[12px] font-semibold text-[#5E5BAE]">
             <span>All ({confirmedMemories.length})</span>
             <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform stroke-[2.2]" />
           </div>
@@ -1996,7 +1986,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
         {representativeConfirmedMemories.length === 0 ? (
           <div
             onClick={() => setSelectedModule('memory')}
-            className="bg-white/55 rounded-[16px] p-3.5 border border-white/75 text-[12.5px] text-[#7A7895] cursor-pointer"
+            className="bg-[#F2F2F7]/85 rounded-[15px] p-3.5 text-[12.5px] text-[#6C6C70] cursor-pointer"
           >
             No confirmed preferences saved yet. Talk to Nova to share what works for you.
           </div>
@@ -2007,15 +1997,15 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                 key={item.id}
                 type="button"
                 onClick={() => setSelectedMemory(item)}
-                className="w-full bg-white/60 hover:bg-white/90 active:scale-[0.99] transition-all px-3.5 py-2.5 rounded-[16px] border border-white/80 flex items-center justify-between gap-2.5 text-left cursor-pointer group"
+                className="w-full bg-[#F2F2F7]/85 hover:bg-[#E5E5EA]/75 active:scale-[0.99] transition-all px-3.5 py-2.5 rounded-[15px] flex items-center justify-between gap-2.5 text-left cursor-pointer group"
               >
                 <div className="flex items-center gap-2.5 min-w-0 flex-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#5E5BAE] shrink-0" />
-                  <span className="text-[13px] font-semibold text-[#26263F] truncate">
+                  <span className="text-[13.5px] font-semibold text-[#1C1C1E] truncate">
                     {item.title}
                   </span>
                 </div>
-                <ChevronRight className="w-3.5 h-3.5 text-[#7A7895] group-hover:text-[#5E5BAE] shrink-0 stroke-[2.2]" />
+                <ChevronRight className="w-3.5 h-3.5 text-[#8E8E93] group-hover:text-[#5E5BAE] shrink-0 stroke-[2.2]" />
               </button>
             ))}
           </div>
@@ -2026,10 +2016,10 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
           <button
             type="button"
             onClick={() => setSelectedModule('memory')}
-            className="w-full px-3.5 py-2 rounded-[14px] bg-[#FAF8FD] hover:bg-white border border-[#5E5BAE]/20 flex items-center justify-between text-left transition-all cursor-pointer group"
+            className="w-full px-3.5 py-2 rounded-[14px] bg-[#F5F3FF] hover:bg-[#EDE9FE] border border-[#5E5BAE]/15 flex items-center justify-between text-left transition-all cursor-pointer group"
           >
             <div className="flex items-center gap-1.5 min-w-0">
-              <Sparkles className="w-3.5 h-3.5 text-[#6865B8] shrink-0 stroke-[2.2]" />
+              <Sparkles className="w-3.5 h-3.5 text-[#5E5BAE] shrink-0 stroke-[2.2]" />
               <span className="text-[12px] font-semibold text-[#5E5BAE] truncate">
                 Can I check something? ({checkMemories.length} pending)
               </span>
@@ -2044,7 +2034,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
             type="button"
             id="plan-memory-talk-btn"
             onClick={() => handleStartTalkToNovaMemory(null)}
-            className="w-full py-2.5 px-3.5 rounded-[16px] bg-[#5E5BAE]/[0.08] hover:bg-[#5E5BAE]/[0.14] active:scale-[0.99] text-[#5E5BAE] text-[12.5px] font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+            className="w-full py-2.5 px-3.5 rounded-[15px] bg-[#5E5BAE]/[0.09] hover:bg-[#5E5BAE]/[0.15] active:scale-[0.99] text-[#5E5BAE] text-[13px] font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
           >
             <MessageSquare className="w-3.5 h-3.5 stroke-[2.2]" />
             <span>Talk to Nova to update or add</span>
@@ -2058,7 +2048,7 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
       <section
         id="plan-module-health"
         onClick={() => setSelectedModule('health')}
-        className="group bg-white/70 hover:bg-white/85 transition-all duration-200 backdrop-blur-md rounded-[24px] p-4.5 border border-white/80 shadow-[0_4px_20px_rgba(90,80,140,0.04)] cursor-pointer flex flex-col gap-3 relative"
+        className="group bg-white hover:bg-[#FAFAFC] active:scale-[0.99] transition-all duration-200 rounded-[22px] p-4.5 border border-black/[0.03] shadow-[0_2px_10px_rgba(0,0,0,0.03)] cursor-pointer flex flex-col gap-3 relative"
         role="button"
         tabIndex={0}
         aria-label="View Health data details"
@@ -2066,19 +2056,19 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-[16px] font-bold text-[#26263F] tracking-tight">Health data</span>
+            <span className="text-[17px] font-bold text-[#1C1C1E] tracking-[-0.02em]">Health data</span>
             <span
               className={`text-[10.5px] font-semibold px-2.5 py-0.5 rounded-full flex items-center gap-1 ${
                 isAppleHealthConnected
-                  ? 'text-[#E11D48] bg-[#FFE4E6]/80'
-                  : 'text-[#7A7895] bg-[#26263F]/[0.05]'
+                  ? 'text-[#E11D48] bg-[#FFE4E6]/85'
+                  : 'text-[#6C6C70] bg-[#F2F2F7]'
               }`}
             >
               <Heart className="w-2.5 h-2.5 fill-current" />
               {isAppleHealthConnected ? 'Sample sync' : 'Not connected'}
             </span>
           </div>
-          <ChevronRight className="w-4 h-4 text-[#5E5BAE] group-hover:translate-x-0.5 transition-transform stroke-[2.2]" />
+          <ChevronRight className="w-4 h-4 text-[#8E8E93] group-hover:text-[#5E5BAE] group-hover:translate-x-0.5 transition-all stroke-[2.2]" />
         </div>
 
         {/* 2 Core Metrics Only on Level-1 (Resting Heart Rate & Sleep Duration) */}
@@ -2094,22 +2084,22 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
             return (
               <div
                 key={metric.id}
-                className="bg-white/60 px-3.5 py-3 rounded-[16px] border border-white/75 flex flex-col justify-between gap-1.5"
+                className="bg-[#F2F2F7]/85 px-3.5 py-3 rounded-[15px] flex flex-col justify-between gap-1.5"
               >
-                <span className="text-[11px] font-medium text-[#7A7895] leading-snug">
+                <span className="text-[11.5px] font-medium text-[#6C6C70] leading-snug">
                   {metric.name}
                 </span>
 
-                <div className="flex items-baseline gap-1 flex-wrap">
+                <div className="flex items-baseline gap-1 flex-wrap tabular-nums">
                   <span
-                    className={`font-bold text-[#26263F] tracking-tight leading-none ${
-                      isAppleHealthConnected ? 'text-[18px]' : 'text-[12.5px] text-[#8E8EA8]'
+                    className={`font-bold text-[#1C1C1E] tracking-[-0.02em] leading-none ${
+                      isAppleHealthConnected ? 'text-[20px]' : 'text-[13px] text-[#8E8E93]'
                     }`}
                   >
                     {displayValue}
                   </span>
                   {displayUnit && (
-                    <span className="text-[10.5px] text-[#7A7895] font-medium">{displayUnit}</span>
+                    <span className="text-[11px] text-[#6C6C70] font-medium">{displayUnit}</span>
                   )}
                 </div>
               </div>
@@ -2143,20 +2133,20 @@ export function MyPlanView({ phoneFrameRef }: MyPlanViewProps) {
                   animate={{ y: 0 }}
                   exit={{ y: '100%' }}
                   transition={{ type: 'spring', damping: 28, stiffness: 280 }}
-                  className="relative w-full max-h-[88%] bg-[#FAF7F2] rounded-t-[32px] p-6 shadow-2xl border-t border-white/90 overflow-y-auto z-10 flex flex-col gap-4 text-[#26263F]"
+                  className="relative w-full max-h-[88%] bg-[#F2F2F7]/96 backdrop-blur-2xl rounded-t-[32px] p-6 shadow-2xl border-t border-white/90 overflow-y-auto z-10 flex flex-col gap-4 text-[#1C1C1E]"
                   id="my-plan-secondary-sheet"
                 >
                   {/* Sheet Header */}
-                  <div className="flex items-center justify-between pb-2 border-b border-[#26263F]/[0.06] shrink-0">
+                  <div className="flex items-center justify-between pb-2 border-b border-black/[0.06] shrink-0">
                     <div>
-                      <h3 className="text-[18px] font-bold text-[#26263F]">
+                      <h3 className="text-[18px] font-bold text-[#1C1C1E] tracking-[-0.02em]">
                         {selectedModule === 'activity' && 'Activity History'}
                         {selectedModule === 'rhythm' && 'Your rhythm'}
                         {selectedModule === 'direction' && 'Your direction'}
                         {selectedModule === 'memory' && 'What Nova knows'}
                         {selectedModule === 'health' && 'Health data'}
                       </h3>
-                      <span className="text-[11px] text-[#7A7895]">
+                      <span className="text-[11.5px] text-[#6C6C70]">
                         {selectedModule === 'activity' && 'Monthly action log & intervals'}
                         {selectedModule === 'rhythm' && 'Long-term trends & recent summary'}
                         {selectedModule === 'direction' && 'Long-term focus & conversational pacing'}

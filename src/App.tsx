@@ -920,23 +920,23 @@ export default function App() {
   const strokeDashoffset = circumference - (holdProgress / 100) * circumference;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#EAE6F4] via-[#EDE9F6] to-[#E5E0F2] flex items-center justify-center p-0 sm:py-6 font-sans antialiased select-none text-[#26263F]">
+    <div className="min-h-screen bg-[#E5E5EA] flex items-center justify-center p-0 sm:py-6 font-sans antialiased select-none text-[#1C1C1E]">
       {/* 393 × 852 px Native Smartphone Frame */}
       <div 
         ref={phoneFrameRef}
-        className="w-full max-w-[393px] h-[100dvh] sm:h-[844px] sm:max-h-[852px] bg-[#FAF8F5] relative flex flex-col justify-between overflow-hidden sm:rounded-[44px] sm:shadow-[0_28px_72px_-16px_rgba(90,80,140,0.18)] sm:border sm:border-white/80"
+        className="w-full max-w-[393px] h-[100dvh] sm:h-[844px] sm:max-h-[852px] bg-[#F2F2F7] relative flex flex-col justify-between overflow-hidden sm:rounded-[44px] sm:shadow-[0_28px_72px_-16px_rgba(28,28,30,0.18)] sm:border sm:border-white/90"
       >
         
-        {/* Soft Ambient Light Glows (Low-saturation, ethereal warmth & lavender mist as in reference) */}
+        {/* Apple Health Style Top Pink-Lavender Gradient transitioning smoothly to #F2F2F7 */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden -z-0">
-          {/* Subtle peach / apricot gentle warmth in upper-right */}
-          <div className="absolute -top-12 -right-16 w-80 h-80 rounded-full bg-radial from-[#FCEEE5]/65 via-[#FAF3ED]/30 to-transparent blur-3xl" />
-          {/* Delicate celestial lavender / lilac glow in center */}
-          <div className="absolute top-48 -left-20 w-80 h-80 rounded-full bg-radial from-[#EEE9FC]/70 via-[#F4F1FD]/35 to-transparent blur-3xl" />
-          {/* Soft serene sky mist near bottom */}
-          <div className="absolute -bottom-16 right-0 w-80 h-72 rounded-full bg-radial from-[#EBF2FD]/55 via-[#F3EEFD]/30 to-transparent blur-3xl" />
-          {/* Central diffused light aura behind companion & card */}
-          <div className="absolute top-[38%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full bg-radial from-white/60 via-white/20 to-transparent blur-2xl" />
+          {/* Primary vertical top wash: soft pink-lavender at top fading into #F2F2F7 by ~42% */}
+          <div className="absolute top-0 inset-x-0 h-[360px] bg-gradient-to-b from-[#DDD2FC]/85 via-[#F3D1EE]/55 to-transparent" />
+          {/* Left soft periwinkle-lavender bloom */}
+          <div className="absolute -top-20 -left-16 w-72 h-72 rounded-full bg-radial from-[#C9BEFC]/75 via-[#DDD5FC]/35 to-transparent blur-2xl" />
+          {/* Right soft rose-pink bloom */}
+          <div className="absolute -top-16 -right-14 w-72 h-72 rounded-full bg-radial from-[#FAD0E5]/80 via-[#F6DCEB]/40 to-transparent blur-2xl" />
+          {/* Subtle central aura behind companion */}
+          <div className="absolute top-[36%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full bg-radial from-white/75 via-white/25 to-transparent blur-2xl" />
         </div>
 
         {/* Unified Animated Transition Nova (Active during opening, open, or closing) */}
@@ -1112,8 +1112,8 @@ export default function App() {
         )}
 
         {/* 1. iOS Status Bar (44px Height Standard Safe Area) */}
-        <div className="pt-3.5 pb-1 px-7 flex items-center justify-between text-xs font-semibold text-[#26263F] select-none shrink-0 z-30">
-          <span>9:41</span>
+        <div className="pt-3.5 pb-1 px-7 flex items-center justify-between text-xs font-semibold text-[#1C1C1E] select-none shrink-0 z-30">
+          <span className="tracking-tight">9:41</span>
           <div className="flex items-center gap-1.5">
             {/* Cellular signal bars */}
             <svg className="w-4 h-3 fill-current" viewBox="0 0 17 12">
@@ -1124,22 +1124,22 @@ export default function App() {
             </svg>
             <Wifi className="w-3.5 h-3.5 stroke-[2.4]" />
             {/* Battery icon */}
-            <div className="w-5 h-2.5 border border-[#26263F] rounded-[3px] p-0.5 flex items-center">
-              <div className="w-full h-full bg-[#26263F] rounded-[1px]" />
+            <div className="w-5 h-2.5 border border-[#1C1C1E] rounded-[3px] p-0.5 flex items-center">
+              <div className="w-full h-full bg-[#1C1C1E] rounded-[1px]" />
             </div>
           </div>
         </div>
 
-        {/* 2. Top Header Bar (24px horizontal padding) */}
+        {/* 2. Top Header Bar (Apple HIG Large Title Hierarchy) */}
         <header 
           onClick={() => {
             if (activeTab === 'Today' && isPlanCardOpen) {
               setIsPlanCardOpen(false);
             }
           }}
-          className="px-6 pt-1 pb-1.5 flex items-center justify-between shrink-0 z-20"
+          className="px-5 pt-1 pb-1.5 flex items-center justify-between shrink-0 z-20"
         >
-          <span className="text-[24px] font-bold tracking-tight text-[#26263F]">
+          <span className="text-[28px] sm:text-[30px] font-bold tracking-[-0.024em] text-[#1C1C1E] leading-tight">
             {activeTab === 'Today' ? 'Plan B' : activeTab}
           </span>
           {activeTab === 'Discover' && (
@@ -1147,7 +1147,7 @@ export default function App() {
               type="button"
               id="top-saved-btn"
               onClick={() => setIsSavedSheetOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/75 hover:bg-white/95 border border-white/85 shadow-2xs text-xs font-semibold text-[#5E5BAE] transition-all cursor-pointer active:scale-95"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/85 hover:bg-white backdrop-blur-md border border-white/90 shadow-[0_2px_8px_rgba(0,0,0,0.04)] text-xs font-semibold text-[#5E5BAE] transition-all cursor-pointer active:scale-95 min-h-[34px]"
               aria-label="View saved items"
             >
               <Bookmark className="w-3.5 h-3.5 fill-current" />
@@ -1181,31 +1181,33 @@ export default function App() {
 
           {/* A. Lightweight Real-Time Ambient Info Area (Weather, Steps, Heart Rate - Clearly Marked Sample Data) */}
           <div className="w-full shrink-0 z-10 mb-0.5">
-            <div className="w-full flex items-center justify-between py-1.5 px-0 border-b border-[#26263F]/[0.06] text-[11px] sm:text-[12px] text-[#5D5B78] tabular-nums">
-              <div className="flex items-center gap-1 sm:gap-2 min-w-0">
-                <span className="inline-flex items-center gap-0.5 sm:gap-1 whitespace-nowrap">
-                  <CloudSun className="w-3.5 h-3.5 text-[#6865B8] stroke-[2] shrink-0" />
-                  <span className="font-semibold text-[#26263F]">18°C</span>
-                  <span className="text-[#7A7895] text-[10.5px] sm:text-[11px]">Cloudy</span>
+            <div className="w-full flex items-center justify-between py-1.5 px-0 border-b border-black/[0.06] text-[11px] sm:text-[12px] text-[#3C3C43] tabular-nums">
+              <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 shrink-0">
+                <span className="inline-flex items-center gap-1 whitespace-nowrap shrink-0">
+                  <CloudSun className="w-3.5 h-3.5 text-[#5E5BAE] stroke-[2] shrink-0" />
+                  <span className="font-semibold text-[#1C1C1E]">18°C</span>
+                  <span className="hidden min-[380px]:inline text-[#6C6C70] text-[10.5px] sm:text-[11px]">
+                    Cloudy
+                  </span>
                 </span>
-                <span className="text-[#26263F]/20 select-none" aria-hidden="true">·</span>
-                <span className="inline-flex items-center gap-0.5 sm:gap-1 whitespace-nowrap">
-                  <Footprints className="w-3.5 h-3.5 text-[#6865B8] stroke-[2] shrink-0" />
-                  <span className="font-semibold text-[#26263F]">3,420</span>
-                  <span className="text-[#7A7895] text-[10.5px] sm:text-[11px]">steps</span>
+                <span className="text-black/20 select-none shrink-0" aria-hidden="true">·</span>
+                <span className="inline-flex items-center gap-1 whitespace-nowrap shrink-0">
+                  <Footprints className="w-3.5 h-3.5 text-[#5E5BAE] stroke-[2] shrink-0" />
+                  <span className="font-semibold text-[#1C1C1E]">3,420</span>
+                  <span className="text-[#6C6C70] text-[10.5px] sm:text-[11px]">steps</span>
                 </span>
-                <span className="text-[#26263F]/20 select-none" aria-hidden="true">·</span>
-                <span className="inline-flex items-center gap-0.5 sm:gap-1 whitespace-nowrap">
-                  <Heart className="w-3.5 h-3.5 text-[#D96B52] stroke-[2] shrink-0" />
-                  <span className="font-semibold text-[#26263F]">68</span>
-                  <span className="text-[#7A7895] text-[10.5px] sm:text-[11px]">bpm</span>
+                <span className="text-black/20 select-none shrink-0" aria-hidden="true">·</span>
+                <span className="inline-flex items-center gap-1 whitespace-nowrap shrink-0">
+                  <Heart className="w-3.5 h-3.5 text-[#FF2D55] stroke-[2.2] shrink-0" />
+                  <span className="font-semibold text-[#1C1C1E]">68</span>
+                  <span className="text-[#6C6C70] text-[10.5px] sm:text-[11px]">bpm</span>
                 </span>
               </div>
 
               <button
                 type="button"
                 onClick={() => setShowSampleDataNote((prev) => !prev)}
-                className="text-[10px] sm:text-[10.5px] font-medium text-[#7A7895] hover:text-[#46437B] underline decoration-[#7A7895]/40 underline-offset-2 shrink-0 ml-1 pl-1.5 border-l border-[#26263F]/10 cursor-pointer transition-colors whitespace-nowrap"
+                className="text-[10px] sm:text-[10.5px] font-medium text-[#6C6C70] hover:text-[#1C1C1E] underline decoration-[#8E8E93]/50 underline-offset-2 shrink-0 ml-1.5 pl-2 border-l border-black/10 cursor-pointer transition-colors whitespace-nowrap"
                 title="Sample values shown before sensor connection"
               >
                 Sample data
@@ -1218,7 +1220,7 @@ export default function App() {
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="text-[11px] text-[#706E8A] pt-1 px-1 leading-snug overflow-hidden"
+                  className="text-[11px] text-[#6C6C70] pt-1 px-1 leading-snug overflow-hidden"
                 >
                   Sample values for preview — live weather and wearable health sensors are not connected yet.
                 </motion.p>
@@ -1280,13 +1282,13 @@ export default function App() {
                         : { duration: 0.28, ease: [0.32, 0.72, 0, 1] }
                     }
                     style={{ transformOrigin: '25% 0%' }}
-                    className="absolute top-[166px] sm:top-[180px] right-0 z-20 max-w-[238px] sm:max-w-[248px] rounded-[22px] rounded-tl-[6px] bg-white/90 hover:bg-white/95 active:scale-[0.98] backdrop-blur-xl border border-white/95 shadow-[0_10px_28px_-6px_rgba(94,91,174,0.18),0_1px_1px_rgba(255,255,255,0.95)_inset] px-3.5 py-2.5 text-left flex items-center gap-2.5 cursor-pointer group transition-colors min-h-[52px]"
+                    className="absolute top-[166px] sm:top-[180px] right-0 z-20 max-w-[238px] sm:max-w-[248px] rounded-[20px] rounded-tl-[6px] bg-white hover:bg-[#FAFAFC] active:scale-[0.98] border border-black/[0.04] shadow-[0_8px_24px_-4px_rgba(28,28,30,0.10),0_1px_2px_rgba(0,0,0,0.04)] px-3.5 py-2.5 text-left flex items-center gap-2.5 cursor-pointer group transition-all min-h-[50px]"
                     aria-label={`Open today's suggestion: ${currentPlan.title}`}
                   >
                     {/* Speech bubble tail pointing up-left toward Nova */}
                     <span
                       aria-hidden="true"
-                      className="absolute -top-1.5 left-3.5 w-3 h-3 rotate-45 bg-white/90 border-l border-t border-white/95 rounded-tl-[2px] pointer-events-none"
+                      className="absolute -top-1.5 left-3.5 w-3 h-3 rotate-45 bg-white border-l border-t border-black/[0.04] rounded-tl-[2px] pointer-events-none"
                     />
 
                     <div className="flex-1 min-w-0 relative z-10">
@@ -1308,13 +1310,13 @@ export default function App() {
                       )}
 
                       {/* Suggestion / Task Title */}
-                      <div className="text-[13.5px] font-bold text-[#26263F] leading-snug line-clamp-2">
+                      <div className="text-[14px] font-semibold text-[#1C1C1E] tracking-[-0.01em] leading-snug line-clamp-2">
                         {currentPlan.title}
                       </div>
                     </div>
 
                     {/* Subtle Tap Affordance Icon */}
-                    <div className="w-6 h-6 rounded-full bg-[#F4F1FD] group-hover:bg-[#EAE5FA] text-[#5E5BAE] flex items-center justify-center shrink-0 transition-colors">
+                    <div className="w-6 h-6 rounded-full bg-[#F2F2F7] group-hover:bg-[#E5E5EA] text-[#5E5BAE] flex items-center justify-center shrink-0 transition-colors">
                       <ChevronRight className="w-3.5 h-3.5 stroke-[2.4]" />
                     </div>
                   </motion.button>
@@ -1327,12 +1329,12 @@ export default function App() {
                   isPlanCardOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
                 }`}
               >
-                <h2 className="text-[20px] font-bold text-[#26263F] tracking-tight text-center mt-2 select-none leading-none">
+                <h2 className="text-[21px] font-bold text-[#1C1C1E] tracking-[-0.02em] text-center mt-2 select-none leading-none">
                   Nova
                 </h2>
 
                 <div className="mt-2.5 sm:mt-3 text-center px-4">
-                  <p className="text-[14.5px] font-normal text-[#5D5B78] leading-snug tracking-normal">
+                  <p className="text-[15px] font-normal text-[#6C6C70] leading-snug tracking-[-0.01em]">
                     Hope your morning is going a little easier.
                   </p>
                 </div>
@@ -1377,15 +1379,8 @@ export default function App() {
                         ? { duration: 0.05 }
                         : { duration: 0.36, ease: [0.32, 0.72, 0, 1] }
                     }
-                    className={`w-full rounded-[28px] shrink-0 relative overflow-hidden backdrop-blur-xl transition-[background-color,border-color,box-shadow] duration-300 ${
-                      planState === 'suggested'
-                        ? 'bg-white/88 border border-white/95 shadow-[0_14px_40px_-8px_rgba(94,91,174,0.16),0_1px_1px_rgba(255,255,255,0.95)_inset]'
-                        : 'bg-white/92 border border-white/95 shadow-[0_16px_44px_-8px_rgba(94,91,174,0.18),0_1px_1px_rgba(255,255,255,0.95)_inset]'
-                    }`}
+                    className="w-full rounded-[24px] shrink-0 relative overflow-hidden bg-white border border-black/[0.04] shadow-[0_14px_36px_-8px_rgba(28,28,30,0.12),0_2px_6px_rgba(0,0,0,0.04)] transition-shadow duration-300"
                   >
-                    {/* Subtle top edge frosted light reflection inside the card */}
-                    <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white to-transparent pointer-events-none" />
-
                     {/* Inner Measurable Content Container */}
                     <div ref={cardContentRef} className="p-5 sm:p-5.5 w-full flex flex-col">
                       
@@ -1395,7 +1390,7 @@ export default function App() {
                         <div className="flex items-center justify-between gap-2 mb-1">
                           <div className="relative h-4 flex-1 select-none">
                             <span 
-                              className={`text-[11px] font-bold uppercase tracking-wider text-[#6865B8] absolute inset-0 transition-opacity ${
+                              className={`text-[11px] font-bold uppercase tracking-wider text-[#5E5BAE] absolute inset-0 transition-opacity ${
                                 shouldReduceMotion ? 'duration-75' : 'duration-200'
                               } ${
                                 planState === 'suggested' ? 'opacity-100' : 'opacity-0 pointer-events-none'
@@ -1404,7 +1399,7 @@ export default function App() {
                               Today’s suggestion
                             </span>
                             <span 
-                              className={`text-[11px] font-bold uppercase tracking-wider text-[#6865B8] absolute inset-0 transition-opacity ${
+                              className={`text-[11px] font-bold uppercase tracking-wider text-[#5E5BAE] absolute inset-0 transition-opacity ${
                                 shouldReduceMotion ? 'duration-75' : 'duration-250 delay-100'
                               } ${
                                 planState !== 'suggested' ? 'opacity-100' : 'opacity-0 pointer-events-none'
@@ -1419,7 +1414,7 @@ export default function App() {
                             type="button"
                             id="close-plan-card-btn"
                             onClick={() => setIsPlanCardOpen(false)}
-                            className="-mr-1.5 -mt-1 w-8 h-8 rounded-full flex items-center justify-center text-[#706E8A] hover:text-[#26263F] bg-[#26263F]/[0.05] hover:bg-[#26263F]/[0.10] active:scale-95 transition-all cursor-pointer shrink-0"
+                            className="-mr-1.5 -mt-1 w-8 h-8 rounded-full flex items-center justify-center text-[#6C6C70] hover:text-[#1C1C1E] bg-[#F2F2F7] hover:bg-[#E5E5EA] active:scale-95 transition-all cursor-pointer shrink-0"
                             aria-label="Close suggestion card"
                           >
                             <X className="w-4 h-4 stroke-[2.2]" />
@@ -1429,7 +1424,7 @@ export default function App() {
                         {/* Title & Thumbnail Row */}
                         <div className="flex items-center justify-between gap-3">
                           {/* Continuous Plan Title: Always in DOM, never jumps */}
-                          <h2 className="text-[19px] sm:text-[20px] font-bold tracking-tight text-[#26263F] leading-snug flex-1">
+                          <h2 className="text-[19px] sm:text-[20px] font-bold tracking-[-0.02em] text-[#1C1C1E] leading-snug flex-1">
                             {currentPlan.title}
                           </h2>
 
@@ -1494,7 +1489,7 @@ export default function App() {
                             }
                             className="overflow-hidden flex flex-col gap-3.5 pt-1.5"
                           >
-                            <p className="text-[13.5px] sm:text-[14px] text-[#5D5B78] leading-relaxed">
+                            <p className="text-[14px] text-[#6C6C70] leading-relaxed">
                               {currentPlan.subtitle}
                             </p>
 
@@ -1502,7 +1497,7 @@ export default function App() {
                               <button
                                 type="button"
                                 onClick={handleSoundsGood}
-                                className="h-11 sm:h-12 px-4 rounded-[18px] bg-[#5E5BAE] hover:bg-[#524FA0] active:bg-[#484591] active:scale-[0.98] text-white text-[14px] font-bold shadow-[0_4px_16px_rgba(94,91,174,0.22)] border border-white/20 transition-all flex items-center justify-center text-center min-h-[44px] cursor-pointer"
+                                className="h-11 sm:h-12 px-4 rounded-[16px] bg-[#5E5BAE] hover:bg-[#524FA0] active:bg-[#484591] active:scale-[0.98] text-white text-[14px] font-semibold shadow-[0_4px_14px_rgba(94,91,174,0.22)] transition-all flex items-center justify-center text-center min-h-[44px] cursor-pointer"
                               >
                                 Sounds good
                               </button>
@@ -1510,12 +1505,12 @@ export default function App() {
                                 <button
                                   type="button"
                                   onClick={handleInitialPlanB}
-                                  className="h-11 sm:h-12 w-full px-4 rounded-[18px] bg-white/75 hover:bg-white/95 active:scale-[0.98] text-[#46437B] border border-white/90 shadow-[0_2px_10px_rgba(94,91,174,0.05)] text-[14px] font-semibold transition-all flex items-center justify-center text-center min-h-[44px] backdrop-blur-md cursor-pointer"
+                                  className="h-11 sm:h-12 w-full px-4 rounded-[16px] bg-[#F2F2F7] hover:bg-[#E5E5EA] active:scale-[0.98] text-[#1C1C1E] text-[14px] font-semibold transition-all flex items-center justify-center text-center min-h-[44px] cursor-pointer"
                                 >
                                   Plan B
                                 </button>
                                 {showPlanBHint && (
-                                  <span className="text-[11px] text-[#706E8A] text-center mt-1 select-none animate-in fade-in font-normal tracking-tight">
+                                  <span className="text-[11px] text-[#6C6C70] text-center mt-1 select-none animate-in fade-in font-normal tracking-tight">
                                     Find another way
                                   </span>
                                 )}
@@ -1669,8 +1664,8 @@ export default function App() {
           />
         </div>
 
-        {/* 4. Bottom Pinned Section: Conversational Input (Hidden on Plan) & 3 Navigation Tabs (Today / Plan / Discover) */}
-        <div className="px-6 pt-2 pb-1.5 flex flex-col gap-1.5 shrink-0 z-20 bg-white/60 backdrop-blur-xl border-t border-white/65 shadow-[0_-4px_24px_rgba(90,80,140,0.04)]">
+        {/* 4. Bottom Floating Section: Translucent Glass Input (Hidden on Plan) & Apple Health Style Floating Glass Tab Capsule */}
+        <div className="px-5 pt-1.5 pb-1 flex flex-col gap-2 shrink-0 z-20 bg-gradient-to-t from-[#F2F2F7] via-[#F2F2F7]/90 to-transparent">
           {/* Conversational Input Entry (Hidden on Plan tab to increase viewport space) */}
           {activeTab !== 'Plan' && (
             <button 
@@ -1688,20 +1683,23 @@ export default function App() {
                   ]);
                 });
               }}
-              className="w-full bg-white/70 hover:bg-white/85 backdrop-blur-md rounded-full px-5 py-3 flex items-center gap-3 border border-white/80 shadow-[0_2px_12px_rgba(90,80,140,0.04)] cursor-pointer min-h-[48px] transition-all text-left"
+              className="w-full bg-white/82 hover:bg-white/92 active:scale-[0.99] backdrop-blur-2xl backdrop-saturate-180 rounded-full px-4.5 py-2.5 flex items-center gap-3 border border-white/90 shadow-[0_4px_18px_rgba(28,28,30,0.06),0_1px_2px_rgba(0,0,0,0.03)] cursor-pointer min-h-[46px] transition-all text-left"
               aria-label="Talk to Nova"
             >
-              <span className="flex-1 text-[13.5px] text-[#7A7895] font-normal select-none">
+              <span className="flex-1 text-[14px] text-[#6C6C70] font-normal select-none tracking-[-0.01em]">
                 Talk to Nova…
               </span>
-              <div className="text-[#6865B8]">
-                <Mic className="w-5 h-5 stroke-[2]" />
+              <div className="w-7 h-7 rounded-full bg-[#5E5BAE]/10 text-[#5E5BAE] flex items-center justify-center shrink-0">
+                <Mic className="w-4 h-4 stroke-[2.2]" />
               </div>
             </button>
           )}
 
-          {/* 3 Bottom Navigation Tabs: Today / Plan / Discover */}
-          <nav className="pt-1 px-2 grid grid-cols-3 gap-2 text-xs font-medium">
+          {/* 3 Bottom Navigation Tabs in Floating Translucent Glass Capsule (Apple Health Reference Style) */}
+          <nav
+            aria-label="Primary navigation"
+            className="p-1 rounded-full bg-white/78 backdrop-blur-2xl backdrop-saturate-180 border border-white/90 shadow-[0_8px_26px_rgba(28,28,30,0.08),0_1px_3px_rgba(0,0,0,0.04)] grid grid-cols-3 gap-1"
+          >
             {[
               { id: 'Today', icon: Calendar },
               { id: 'Plan', icon: Sliders },
@@ -1714,22 +1712,23 @@ export default function App() {
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveTab(tab.id as 'Today' | 'Plan' | 'Discover')}
-                  className={`flex flex-col items-center gap-1 py-1 px-3 rounded-[16px] transition-all min-h-[44px] justify-center cursor-pointer ${
+                  aria-current={isActive ? 'page' : undefined}
+                  className={`flex flex-col items-center gap-0.5 py-1.5 px-3 rounded-full transition-all min-h-[46px] justify-center cursor-pointer active:scale-[0.97] ${
                     isActive
-                      ? 'bg-white/80 backdrop-blur-sm text-[#5E5BAE] shadow-2xs border border-white/80 font-bold'
-                      : 'text-[#7A7895] hover:text-[#26263F]'
+                      ? 'bg-[#E5E5EA]/90 text-[#5E5BAE] font-semibold shadow-[0_1px_2px_rgba(0,0,0,0.04)]'
+                      : 'text-[#3C3C43] hover:text-[#1C1C1E] font-medium'
                   }`}
                 >
-                  <Icon className={`w-5 h-5 ${isActive ? 'stroke-[2.5]' : 'stroke-[1.8]'}`} />
-                  <span className="text-[11px] tracking-tight">{tab.id}</span>
+                  <Icon className={`w-[19px] h-[19px] ${isActive ? 'stroke-[2.4]' : 'stroke-[1.9]'}`} />
+                  <span className="text-[11px] tracking-[-0.01em] leading-none mt-0.5">{tab.id}</span>
                 </button>
               );
             })}
           </nav>
 
-          {/* 5. iOS Home Gesture Indicator Bar (34px Height Safe Area) */}
-          <div className="pt-1 pb-1.5 flex items-center justify-center select-none shrink-0">
-            <div className="w-32 h-1 bg-[#26263F]/20 rounded-full" />
+          {/* 5. iOS Home Gesture Indicator Bar */}
+          <div className="pt-0.5 pb-1 flex items-center justify-center select-none shrink-0">
+            <div className="w-32 h-1 bg-[#1C1C1E]/20 rounded-full" />
           </div>
         </div>
 

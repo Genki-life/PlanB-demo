@@ -184,9 +184,9 @@ export function DiscoverView({
       </AnimatePresence>
 
       {/* Intro Subtitle / Context Header */}
-      <div className="flex items-center justify-between text-xs text-[#7A7895] px-0.5">
-        <span>Curated resets for your pacing</span>
-        <span className="text-[11px] bg-[#26263F]/[0.04] px-2 py-0.5 rounded-full">
+      <div className="flex items-center justify-between text-xs text-[#6C6C70] px-0.5">
+        <span className="font-medium">Curated resets for your pacing</span>
+        <span className="text-[11px] font-medium text-[#6C6C70] bg-white/80 border border-black/[0.04] px-2.5 py-0.5 rounded-full">
           Sample curation
         </span>
       </div>
@@ -200,14 +200,14 @@ export function DiscoverView({
             <article
               key={item.id}
               onClick={() => setSelectedItem(item)}
-              className="group bg-white/70 hover:bg-white/85 active:scale-[0.99] transition-all duration-200 backdrop-blur-md rounded-[26px] p-4 border border-white/85 shadow-[0_4px_20px_rgba(90,80,140,0.04)] cursor-pointer flex flex-col gap-3 relative select-none"
+              className="group bg-white hover:bg-[#FAFAFC] active:scale-[0.99] transition-all duration-200 rounded-[22px] p-4 border border-black/[0.03] shadow-[0_2px_10px_rgba(0,0,0,0.03)] cursor-pointer flex flex-col gap-3 relative select-none"
               role="button"
               tabIndex={0}
               aria-label={`View ${item.title}`}
               onKeyDown={(e) => e.key === 'Enter' && setSelectedItem(item)}
             >
               {/* 1. Cover Image Container with Badges & Save Button */}
-              <div className="relative w-full h-44 rounded-[20px] overflow-hidden border border-white/75 shadow-2xs shrink-0">
+              <div className="relative w-full h-44 rounded-[16px] overflow-hidden border border-black/[0.04] shrink-0">
                 <img
                   src={item.coverUrl}
                   alt={item.title}
@@ -221,7 +221,7 @@ export function DiscoverView({
                 {/* Top Overlay Row: Category Tag & Save Bookmark Button */}
                 <div className="absolute top-3 left-3 right-3 flex items-center justify-between z-10">
                   {/* Category Tag inside card */}
-                  <span className="px-2.5 py-1 rounded-full bg-white/85 backdrop-blur-md border border-white/90 text-[11px] font-bold text-[#5E5BAE] shadow-2xs">
+                  <span className="px-2.5 py-1 rounded-full bg-white/88 backdrop-blur-md border border-white/90 text-[11px] font-bold text-[#5E5BAE] shadow-2xs">
                     {item.category}
                   </span>
 
@@ -235,7 +235,7 @@ export function DiscoverView({
                     className={`w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-md border transition-all active:scale-90 cursor-pointer shadow-2xs ${
                       isSaved
                         ? 'bg-[#5E5BAE] text-white border-[#5E5BAE]'
-                        : 'bg-white/80 hover:bg-white text-[#26263F] border-white/90'
+                        : 'bg-white/85 hover:bg-white text-[#1C1C1E] border-white/90'
                     }`}
                     aria-label={isSaved ? "Remove from saved" : "Save this item"}
                     title={isSaved ? "Saved" : "Save"}
@@ -246,40 +246,40 @@ export function DiscoverView({
 
                 {/* Bottom Overlay Row: Content Type & Duration */}
                 <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white text-xs z-10 pointer-events-none">
-                  <div className="flex items-center gap-1.5 font-semibold bg-black/35 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/20">
+                  <div className="flex items-center gap-1.5 font-semibold bg-black/40 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/20">
                     <Clock className="w-3.5 h-3.5 stroke-[2.2]" />
                     <span>{item.contentType} • {item.duration}</span>
                   </div>
 
-                  <div className="w-7 h-7 rounded-full bg-white/90 text-[#26263F] flex items-center justify-center shadow-xs">
+                  <div className="w-7 h-7 rounded-full bg-white/92 text-[#1C1C1E] flex items-center justify-center shadow-xs">
                     <Play className="w-3 h-3 fill-current ml-0.5" />
                   </div>
                 </div>
               </div>
 
               {/* 2. Text Content: Title & Source */}
-              <div className="flex flex-col gap-1 px-1">
+              <div className="flex flex-col gap-1 px-0.5">
                 <div className="flex items-start justify-between gap-2">
-                  <h3 className="text-[16px] font-bold text-[#26263F] tracking-tight leading-snug group-hover:text-[#5E5BAE] transition-colors">
+                  <h3 className="text-[16.5px] font-bold text-[#1C1C1E] tracking-[-0.02em] leading-snug group-hover:text-[#5E5BAE] transition-colors">
                     {item.title}
                   </h3>
                 </div>
 
-                <span className="text-[11.5px] text-[#7A7895] font-medium">
+                <span className="text-[12px] text-[#6C6C70] font-medium">
                   {item.source}
                 </span>
               </div>
 
               {/* 3. Nova Recommendation Reason */}
-              <div className="p-3 rounded-[16px] bg-[#FAF8FD] border border-[#26263F]/[0.05] flex items-start gap-2.5">
-                <div className="w-5 h-5 rounded-full bg-[#5E5BAE]/10 text-[#5E5BAE] flex items-center justify-center shrink-0 mt-0.5">
-                  <Sparkles className="w-3 h-3 text-[#6865B8]" />
+              <div className="p-3 rounded-[15px] bg-[#F2F2F7]/85 flex items-start gap-2.5">
+                <div className="w-5 h-5 rounded-full bg-[#5E5BAE]/12 text-[#5E5BAE] flex items-center justify-center shrink-0 mt-0.5">
+                  <Sparkles className="w-3 h-3 text-[#5E5BAE]" />
                 </div>
                 <div className="flex-1">
-                  <span className="text-[10.5px] uppercase font-bold text-[#6865B8] tracking-wider block">
+                  <span className="text-[10.5px] uppercase font-bold text-[#5E5BAE] tracking-wider block">
                     Nova Recommendation
                   </span>
-                  <p className="text-[12px] text-[#26263F] leading-snug mt-0.5">
+                  <p className="text-[12.5px] text-[#1C1C1E] leading-snug mt-0.5">
                     {item.novaReason}
                   </p>
                 </div>
@@ -313,11 +313,11 @@ export function DiscoverView({
                   animate={{ y: 0 }}
                   exit={{ y: '100%' }}
                   transition={{ type: 'spring', damping: 28, stiffness: 280 }}
-                  className="relative w-full max-h-[88%] bg-[#FAF7F2] rounded-t-[34px] shadow-2xl border-t border-white/90 overflow-y-auto z-10 flex flex-col text-[#26263F]"
+                  className="relative w-full max-h-[88%] bg-[#F2F2F7]/96 backdrop-blur-2xl rounded-t-[34px] shadow-2xl border-t border-white/90 overflow-y-auto z-10 flex flex-col text-[#1C1C1E]"
                   id="discover-detail-sheet"
                 >
                   {/* Sheet Header */}
-                  <div className="px-6 pt-5 pb-3 border-b border-[#26263F]/[0.06] flex items-center justify-between shrink-0">
+                  <div className="px-6 pt-5 pb-3 border-b border-black/[0.06] flex items-center justify-between shrink-0">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-bold uppercase tracking-wider text-[#6865B8]">
                         {selectedItem.category}
