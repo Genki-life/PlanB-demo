@@ -5,7 +5,7 @@ import { createGPUFurPhysics, type GPUFurPhysics } from './gpuPhysics.ts';
 import { createGPUFurSystem, type FurSystem } from './furSystem.ts';
 
 export interface NovaAvatar3DProps {
-  /** Whether the current page/tab is active (pauses render loop when false) */
+  /** Whether the current page/tab is active and visible (pauses loop when false) */
   isActiveTab?: boolean;
   /** Fallback image URL if WebGL fails or user switches to 2D */
   fallbackImage?: string;
@@ -31,13 +31,35 @@ export function NovaAvatar3D({
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // References to keep across renders
+  // References to keep across renders and tab switches
+  const isDisposedRef = useRef(false);
+  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+  const sceneRef = useRef<THREE.Scene | null>(null);
+  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const creatureRef = useRef<BlobCreature | null>(null);
   const furSystemRef = useRef<FurSystem | null>(null);
   const gpuPhysicsRef = useRef<GPUFurPhysics | null>(null);
-  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
-  const animationFrameIdRef = useRef<number | null>(null);
-  const isRunningRef = useRef(false);
+
+  // Simulation timing & single-loop management
+  const clockRef = useRef<THREE.Clock>(new THREE.Clock(false));
+  const simTimeRef = useRef<number>(0);
+  const animFrameIdRef = useRef<number | null>(null);
+  const isLoopRunningRef = useRef<boolean>(false);
+
+  // Full quality fur configuration parameters
+  const furParamsRef = useRef({
+    baseColor: '#5e2bff', // Plush lavender-violet
+    tipColor: '#ff9ec7',  // Soft petal pink tips
+    furLength: 0.31,
+    furDensity: 0.75,
+    roughness: 0.77,
+    specular: 0.24,
+    clumping: 0.35,
+    curliness: 0.23,
+    windStrength: 0.95,
+    lightIntensity: 1.35,
+    rimIntensity: 1.35
+  });
 
   // Interaction tracking state
   const isPointerDownRef = useRef(false);
@@ -49,7 +71,108 @@ export function NovaAvatar3D({
   const pointerVelocityRef = useRef(new THREE.Vector3(0, 0, 0));
   const boopShockwaveRef = useRef(0.0);
 
-  // Clean initialization effect
+  // Stop animation loop cleanly
+  const stopAnimationLoop = useCallback(() => {
+    isLoopRunningRef.current = false;
+    if (animFrameIdRef.current !== null) {
+      cancelAnimationFrame(animFrameIdRef.current);
+      animFrameIdRef.current = null;
+    }
+  }, []);
+
+  // Start single animation loop with fresh clock baseline
+  const startAnimationLoop = useCallback(() => {
+    if (
+      isDisposedRef.current ||
+      !rendererRef.current ||
+      !sceneRef.current ||
+      !cameraRef.current ||
+      !creatureRef.current ||
+      !furSystemRef.current ||
+      !gpuPhysicsRef.current
+    ) {
+      return;
+    }
+
+    // Cancel any pending frame to guarantee exactly ONE active loop
+    if (animFrameIdRef.current !== null) {
+      cancelAnimationFrame(animFrameIdRef.current);
+      animFrameIdRef.current = null;
+    }
+
+    isLoopRunningRef.current = true;
+    // Reset clock baseline so the first resumed frame delta is ~0.016s without time jumps
+    clockRef.current.start();
+
+    const loop = () => {
+      if (isDisposedRef.current || !isLoopRunningRef.current) {
+        animFrameIdRef.current = null;
+        return;
+      }
+
+      animFrameIdRef.current = requestAnimationFrame(loop);
+
+      // Single call to getDelta() per frame
+      const rawDelta = clockRef.current.getDelta();
+      const dt = Math.min(Math.max(rawDelta, 0.001), 0.05);
+
+      // Monotonic, stable simulated time accumulator
+      simTimeRef.current += dt;
+      const time = simTimeRef.current;
+
+      const creature = creatureRef.current;
+      const furSystem = furSystemRef.current;
+      const gpuPhysics = gpuPhysicsRef.current;
+      const renderer = rendererRef.current;
+      const scene = sceneRef.current;
+      const camera = cameraRef.current;
+
+      if (!creature || !furSystem || !gpuPhysics || !renderer || !scene || !camera) {
+        return;
+      }
+
+      // Creature idle breathing, swaying, blinking & gaze tracking
+      creature.update(dt, pointerNDCRef.current, camera.position, false);
+
+      // Boop shockwave decay
+      if (boopShockwaveRef.current > 0.001) {
+        boopShockwaveRef.current = Math.max(0, boopShockwaveRef.current - dt * 3.2);
+      }
+
+      // GPGPU Verlet spring simulation step
+      const physicsTex = gpuPhysics.step({
+        time,
+        dt,
+        windStrength: furParamsRef.current.windStrength,
+        creatureVelocity: creature.animState.velocity,
+        creatureAngularVel: creature.animState.angularVelocity,
+        pointerLocalPos: pointerLocalPosRef.current,
+        pointerVelocity: pointerVelocityRef.current,
+        pointerActive: isPointerOverCreatureRef.current,
+        boopShockwave: boopShockwaveRef.current
+      });
+
+      // Feed physics texture and dynamic uniforms to fur shaders
+      furSystem.sharedUniforms.uPhysicsTex.value = physicsTex;
+      furSystem.sharedUniforms.uTime.value = time;
+      furSystem.sharedUniforms.uPointerLocalPos.value.copy(pointerLocalPosRef.current);
+      furSystem.sharedUniforms.uPointerActive.value = isPointerOverCreatureRef.current ? 1.0 : 0.0;
+      furSystem.sharedUniforms.uBoopShockwave.value = boopShockwaveRef.current;
+
+      // Analytical fallback inertia
+      furSystem.sharedUniforms.uWebGLInertia.value.set(
+        -creature.animState.velocity.x * 0.12,
+        -creature.animState.velocity.y * 0.12,
+        -creature.animState.velocity.z * 0.12
+      );
+
+      renderer.render(scene, camera);
+    };
+
+    animFrameIdRef.current = requestAnimationFrame(loop);
+  }, []);
+
+  // Main 3D Scene Initialization Effect (Runs once on mount or when mode toggles)
   useEffect(() => {
     if (mode === '2d') {
       return;
@@ -59,8 +182,8 @@ export function NovaAvatar3D({
     if (!container) return;
 
     // 1. WebGL Support Test
-    const canvas = document.createElement('canvas');
-    const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
+    const testCanvas = document.createElement('canvas');
+    const gl = testCanvas.getContext('webgl2') || testCanvas.getContext('webgl');
     if (!gl) {
       console.warn('WebGL not supported in current environment. Falling back to 2D Nova.');
       setHasError(true);
@@ -68,11 +191,11 @@ export function NovaAvatar3D({
       return;
     }
 
-    let isDisposed = false;
+    isDisposedRef.current = false;
 
     try {
-      const width = container.clientWidth || 280;
-      const height = container.clientHeight || 280;
+      const width = container.clientWidth || 240;
+      const height = container.clientHeight || 240;
 
       // 2. WebGL Renderer with Alpha: true for seamless gradient integration
       const renderer = new THREE.WebGLRenderer({
@@ -91,7 +214,6 @@ export function NovaAvatar3D({
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-      // Ensure canvas respects container shape and does not block touch scrolling
       const domElement = renderer.domElement;
       domElement.style.width = '100%';
       domElement.style.height = '100%';
@@ -102,9 +224,12 @@ export function NovaAvatar3D({
 
       // 3. Three.js Scene & Perspective Camera
       const scene = new THREE.Scene();
-      const camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 40);
+      sceneRef.current = scene;
 
-      // Frame Mochi-Puff with ample margins for perky ears, plush side fur, and jump bounces
+      const camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 40);
+      cameraRef.current = camera;
+
+      // Frame Mochi-Puff with safe padding for perky ears, plush side fur, and jump bounce
       const updateFraming = (w: number, h: number) => {
         const aspect = Math.max(0.5, w / Math.max(1, h));
         camera.aspect = aspect;
@@ -116,7 +241,6 @@ export function NovaAvatar3D({
 
         const distV = 1.65 / tanHalfV;
         const distH = 1.95 / tanHalfH;
-        // Target distance accommodates both axes with safe margin
         const targetDist = Math.max(distV, distH, 6.2);
 
         camera.position.set(0.0, 0.28, targetDist);
@@ -153,17 +277,7 @@ export function NovaAvatar3D({
       gpuPhysicsRef.current = gpuPhysics;
 
       const furParams = {
-        baseColor: '#5e2bff', // Deep plush lavender-violet
-        tipColor: '#ff9ec7',  // Soft petal pink tips
-        furLength: 0.31,
-        furDensity: 0.75,
-        roughness: 0.77,
-        specular: 0.24,
-        clumping: 0.35,
-        curliness: 0.23,
-        windStrength: 0.95,
-        lightIntensity: 1.35,
-        rimIntensity: 1.35,
+        ...furParamsRef.current,
         gpuFurEnabled: gpuPhysics.isGPGPUActive
       };
 
@@ -225,7 +339,7 @@ export function NovaAvatar3D({
           e.clientY - pointerStartPosRef.current.y
         );
 
-        // If tap/click with minimal drag and pointer is on character, trigger boop!
+        // Tap/click with minimal drag on character triggers boop
         if (dist < 12 && isPointerOverCreatureRef.current) {
           creature.triggerBoop();
           boopShockwaveRef.current = 1.0;
@@ -251,7 +365,7 @@ export function NovaAvatar3D({
 
       // 8. Dynamic Resize Observer
       const resizeObserver = new ResizeObserver((entries) => {
-        if (!entries || entries.length === 0 || isDisposed) return;
+        if (!entries || entries.length === 0 || isDisposedRef.current) return;
         const entry = entries[0];
         const newWidth = Math.max(160, Math.floor(entry.contentRect.width));
         const newHeight = Math.max(160, Math.floor(entry.contentRect.height));
@@ -259,72 +373,15 @@ export function NovaAvatar3D({
       });
       resizeObserver.observe(container);
 
-      // 9. Main Animation Loop
-      const clock = new THREE.Clock();
-      isRunningRef.current = true;
+      // If active and document is visible, start the loop
+      if (isActiveTab && document.visibilityState === 'visible') {
+        startAnimationLoop();
+      }
 
-      const animate = () => {
-        if (isDisposed) return;
-
-        if (!isRunningRef.current) {
-          animationFrameIdRef.current = null;
-          return;
-        }
-
-        animationFrameIdRef.current = requestAnimationFrame(animate);
-
-        const dt = Math.min(clock.getDelta(), 0.05);
-        const time = clock.getElapsedTime();
-
-        // Creature idle breathing, swaying, blinking & gaze tracking
-        creature.update(dt, pointerNDCRef.current, camera.position, false);
-
-        // Boop shockwave decay
-        if (boopShockwaveRef.current > 0.001) {
-          boopShockwaveRef.current = Math.max(0, boopShockwaveRef.current - dt * 3.2);
-        }
-
-        // GPGPU Verlet spring simulation step
-        const physicsTex = gpuPhysics.step({
-          time,
-          dt,
-          windStrength: furParams.windStrength,
-          creatureVelocity: creature.animState.velocity,
-          creatureAngularVel: creature.animState.angularVelocity,
-          pointerLocalPos: pointerLocalPosRef.current,
-          pointerVelocity: pointerVelocityRef.current,
-          pointerActive: isPointerOverCreatureRef.current,
-          boopShockwave: boopShockwaveRef.current
-        });
-
-        // Feed physics texture and dynamic uniforms to fur shaders
-        furSystem.sharedUniforms.uPhysicsTex.value = physicsTex;
-        furSystem.sharedUniforms.uTime.value = time;
-        furSystem.sharedUniforms.uPointerLocalPos.value.copy(pointerLocalPosRef.current);
-        furSystem.sharedUniforms.uPointerActive.value = isPointerOverCreatureRef.current ? 1.0 : 0.0;
-        furSystem.sharedUniforms.uBoopShockwave.value = boopShockwaveRef.current;
-
-        // Analytical fallback inertia
-        furSystem.sharedUniforms.uWebGLInertia.value.set(
-          -creature.animState.velocity.x * 0.12,
-          -creature.animState.velocity.y * 0.12,
-          -creature.animState.velocity.z * 0.12
-        );
-
-        renderer.render(scene, camera);
-      };
-
-      animate();
-
-      // Cleanup on unmount
+      // Cleanup on component unmount or 2D mode switch
       return () => {
-        isDisposed = true;
-        isRunningRef.current = false;
-
-        if (animationFrameIdRef.current !== null) {
-          cancelAnimationFrame(animationFrameIdRef.current);
-          animationFrameIdRef.current = null;
-        }
+        isDisposedRef.current = true;
+        stopAnimationLoop();
 
         resizeObserver.disconnect();
         domElement.removeEventListener('pointerdown', handlePointerDown);
@@ -337,6 +394,13 @@ export function NovaAvatar3D({
         gpuPhysics.dispose();
         renderer.dispose();
 
+        creatureRef.current = null;
+        furSystemRef.current = null;
+        gpuPhysicsRef.current = null;
+        rendererRef.current = null;
+        sceneRef.current = null;
+        cameraRef.current = null;
+
         if (container.contains(domElement)) {
           container.removeChild(domElement);
         }
@@ -346,42 +410,41 @@ export function NovaAvatar3D({
       setHasError(true);
       setErrorMessage(err?.message || '3D initialization error');
     }
-  }, [mode, onBoop]);
+  }, [mode, onBoop, startAnimationLoop, stopAnimationLoop]);
 
-  // Handle Tab Activation / Background Page Visibility Pause
+  // Tab Activation / Background Page Visibility Loop Controller
   useEffect(() => {
-    if (mode === '2d' || hasError) return;
+    if (mode === '2d' || hasError) {
+      stopAnimationLoop();
+      return;
+    }
 
-    const handleVisibilityChange = () => {
+    const syncLoopState = () => {
       const isVisible = document.visibilityState === 'visible';
-      if (isVisible && isActiveTab) {
-        if (!isRunningRef.current) {
-          isRunningRef.current = true;
+      const shouldBeRunning = isActiveTab && isVisible;
+
+      if (shouldBeRunning) {
+        if (!isLoopRunningRef.current) {
+          startAnimationLoop();
         }
       } else {
-        isRunningRef.current = false;
-        if (animationFrameIdRef.current !== null) {
-          cancelAnimationFrame(animationFrameIdRef.current);
-          animationFrameIdRef.current = null;
+        if (isLoopRunningRef.current) {
+          stopAnimationLoop();
         }
       }
     };
 
-    if (isActiveTab && document.visibilityState === 'visible') {
-      isRunningRef.current = true;
-    } else {
-      isRunningRef.current = false;
-      if (animationFrameIdRef.current !== null) {
-        cancelAnimationFrame(animationFrameIdRef.current);
-        animationFrameIdRef.current = null;
-      }
-    }
+    syncLoopState();
+
+    const handleVisibilityChange = () => {
+      syncLoopState();
+    };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [isActiveTab, mode, hasError]);
+  }, [isActiveTab, mode, hasError, startAnimationLoop, stopAnimationLoop]);
 
   // Fallback 2D Image View if in 2D mode or upon WebGL failure
   if (mode === '2d' || hasError) {
